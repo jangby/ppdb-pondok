@@ -5,14 +5,17 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\AdminCandidateController;
 use App\Http\Controllers\AdminTransactionController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', [RegistrationController::class, 'index'])->name('pendaftaran.index');
-Route::post('/daftar', [RegistrationController::class, 'store'])->name('pendaftaran.store');
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/pendaftaran', [AdminCandidateController::class, 'create'])->name('pendaftaran.create');
+Route::post('/pendaftaran', [AdminCandidateController::class, 'store'])->name('pendaftaran.store');
 Route::get('/sukses/{id}', [RegistrationController::class, 'sukses'])->name('pendaftaran.sukses');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -12,15 +12,35 @@ use Illuminate\Support\Facades\DB;
 
 class AdminCandidateController extends Controller
 {
-    public function index()
-    {
-        // Ambil data santri terbaru, beserta data tagihannya untuk hitung total
-        $candidates = Candidate::with(['bills'])
-                        ->latest()
-                        ->paginate(10); // Tampilkan 10 per halaman
+    public function index(Request $request)
+{
+    // Mulai Query
+    $query = Candidate::query();
 
-        return view('admin.candidates.index', compact('candidates'));
+    // 1. Logika Search (Nama atau No Daftar)
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('nama_lengkap', 'like', '%' . $search . '%')
+              ->orWhere('no_daftar', 'like', '%' . $search . '%');
+        });
     }
+
+    // 2. Logika Filter Jenjang
+    if ($request->filled('jenjang')) {
+        $query->where('jenjang', $request->jenjang);
+    }
+
+    // 3. Logika Filter Status
+    if ($request->filled('status')) {
+        $query->where('status_seleksi', $request->status);
+    }
+
+    // Ambil data dengan pagination (tambahkan withQueryString agar filter tidak hilang saat ganti halaman)
+    $candidates = $query->latest()->paginate(10)->withQueryString();
+
+    return view('admin.candidates.index', compact('candidates'));
+}
 
     // 1. Tampilkan Form Tambah Santri (Offline)
     public function create()
