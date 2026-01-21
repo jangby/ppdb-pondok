@@ -3,16 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Setting; // Panggil model setting
+use App\Models\Setting; // Pastikan Model Setting di-import
 
 class HomeController extends Controller
 {
     public function index()
     {
-        // Ambil status dari database, default 'tutup' jika belum disetting
-        $setting = Setting::where('key', 'ppdb_status')->first();
-        $status_ppdb = $setting ? $setting->value : 'tutup';
+        // 1. Ambil data setting (untuk ditampilkan di view jika perlu)
+        $setting = Setting::first();
 
-        return view('welcome', compact('status_ppdb'));
+        // 2. Cek status menggunakan Helper 'isOpen' dari Model
+        // Hasilnya true (buka) atau false (tutup)
+        $isOpen = Setting::isOpen();
+
+        // 3. Konversi ke string 'buka'/'tutup' agar sesuai dengan logika di View welcome Anda
+        $status_ppdb = $isOpen ? 'buka' : 'tutup';
+
+        // Kirim variabel ke view
+        return view('welcome', compact('status_ppdb', 'setting'));
     }
 }

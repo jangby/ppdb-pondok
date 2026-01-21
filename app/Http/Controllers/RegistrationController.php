@@ -7,6 +7,7 @@ use App\Models\CandidateAddress;
 use App\Models\CandidateParent;
 use App\Models\CandidateBill;
 use App\Models\PaymentType;
+use App\Models\Setting; // Pastikan Model Setting sudah dibuat
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,33 +16,55 @@ class RegistrationController extends Controller
     // 1. Tampilkan Form Pendaftaran
     public function index()
     {
+        // Cek Status Pendaftaran dari Database
+        if (!Setting::isOpen()) {
+            $setting = Setting::first();
+            // Pastikan Anda sudah membuat view 'pendaftaran.tutup' sesuai panduan sebelumnya
+            return view('pendaftaran.tutup', compact('setting'));
+        }
+
         return view('pendaftaran.index');
     }
 
     // 2. Proses Simpan Data
     public function store(Request $request)
     {
-        // Validasi Input (Bisa diperketat lagi nanti)
+        // Cek lagi saat submit (untuk keamanan)
+        if (!Setting::isOpen()) {
+            return redirect()->route('home')->with('error', 'Pendaftaran sudah ditutup.');
+        }
+
+        // A. Validasi Input
         $request->validate([
-            'nama_lengkap' => 'required',
-            'nisn' => 'required|unique:candidates,nisn',
-            'nik' => 'required|unique:candidates,nik',
-            'jenis_kelamin' => 'required',
-            'jenjang' => 'required',
-            'alamat' => 'required',
-            'nama_ayah' => 'required',
-            'nama_ibu' => 'required',
+            // Data Pribadi
+            'nama_lengkap' => 'required|string|max:255',
+            'nisn' => 'required|numeric|unique:candidates,nisn',
+            'nik' => 'required|numeric|unique:candidates,nik',
+            'no_kk' => 'nullable|numeric',
+            'tempat_lahir' => 'required|string',
+            'tanggal_lahir' => 'required|date',
+            'jenis_kelamin' => 'required|in:L,P',
+            'jenjang' => 'required|in:SMP,SMK',
+            
+            // Alamat (Wajib Lengkap)
+            'alamat' => 'required|string',
+            'desa' => 'required|string',
+            'kecamatan' => 'required|string',
+            'kabupaten' => 'required|string', // Kolom Baru
+            'provinsi' => 'required|string',   // Kolom Baru
+            
+            // Orang Tua
+            'nama_ayah' => 'required|string',
+            'nama_ibu' => 'required|string',
+            'no_hp_ayah' => 'required|numeric',
         ]);
 
-        // Gunakan Database Transaction agar data aman
-        // (Jika satu gagal, semua batal disimpan)
         DB::beginTransaction();
 
         try {
-            // A. Simpan Data Inti Santri
+            // B. Simpan Data Inti Santri
             $candidate = Candidate::create([
-                // Generate No Daftar: REG-Tahun-Detik (Unik)
-                'no_daftar' => 'REG-' . date('Y') . date('His'), 
+                'no_daftar' => 'REG-' . date('Y') . date('His'), // Generate No Daftar Unik
                 'nisn' => $request->nisn,
                 'nik' => $request->nik,
                 'no_kk' => $request->no_kk,
@@ -49,19 +72,19 @@ class RegistrationController extends Controller
                 'jenis_kelamin' => $request->jenis_kelamin,
                 'tempat_lahir' => $request->tempat_lahir,
                 'tanggal_lahir' => $request->tanggal_lahir,
-                'anak_ke' => $request->anak_ke,
-                'jumlah_saudara' => $request->jumlah_saudara,
+                'anak_ke' => $request->anak_ke ?? 1,
+                'jumlah_saudara' => $request->jumlah_saudara ?? 0,
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
                 'asal_sekolah' => $request->asal_sekolah,
                 
-                // Field Otomatis
+                // Field Sistem Otomatis
                 'tahun_masuk' => date('Y'),
                 'jalur_pendaftaran' => 'Online',
                 'status_seleksi' => 'Pending',
             ]);
 
-            // B. Simpan Alamat
+            // C. Simpan Alamat (LENGKAP dengan Kabupaten & Provinsi)
             CandidateAddress::create([
                 'candidate_id' => $candidate->id,
                 'alamat' => $request->alamat,
@@ -69,12 +92,12 @@ class RegistrationController extends Controller
                 'rw' => $request->rw,
                 'desa' => $request->desa,
                 'kecamatan' => $request->kecamatan,
-                'kabupaten' => $request->kabupaten ?? 'Default Kab', // Sesuaikan form nanti
-                'provinsi' => $request->provinsi ?? 'Default Prov',
+                'kabupaten' => $request->kabupaten, // Ambil dari input
+                'provinsi' => $request->provinsi,   // Ambil dari input
                 'kode_pos' => $request->kode_pos,
             ]);
 
-            // C. Simpan Orang Tua
+            // D. Simpan Orang Tua (LENGKAP dengan Penghasilan)
             CandidateParent::create([
                 'candidate_id' => $candidate->id,
                 'nama_ayah' => $request->nama_ayah,
@@ -82,7 +105,7 @@ class RegistrationController extends Controller
                 'thn_lahir_ayah' => $request->thn_lahir_ayah,
                 'pendidikan_ayah' => $request->pendidikan_ayah,
                 'pekerjaan_ayah' => $request->pekerjaan_ayah,
-                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
+                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0, // Input atau 0
                 'no_hp_ayah' => $request->no_hp_ayah,
                 
                 'nama_ibu' => $request->nama_ibu,
@@ -90,12 +113,11 @@ class RegistrationController extends Controller
                 'thn_lahir_ibu' => $request->thn_lahir_ibu,
                 'pendidikan_ibu' => $request->pendidikan_ibu,
                 'pekerjaan_ibu' => $request->pekerjaan_ibu,
-                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
+                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0, // Input atau 0
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
-            // D. GENERATE TAGIHAN OTOMATIS
-            // Ambil jenis pembayaran yang sesuai jenjang (SMP/SMK) atau yang 'Semua'
+            // E. Generate Tagihan Otomatis
             $biaya = PaymentType::where('jenjang', 'Semua')
                         ->orWhere('jenjang', $request->jenjang)
                         ->get();
@@ -110,14 +132,14 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            DB::commit(); // Simpan semua perubahan
-            
-            // Redirect ke halaman sukses
+            DB::commit(); // Simpan permanen
+
+            // Redirect ke halaman Sukses
             return redirect()->route('pendaftaran.sukses', ['id' => $candidate->no_daftar]);
 
         } catch (\Exception $e) {
-            DB::rollback(); // Batalkan semua jika error
-            return back()->withErrors(['msg' => 'Gagal Mendaftar: ' . $e->getMessage()]);
+            DB::rollback(); // Batalkan jika error
+            return back()->with('error', 'Gagal Mendaftar: ' . $e->getMessage())->withInput();
         }
     }
 

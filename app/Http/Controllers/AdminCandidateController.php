@@ -56,7 +56,7 @@ class AdminCandidateController extends Controller
             'nama_lengkap' => 'required',
             'jenis_kelamin' => 'required',
             'jenjang' => 'required',
-            // NISN/NIK boleh diisi nanti kalau lupa bawa berkas, tapi sebaiknya diisi
+            // NISN/NIK boleh diisi nanti kalau lupa bawa berkas
             'nisn' => 'nullable|unique:candidates,nisn', 
             'nik' => 'nullable|unique:candidates,nik',
         ]);
@@ -66,7 +66,7 @@ class AdminCandidateController extends Controller
         try {
             // A. Simpan Data Santri
             $candidate = Candidate::create([
-                'no_daftar' => 'OFF-' . date('Y') . date('His'), // Kode OFF untuk Offline
+                'no_daftar' => 'OFF-' . date('Y') . date('His'),
                 'nisn' => $request->nisn,
                 'nik' => $request->nik,
                 'no_kk' => $request->no_kk,
@@ -78,12 +78,12 @@ class AdminCandidateController extends Controller
                 'jumlah_saudara' => $request->jumlah_saudara ?? 0,
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
-                'asal_sekolah' => $request->asal_sekolah,
+                // 'asal_sekolah' => $request->asal_sekolah, // Hapus jika kolom tidak ada di DB
                 
                 // Field Sistem
                 'tahun_masuk' => date('Y'),
-                'jalur_pendaftaran' => 'Offline', // PENTING
-                'status_seleksi' => 'Pending', // Default Pending, nanti admin bisa langsung terima di detail
+                'jalur_pendaftaran' => 'Offline',
+                'status_seleksi' => 'Pending',
             ]);
 
             // B. Simpan Alamat
@@ -95,32 +95,31 @@ class AdminCandidateController extends Controller
                 'desa' => $request->desa,
                 'kecamatan' => $request->kecamatan,
                 'kode_pos' => $request->kode_pos,
-                'kabupaten' => $request->kabupaten ?? '-',
-                'provinsi' => $request->provinsi ?? '-',
+                'kabupaten' => $request->kabupaten, // Pastikan sudah migrasi kolom ini
+                'provinsi' => $request->provinsi,   // Pastikan sudah migrasi kolom ini
             ]);
 
             // C. Simpan Orang Tua
-            // Bagian C. Simpan Orang Tua di function store()
-CandidateParent::create([
-    'candidate_id' => $candidate->id,
-    'nama_ayah' => $request->nama_ayah,
-    'nik_ayah' => $request->nik_ayah,
-    // Tambahkan ini agar tersimpan saat daftar baru
-    'thn_lahir_ayah' => $request->thn_lahir_ayah, 
-    'pendidikan_ayah' => $request->pendidikan_ayah,
-    'pekerjaan_ayah' => $request->pekerjaan_ayah,
-    'no_hp_ayah' => $request->no_hp_ayah,
-    
-    'nama_ibu' => $request->nama_ibu,
-    'nik_ibu' => $request->nik_ibu,
-    // Tambahkan ini juga
-    'thn_lahir_ibu' => $request->thn_lahir_ibu,
-    'pendidikan_ibu' => $request->pendidikan_ibu,
-    'pekerjaan_ibu' => $request->pekerjaan_ibu,
-    'no_hp_ibu' => $request->no_hp_ibu,
-]);
+            CandidateParent::create([
+                'candidate_id' => $candidate->id,
+                'nama_ayah' => $request->nama_ayah,
+                'nik_ayah' => $request->nik_ayah,
+                'thn_lahir_ayah' => $request->thn_lahir_ayah, 
+                'pendidikan_ayah' => $request->pendidikan_ayah,
+                'pekerjaan_ayah' => $request->pekerjaan_ayah,
+                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0, // TAMBAHKAN INI
+                'no_hp_ayah' => $request->no_hp_ayah,
+                
+                'nama_ibu' => $request->nama_ibu,
+                'nik_ibu' => $request->nik_ibu,
+                'thn_lahir_ibu' => $request->thn_lahir_ibu,
+                'pendidikan_ibu' => $request->pendidikan_ibu,
+                'pekerjaan_ibu' => $request->pekerjaan_ibu,
+                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0, // TAMBAHKAN INI
+                'no_hp_ibu' => $request->no_hp_ibu,
+            ]);
 
-            // D. Generate Tagihan (Copy logic dari online)
+            // D. Generate Tagihan
             $biaya = PaymentType::where('jenjang', 'Semua')
                         ->orWhere('jenjang', $request->jenjang)
                         ->get();
@@ -137,9 +136,8 @@ CandidateParent::create([
 
             DB::commit();
 
-            // Redirect langsung ke halaman Detail agar Admin bisa langsung input pembayaran
             return redirect()->route('admin.candidates.show', $candidate->id)
-                             ->with('success', 'Pendaftaran Offline Berhasil! Silakan cek kelengkapan & pembayaran.');
+                             ->with('success', 'Pendaftaran Offline Berhasil!');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -178,11 +176,10 @@ CandidateParent::create([
     // 4. Proses Update Data
     public function update(Request $request, $id)
     {
-        // Validasi sederhana (Sesuaikan kebutuhan)
+        // Validasi
         $request->validate([
             'nama_lengkap' => 'required',
             'jenjang' => 'required',
-            // Ignore ID saat cek unique agar tidak error validasi diri sendiri
             'nisn' => 'nullable|unique:candidates,nisn,'.$id, 
             'nik' => 'nullable|unique:candidates,nik,'.$id,
         ]);
@@ -205,18 +202,18 @@ CandidateParent::create([
                 'jumlah_saudara' => $request->jumlah_saudara,
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
-                'asal_sekolah' => $request->asal_sekolah,
+                // 'asal_sekolah' => $request->asal_sekolah, // Pastikan ada migrasi untuk ini jika ingin dipakai
             ]);
 
-            // B. Update Alamat
+            // B. Update Alamat (Sekarang KABUPATEN & PROVINSI dimasukkan)
             $candidate->address()->update([
                 'alamat' => $request->alamat,
                 'rt' => $request->rt,
                 'rw' => $request->rw,
                 'desa' => $request->desa,
                 'kecamatan' => $request->kecamatan,
-                'kabupaten' => $request->kabupaten,
-                'provinsi' => $request->provinsi, // Jika ada inputnya
+                'kabupaten' => $request->kabupaten, // SUDAH ADA DI DB
+                'provinsi' => $request->provinsi,   // SUDAH ADA DI DB
                 'kode_pos' => $request->kode_pos,
             ]);
 
@@ -227,6 +224,7 @@ CandidateParent::create([
                 'thn_lahir_ayah' => $request->thn_lahir_ayah,
                 'pendidikan_ayah' => $request->pendidikan_ayah,
                 'pekerjaan_ayah' => $request->pekerjaan_ayah,
+                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
                 'no_hp_ayah' => $request->no_hp_ayah,
                 
                 'nama_ibu' => $request->nama_ibu,
@@ -234,6 +232,7 @@ CandidateParent::create([
                 'thn_lahir_ibu' => $request->thn_lahir_ibu,
                 'pendidikan_ibu' => $request->pendidikan_ibu,
                 'pekerjaan_ibu' => $request->pekerjaan_ibu,
+                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 

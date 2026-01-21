@@ -30,15 +30,17 @@
                     </div>
                 </div>
             @endif
+
             <form action="{{ route('admin.candidates.update', $candidate->id) }}" method="POST">
                 @csrf
                 @method('PUT') 
+                
                 <div class="bg-white shadow-md rounded-xl overflow-hidden mb-6 border border-gray-100">
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                         <div class="bg-blue-100 p-2 rounded-full text-blue-600">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
-                        <h3 class="font-bold text-lg text-gray-800">A. Edit Data Pribadi</h3>
+                        <h3 class="font-bold text-lg text-gray-800">A. Data Pribadi Santri</h3>
                     </div>
                     
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -59,7 +61,7 @@
                             <input type="text" name="nisn" value="{{ old('nisn', $candidate->nisn) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">NIK</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">NIK Santri</label>
                             <input type="text" name="nik" value="{{ old('nik', $candidate->nik) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div>
@@ -91,13 +93,10 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Saudara</label>
                             <input type="number" name="jumlah_saudara" value="{{ old('jumlah_saudara', $candidate->jumlah_saudara) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Asal Sekolah</label>
-                            <input type="text" name="asal_sekolah" value="{{ old('asal_sekolah', $candidate->asal_sekolah) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        </div>
+                        
                         <div class="lg:col-span-3">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Riwayat Penyakit</label>
-                            <input type="text" name="riwayat_penyakit" value="{{ old('riwayat_penyakit', $candidate->riwayat_penyakit) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <textarea name="riwayat_penyakit" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('riwayat_penyakit', $candidate->riwayat_penyakit) }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -107,20 +106,20 @@
                         <div class="bg-green-100 p-2 rounded-full text-green-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
                         </div>
-                        <h3 class="font-bold text-lg text-gray-800">B. Edit Alamat Domisili</h3>
+                        <h3 class="font-bold text-lg text-gray-800">B. Alamat Domisili</h3>
                     </div>
                     
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6">
                         <div class="lg:col-span-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Lengkap</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat (Jalan/Kp/Blok)</label>
                             <textarea name="alamat" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>{{ old('alamat', $candidate->address->alamat ?? '') }}</textarea>
                         </div>
                         
                         <div class="lg:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">RT / RW</label>
                             <div class="flex gap-2">
-                                <input type="text" name="rt" value="{{ old('rt', $candidate->address->rt ?? '') }}" class="w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <input type="text" name="rw" value="{{ old('rw', $candidate->address->rw ?? '') }}" class="w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <input type="text" name="rt" placeholder="RT" value="{{ old('rt', $candidate->address->rt ?? '') }}" class="w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <input type="text" name="rw" placeholder="RW" value="{{ old('rw', $candidate->address->rw ?? '') }}" class="w-1/2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                         </div>
 
@@ -133,11 +132,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kecamatan</label>
                             <input type="text" name="kecamatan" value="{{ old('kecamatan', $candidate->address->kecamatan ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                         </div>
+                        
                         <div class="lg:col-span-3">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kabupaten/Kota</label>
                             <input type="text" name="kabupaten" value="{{ old('kabupaten', $candidate->address->kabupaten ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
                         <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Provinsi</label>
+                            <input type="text" name="provinsi" value="{{ old('provinsi', $candidate->address->provinsi ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+
+                        <div class="lg:col-span-6">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Kode Pos</label>
                             <input type="text" name="kode_pos" value="{{ old('kode_pos', $candidate->address->kode_pos ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>
@@ -149,12 +154,12 @@
                         <div class="bg-purple-100 p-2 rounded-full text-purple-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         </div>
-                        <h3 class="font-bold text-lg text-gray-800">C. Edit Data Orang Tua</h3>
+                        <h3 class="font-bold text-lg text-gray-800">C. Data Orang Tua</h3>
                     </div>
                     
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                         
-                        <div class="space-y-4">
+                        <div class="space-y-4 pr-0 md:pr-4">
                             <h4 class="font-bold text-gray-600 uppercase text-sm border-b pb-2 mb-4">Ayah Kandung</h4>
                             
                             <div>
@@ -189,12 +194,16 @@
                                 <input type="text" name="pekerjaan_ayah" value="{{ old('pekerjaan_ayah', $candidate->parent->pekerjaan_ayah ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Penghasilan Ayah (Rp)</label>
+                                <input type="number" name="penghasilan_ayah" value="{{ old('penghasilan_ayah', $candidate->parent->penghasilan_ayah ?? 0) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">No. HP / WA</label>
                                 <input type="text" name="no_hp_ayah" value="{{ old('no_hp_ayah', $candidate->parent->no_hp_ayah ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                         </div>
 
-                        <div class="space-y-4 pt-4 md:pt-0 md:pl-8">
+                        <div class="space-y-4 pt-4 md:pt-0 md:pl-4">
                             <h4 class="font-bold text-gray-600 uppercase text-sm border-b pb-2 mb-4">Ibu Kandung</h4>
                             
                             <div>
@@ -227,6 +236,10 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Pekerjaan</label>
                                 <input type="text" name="pekerjaan_ibu" value="{{ old('pekerjaan_ibu', $candidate->parent->pekerjaan_ibu ?? '') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Penghasilan Ibu (Rp)</label>
+                                <input type="number" name="penghasilan_ibu" value="{{ old('penghasilan_ibu', $candidate->parent->penghasilan_ibu ?? 0) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">No. HP / WA</label>
