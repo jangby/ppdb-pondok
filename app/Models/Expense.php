@@ -8,17 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Expense extends Model
 {
     use HasFactory;
+
+    // IZINKAN MASS ASSIGNMENT
+    // Artinya: Semua kolom selain 'id' boleh diisi oleh Controller
     protected $guarded = ['id'];
 
-    // Admin siapa yang belanja?
-    public function admin()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
-    // Sumber dananya dari mana aja?
-    public function fund_sources()
+    public function fundSources()
     {
-        return $this->hasMany(ExpenseFundSource::class);
+        return $this->hasMany(ExpenseFundSource::class, 'expense_id');
     }
 }

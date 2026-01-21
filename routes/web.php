@@ -8,6 +8,8 @@ use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingController; // Pastikan ini ada
+use App\Http\Controllers\PaymentTypeController;
+use App\Http\Controllers\AdminFinanceController;
 
 // 1. HALAMAN DEPAN (HOMEPAGE)
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -32,6 +34,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/pengaturan', [SettingController::class, 'update'])->name('admin.settings.update');
 
+    Route::get('/admin/jenis-pembayaran', [PaymentTypeController::class, 'index'])->name('admin.payment_types.index');
+    Route::post('/admin/jenis-pembayaran', [PaymentTypeController::class, 'store'])->name('admin.payment_types.store');
+    Route::put('/admin/jenis-pembayaran/{id}', [PaymentTypeController::class, 'update'])->name('admin.payment_types.update');
+    Route::delete('/admin/jenis-pembayaran/{id}', [PaymentTypeController::class, 'destroy'])->name('admin.payment_types.destroy');
+
     // Route CRUD Admin Santri
     Route::get('/admin/santri', [AdminCandidateController::class, 'index'])->name('admin.candidates.index');
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
@@ -45,6 +52,11 @@ Route::middleware('auth')->group(function () {
     // Route Transaksi
     Route::post('/admin/santri/{id}/pay', [AdminTransactionController::class, 'store'])->name('admin.transactions.store');
     Route::get('/admin/transaksi/{id}/cetak', [AdminTransactionController::class, 'print'])->name('admin.transactions.print');
+
+    // Route Keuangan
+    Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
+    Route::post('/admin/keuangan', [AdminFinanceController::class, 'store'])->name('admin.finance.store');
+    Route::delete('/admin/keuangan/{id}', [AdminFinanceController::class, 'destroy'])->name('admin.finance.destroy');
 });
 
 require __DIR__.'/auth.php';

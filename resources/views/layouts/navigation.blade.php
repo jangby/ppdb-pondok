@@ -16,6 +16,14 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
+                    <x-nav-link :href="route('admin.payment_types.index')" :active="request()->routeIs('admin.payment_types.*')">
+        {{ __('Jenis Pembayaran') }}
+    </x-nav-link>
+
+    <x-nav-link :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')">
+    {{ __('Keuangan') }}
+</x-nav-link>
+
                     <x-nav-link :href="route('admin.candidates.index')" :active="request()->routeIs('admin.candidates.*')">
                         {{ __('Data Santri') }}
                     </x-nav-link>

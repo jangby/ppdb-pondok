@@ -8,15 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class ExpenseFundSource extends Model
 {
     use HasFactory;
+
+    // IZINKAN MASS ASSIGNMENT
     protected $guarded = ['id'];
 
-    public function expense()
-    {
-        return $this->belongsTo(Expense::class);
-    }
-
-    // Diambil dari pos anggaran apa?
-    public function payment_type()
+    // Matikan timestamps karena di migrasi Anda (kemungkinan) tidak pakai created_at/updated_at default
+    // Tapi jika di migrasi ada $table->timestamps(), hapus baris di bawah ini.
+    // Berdasarkan migrasi yang Anda kirim, Anda pakai $table->timestamps(), jadi SAYA HAPUS public $timestamps = false;
+    
+    public function paymentType()
     {
         return $this->belongsTo(PaymentType::class);
     }
