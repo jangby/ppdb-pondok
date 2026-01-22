@@ -9,11 +9,28 @@ class SettingSeeder extends Seeder
 {
     public function run(): void
     {
-        Setting::create([
+        // Data Default dengan format Key-Value
+        $defaults = [
+            'nama_sekolah' => 'Pondok Pesantren Al-Hidayah',
             'nama_gelombang' => 'Gelombang 1 Tahun 2026',
-            'is_open' => true, // Default BUKA
-            'tanggal_buka' => now(),
-            'tanggal_tutup' => now()->addMonths(1),
-        ]);
+            'status_ppdb' => 'buka', // nilainya 'buka' atau 'tutup'
+            'tgl_buka' => date('Y-m-d'),
+            'tgl_tutup' => date('Y-m-d', strtotime('+1 month')),
+            'whatsapp_admin' => '6281234567890',
+            'pengumuman' => 'Penerimaan Santri Baru Tahun Ajaran 2026/2027 telah dibuka. Silakan lengkapi berkas pendaftaran.',
+            // Default Syarat Pendaftaran (JSON)
+            'syarat_pendaftaran' => json_encode([
+                ['nama' => 'Foto Copy Kartu Keluarga', 'jumlah' => 2],
+                ['nama' => 'Foto Copy Akta Kelahiran', 'jumlah' => 2],
+                ['nama' => 'Pas Foto 3x4 Background Merah', 'jumlah' => 4],
+            ]),
+        ];
+
+        foreach ($defaults as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key],   // Cari berdasarkan key
+                ['value' => $value] // Update valuenya
+            );
+        }
     }
 }
