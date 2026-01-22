@@ -19,7 +19,6 @@ class AdminFinanceController extends Controller
             $pemasukan = $type->bills()->sum('nominal_terbayar');
 
             // Pengeluaran: Dari tabel pivot expense_fund_sources
-            // FIX: Menggunakan kolom 'nominal' sesuai migrasi expense_fund_sources
             $pengeluaran = DB::table('expense_fund_sources')
                              ->where('payment_type_id', $type->id)
                              ->sum('nominal'); 
@@ -47,7 +46,7 @@ class AdminFinanceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'deskripsi' => 'required|string|max:255', // Di form namanya deskripsi
+            'deskripsi' => 'required|string|max:255',
             'tanggal' => 'required|date',
             'nominal' => 'required|numeric|min:1',
             'payment_type_id' => 'required|exists:payment_types,id',
@@ -55,23 +54,21 @@ class AdminFinanceController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Simpan ke tabel 'expenses'
-            // FIX: Kolom DB adalah 'judul_pengeluaran' dan 'total_keluar'
-            $expense = Expense::create([
-                'judul_pengeluaran' => $request->deskripsi, 
-                'tanggal' => $request->tanggal,
-                'total_keluar' => $request->nominal, 
-                'user_id' => Auth::id(),
-                // 'deskripsi' => null, // Opsional biarkan null atau isi jika perlu
-            ]);
+            // PERBAIKAN: Gunakan Manual Assignment agar lebih aman dari isu Mass Assignment
+            // 1. Simpan Data Pengeluaran Utama
+            $expense = new Expense();
+            $expense->judul_pengeluaran = $request->deskripsi;
+            $expense->tanggal = $request->tanggal;
+            $expense->total_keluar = $request->nominal; // Paksa isi kolom total_keluar
+            $expense->user_id = Auth::id();
+            $expense->save();
 
-            // 2. Simpan ke tabel 'expense_fund_sources'
-            // FIX: Kolom DB adalah 'nominal'
-            ExpenseFundSource::create([
-                'expense_id' => $expense->id,
-                'payment_type_id' => $request->payment_type_id,
-                'nominal' => $request->nominal, 
-            ]);
+            // 2. Simpan Detail Sumber Dana
+            $source = new ExpenseFundSource();
+            $source->expense_id = $expense->id;
+            $source->payment_type_id = $request->payment_type_id;
+            $source->nominal = $request->nominal; // Paksa isi kolom nominal
+            $source->save();
 
             DB::commit();
             return back()->with('success', 'Pengeluaran berhasil dicatat.');
@@ -85,7 +82,7 @@ class AdminFinanceController extends Controller
     public function destroy($id)
     {
         $expense = Expense::findOrFail($id);
-        $expense->delete(); // Otomatis cascade delete fund sources sesuai migrasi
+        $expense->delete(); 
         return back()->with('success', 'Pengeluaran dibatalkan.');
     }
 }

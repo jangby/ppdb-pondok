@@ -38,7 +38,7 @@
             <button onclick="window.print()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded transition">
                 Cetak Bukti
             </button>
-            <a href="{{ route('pendaftaran.index') }}" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition">
+            <a href="{{ route('home') }}" class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition">
                 Kembali ke Halaman Depan
             </a>
         </div>

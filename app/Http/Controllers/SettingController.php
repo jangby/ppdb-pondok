@@ -9,38 +9,53 @@ class SettingController extends Controller
 {
     public function index()
     {
-        // Ambil data setting pertama, jika tidak ada buat objek baru (kosong)
-        $setting = Setting::first() ?? new Setting();
+        // Ambil semua setting dan jadikan key-value array agar mudah dipanggil
+        // Contoh: $settings['nama_sekolah']
+        $settings = Setting::all()->pluck('value', 'key')->toArray();
         
-        return view('admin.settings.index', compact('setting'));
+        // Ambil data persyaratan dan decode dari JSON ke Array
+        $syaratJson = $settings['syarat_pendaftaran'] ?? '[]';
+        $requirements = json_decode($syaratJson, true);
+        if (!is_array($requirements)) {
+            $requirements = [];
+        }
+
+        return view('admin.settings.index', compact('settings', 'requirements'));
     }
 
     public function update(Request $request)
     {
-        $request->validate([
-            'nama_gelombang' => 'required|string',
-            'tanggal_buka'   => 'nullable|date',
-            'tanggal_tutup'  => 'nullable|date',
-        ]);
-
-        // Cek apakah data sudah ada
-        $setting = Setting::first();
-
-        $data = [
-            'nama_gelombang' => $request->nama_gelombang,
-            'tanggal_buka'   => $request->tanggal_buka,
-            'tanggal_tutup'  => $request->tanggal_tutup,
-            'pengumuman'     => $request->pengumuman,
-            // Checkbox HTML tidak mengirim value jika tidak dicentang, jadi kita pakai trik ini:
-            'is_open'        => $request->has('is_open') ? 1 : 0,
-        ];
-
-        if ($setting) {
-            $setting->update($data);
-        } else {
-            Setting::create($data);
+        // 1. Simpan Pengaturan Umum (Nama, Tanggal, dll)
+        // Kita loop semua input kecuali yang khusus persyaratan
+        $generalSettings = $request->except(['_token', '_method', 'syarat_nama', 'syarat_jumlah']);
+        
+        foreach ($generalSettings as $key => $value) {
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
         }
 
-        return back()->with('success', 'Pengaturan PPDB berhasil disimpan.');
+        // 2. Simpan Daftar Persyaratan (Convert Array to JSON)
+        // Kita gabungkan input array nama dan jumlah menjadi satu format JSON
+        $names = $request->input('syarat_nama', []);
+        $qtys = $request->input('syarat_jumlah', []);
+        
+        $requirementData = [];
+        foreach ($names as $index => $name) {
+            if (!empty($name)) {
+                $requirementData[] = [
+                    'nama' => $name,
+                    'jumlah' => $qtys[$index] ?? 1
+                ];
+            }
+        }
+
+        Setting::updateOrCreate(
+            ['key' => 'syarat_pendaftaran'],
+            ['value' => json_encode($requirementData)]
+        );
+
+        return back()->with('success', 'Pengaturan PPDB dan Persyaratan berhasil diperbarui.');
     }
 }

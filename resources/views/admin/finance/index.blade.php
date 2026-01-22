@@ -101,19 +101,20 @@
                                     {{ \Carbon\Carbon::parse($expense->tanggal)->format('d M Y') }}
                                 </td>
                                 <td class="px-6 py-4 font-medium text-gray-900">
-                                    {{ $expense->deskripsi }}
+                                    {{ $expense->judul_pengeluaran }}
                                     <div class="text-xs text-gray-400 font-normal mt-0.5">Oleh: {{ $expense->user->name ?? 'Admin' }}</div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    {{-- Loop sources (meski saat ini sistemnya 1 source, disiapkan untuk future proof) --}}
+                                    {{-- Loop sources --}}
                                     @foreach($expense->fundSources as $source)
                                         <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
                                             {{ $source->paymentType->nama_pembayaran ?? 'Umum' }}
                                         </span>
                                     @endforeach
                                 </td>
+                                {{-- PERBAIKAN DI SINI: Menggunakan total_keluar, bukan jumlah --}}
                                 <td class="px-6 py-4 text-right font-mono text-red-600 font-bold">
-                                    Rp {{ number_format($expense->jumlah, 0, ',', '.') }}
+                                    Rp {{ number_format($expense->total_keluar, 0, ',', '.') }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <form action="{{ route('admin.finance.destroy', $expense->id) }}" method="POST" onsubmit="return confirm('Batalkan pengeluaran ini? Saldo akan dikembalikan.');">
@@ -184,7 +185,7 @@
                                     </div>
                                 </div>
 
-                                {{-- Sumber Dana (INTI PERMINTAAN ANDA) --}}
+                                {{-- Sumber Dana --}}
                                 <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
                                     <label class="block text-sm font-bold text-gray-700 mb-2">Ambil Dana Dari Item:</label>
                                     <select name="payment_type_id" required class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">

@@ -2,41 +2,54 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Setting extends Model
 {
-    // Izinkan kolom-kolom ini diisi
-    protected $fillable = [
-        'nama_gelombang',
-        'tanggal_buka',
-        'tanggal_tutup',
-        'is_open',
-        'pengumuman',
-    ];
+    use HasFactory;
 
-    // Casting tipe data
-    protected $casts = [
-        'is_open' => 'boolean',
-        'tanggal_buka' => 'date',
-        'tanggal_tutup' => 'date',
-    ];
+    // Izinkan semua kolom diisi (id, key, value)
+    protected $guarded = ['id'];
 
-    // Fungsi Helper untuk Cek Status (PENTING)
+    /**
+     * Helper untuk mengambil value berdasarkan key
+     */
+    public static function getValue($key, $default = null)
+    {
+        // Cache sederhana bisa ditambahkan di sini jika perlu
+        $setting = self::where('key', $key)->first();
+        return $setting ? $setting->value : $default;
+    }
+
+    /**
+     * Cek Status Pendaftaran (Disesuaikan dengan Format Key-Value)
+     */
     public static function isOpen()
     {
-        $setting = self::first();
+        // 1. Ambil Data dari Key-Value
+        $status = self::getValue('status_ppdb', 'tutup'); // Default tutup
+        $tglBuka = self::getValue('tgl_buka');
+        $tglTutup = self::getValue('tgl_tutup');
 
-        // 1. Jika data belum ada atau diset manual CLOSED
-        if (!$setting || !$setting->is_open) {
+        // 2. Cek Saklar Manual (Buka/Tutup)
+        if ($status !== 'buka') {
             return false;
         }
 
-        // 2. Cek Tanggal Otomatis (Jika diisi)
-        $today = now()->startOfDay();
-        
-        if ($setting->tanggal_buka && $today->lt($setting->tanggal_buka)) return false; // Belum buka
-        if ($setting->tanggal_tutup && $today->gt($setting->tanggal_tutup)) return false; // Sudah lewat
+        // 3. Cek Rentang Tanggal (Jika diisi)
+        $today = Carbon::now()->startOfDay();
+
+        if ($tglBuka) {
+            $start = Carbon::parse($tglBuka)->startOfDay();
+            if ($today->lt($start)) return false; // Belum buka (Hari ini < Tanggal Buka)
+        }
+
+        if ($tglTutup) {
+            $end = Carbon::parse($tglTutup)->endOfDay();
+            if ($today->gt($end)) return false; // Sudah lewat (Hari ini > Tanggal Tutup)
+        }
 
         return true;
     }

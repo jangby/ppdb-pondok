@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
 
     // Route CRUD Admin Santri
     Route::get('/admin/santri', [AdminCandidateController::class, 'index'])->name('admin.candidates.index');
+    Route::get('/admin/santri/export', [AdminCandidateController::class, 'export'])->name('admin.candidates.export');
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
     Route::post('/admin/santri/store', [AdminCandidateController::class, 'store'])->name('admin.candidates.store');
     Route::get('/admin/santri/{id}', [AdminCandidateController::class, 'show'])->name('admin.candidates.show');

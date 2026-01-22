@@ -6,41 +6,52 @@ use App\Models\Candidate;
 use Illuminate\Http\Request;
 use App\Models\CandidateAddress;
 use App\Models\CandidateParent;
-use App\Models\CandidateBill;
 use App\Models\PaymentType;
+use App\Models\CandidateBill;
 use Illuminate\Support\Facades\DB;
+use App\Exports\CandidatesExport; // Import Export Class
+use Maatwebsite\Excel\Facades\Excel; // Import Facade Excel
 
 class AdminCandidateController extends Controller
 {
     public function index(Request $request)
-{
-    // Mulai Query
-    $query = Candidate::query();
+    {
+        // 1. FILTER & SEARCH
+        $query = Candidate::query();
 
-    // 1. Logika Search (Nama atau No Daftar)
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->where(function($q) use ($search) {
-            $q->where('nama_lengkap', 'like', '%' . $search . '%')
-              ->orWhere('no_daftar', 'like', '%' . $search . '%');
-        });
+        if ($request->has('search') && $request->search != '') {
+            $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
+                  ->orWhere('no_daftar', 'like', '%' . $request->search . '%');
+        }
+
+        if ($request->has('jenjang') && $request->jenjang != 'Semua') {
+            $query->where('jenjang', $request->jenjang);
+        }
+
+        if ($request->has('status') && $request->status != 'Semua') {
+            $query->where('status', $request->status);
+        }
+
+        // Ambil Data Pagination
+        $candidates = $query->latest()->paginate(10);
+
+        // 2. DATA KPI (STATISTIK)
+        $kpi = [
+            'total' => Candidate::count(),
+            'laki' => Candidate::where('jenis_kelamin', 'L')->count(),
+            'perempuan' => Candidate::where('jenis_kelamin', 'P')->count(),
+            'baru' => Candidate::where('status', 'Baru')->count(),
+            'diterima' => Candidate::where('status', 'Lulus')->count(),
+        ];
+
+        return view('admin.candidates.index', compact('candidates', 'kpi'));
     }
 
-    // 2. Logika Filter Jenjang
-    if ($request->filled('jenjang')) {
-        $query->where('jenjang', $request->jenjang);
+    // Method Baru untuk Export Excel
+    public function export()
+    {
+        return Excel::download(new CandidatesExport, 'Data-Santri-' . date('Y-m-d') . '.xlsx');
     }
-
-    // 3. Logika Filter Status
-    if ($request->filled('status')) {
-        $query->where('status_seleksi', $request->status);
-    }
-
-    // Ambil data dengan pagination (tambahkan withQueryString agar filter tidak hilang saat ganti halaman)
-    $candidates = $query->latest()->paginate(10)->withQueryString();
-
-    return view('admin.candidates.index', compact('candidates'));
-}
 
     // 1. Tampilkan Form Tambah Santri (Offline)
     public function create()
@@ -182,6 +193,7 @@ class AdminCandidateController extends Controller
             'jenjang' => 'required',
             'nisn' => 'nullable|unique:candidates,nisn,'.$id, 
             'nik' => 'nullable|unique:candidates,nik,'.$id,
+            'asal_sekolah' => 'required|string|max:255',
         ]);
 
         DB::beginTransaction();
@@ -202,6 +214,7 @@ class AdminCandidateController extends Controller
                 'jumlah_saudara' => $request->jumlah_saudara,
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
+                'asal_sekolah' => $request->asal_sekolah,
                 // 'asal_sekolah' => $request->asal_sekolah, // Pastikan ada migrasi untuk ini jika ingin dipakai
             ]);
 

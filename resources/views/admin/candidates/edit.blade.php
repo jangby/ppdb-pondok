@@ -57,6 +57,13 @@
                         </div>
 
                         <div>
+    <x-input-label for="asal_sekolah" :value="__('Asal Sekolah')" />
+    <x-text-input id="asal_sekolah" class="block mt-1 w-full" type="text" name="asal_sekolah" 
+        :value="old('asal_sekolah', $candidate->asal_sekolah)" required />
+    <x-input-error :messages="$errors->get('asal_sekolah')" class="mt-2" />
+</div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">NISN</label>
                             <input type="text" name="nisn" value="{{ old('nisn', $candidate->nisn) }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         </div>

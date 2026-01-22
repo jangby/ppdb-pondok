@@ -6,25 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::create('settings', function (Blueprint $table) {
-        $table->id();
-        $table->string('nama_gelombang')->default('Gelombang 1');
-        $table->date('tanggal_buka')->nullable();
-        $table->date('tanggal_tutup')->nullable();
-        $table->boolean('is_open')->default(true); // Saklar Utama (ON/OFF)
-        $table->text('pengumuman')->nullable();
-        $table->timestamps();
-    });
-}
+    {
+        // Kita drop dulu jika ada, lalu buat baru dengan struktur Key-Value
+        Schema::dropIfExists('settings');
+        
+        Schema::create('settings', function (Blueprint $table) {
+            $table->id();
+            $table->string('key')->unique(); // Contoh: 'nama_sekolah', 'syarat_pendaftaran'
+            $table->text('value')->nullable(); // Isi datanya (bisa teks panjang atau JSON)
+            $table->timestamps();
+        });
+    }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('settings');

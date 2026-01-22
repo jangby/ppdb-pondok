@@ -43,9 +43,9 @@
     <div class="container">
         
         <div class="center">
-            <div class="bold" style="font-size: 12px;">PP. AL-IKHLAS</div>
-            <div>Jl. Raya Pesantren No. 99</div>
-            <div>Tasikmalaya</div>
+            <div class="bold" style="font-size: 12px;">PP. AL-HIKAM</div>
+            <div>Galeuhpakuwan</div>
+            <div>Garut</div>
         </div>
 
         <div class="dashed-line"></div>
