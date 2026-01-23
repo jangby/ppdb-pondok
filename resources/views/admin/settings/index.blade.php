@@ -8,7 +8,7 @@
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight">
                     {{ __('Konfigurasi Sistem PPDB') }}
                 </h2>
-                <p class="text-xs text-gray-500">Kelola identitas sekolah, alur pendaftaran, dan tampilan website.</p>
+                <p class="text-xs text-gray-500">Kelola identitas sekolah, alamat, alur pendaftaran, dan tampilan website.</p>
             </div>
         </div>
     </x-slot>
@@ -35,7 +35,7 @@
 
                 <div class="flex flex-col lg:flex-row gap-8">
                     
-                    {{-- SIDEBAR NAVIGATION (Desktop) / TOP (Mobile) --}}
+                    {{-- SIDEBAR NAVIGATION --}}
                     <div class="lg:w-64 flex-shrink-0">
                         <nav class="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 sticky top-4">
                             
@@ -75,8 +75,6 @@
                         {{-- TAB 1: UMUM --}}
                         <div x-show="activeTab === 'umum'" 
                              x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0 translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
                              class="space-y-6">
                             
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -86,6 +84,13 @@
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Nama Sekolah / Pesantren</label>
                                         <input type="text" name="nama_sekolah" value="{{ $settings['nama_sekolah'] ?? '' }}" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Contoh: Pondok Pesantren Al-Hidayah">
                                     </div>
+                                    
+                                    {{-- [BARU] Input Alamat Sekolah --}}
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Alamat Lengkap Pondok</label>
+                                        <textarea name="alamat_sekolah" rows="3" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Jalan, Desa, Kecamatan, Kabupaten...">{{ $settings['alamat_sekolah'] ?? '' }}</textarea>
+                                    </div>
+
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Nama Gelombang Pendaftaran</label>
                                         <input type="text" name="nama_gelombang" value="{{ $settings['nama_gelombang'] ?? 'Gelombang 1' }}" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3">
@@ -163,11 +168,7 @@
                         </div>
 
                         {{-- TAB 2: JENJANG --}}
-                        <div x-show="activeTab === 'jenjang'" 
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0 translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div x-show="activeTab === 'jenjang'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             
                             <div class="flex justify-between items-center mb-6 border-b pb-4">
                                 <h3 class="font-bold text-gray-800 text-lg">Manajemen Jenjang Pendidikan</h3>
@@ -199,11 +200,7 @@
                         </div>
 
                         {{-- TAB 3: MEDIA --}}
-                        <div x-show="activeTab === 'media'" 
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0 translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             class="space-y-6">
+                        <div x-show="activeTab === 'media'" class="space-y-6">
                              
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Banner & Halaman Depan</h3>
@@ -288,11 +285,7 @@
                         </div>
 
                         {{-- TAB 4: SYARAT --}}
-                        <div x-show="activeTab === 'syarat'" 
-                             x-transition:enter="transition ease-out duration-300"
-                             x-transition:enter-start="opacity-0 translate-y-2"
-                             x-transition:enter-end="opacity-100 translate-y-0"
-                             class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div x-show="activeTab === 'syarat'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             
                             <div class="max-w-3xl">
                                 <h3 class="font-bold text-gray-800 text-lg mb-2">Daftar Dokumen Persyaratan</h3>

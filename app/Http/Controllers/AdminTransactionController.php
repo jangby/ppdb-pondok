@@ -6,6 +6,7 @@ use App\Models\Candidate;
 use App\Models\CandidateBill;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
+use App\Models\Setting; // [PENTING] Tambahkan Model Setting
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -79,18 +80,21 @@ class AdminTransactionController extends Controller
     }
 
     public function print($id)
-{
-    $transaction = Transaction::with(['candidate', 'details.bill.payment_type', 'admin'])
-                    ->findOrFail($id);
+    {
+        $transaction = Transaction::with(['candidate', 'details.bill.payment_type', 'admin'])
+                        ->findOrFail($id);
 
-    // Konfigurasi ukuran kertas 80mm (226.77 point)
-    // Format: [0, 0, width, height]
-    // Height dibuat 600-1000 tergantung perkiraan panjang struk
-    $customPaper = [0, 0, 226.77, 600];
+        // [BARU] Ambil Pengaturan Sekolah untuk Header Struk
+        $settings = Setting::all()->pluck('value', 'key');
 
-    $pdf = Pdf::loadView('admin.receipt.thermal', compact('transaction'))
-                ->setPaper($customPaper);
+        // Konfigurasi ukuran kertas 80mm (Thermal Printer Standard)
+        // Format: [0, 0, width, height]
+        // Width 226.77 pt setara 80mm. Height 1000 agar panjang ke bawah (continuous).
+        $customPaper = [0, 0, 226.77, 1000];
 
-    return $pdf->stream('Struk-' . $transaction->kode_transaksi . '.pdf');
-}
+        $pdf = Pdf::loadView('admin.receipt.thermal', compact('transaction', 'settings'))
+                    ->setPaper($customPaper);
+
+        return $pdf->stream('Struk-' . $transaction->kode_transaksi . '.pdf');
+    }
 }

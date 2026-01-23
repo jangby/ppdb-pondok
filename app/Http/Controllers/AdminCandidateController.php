@@ -16,41 +16,53 @@ use Maatwebsite\Excel\Facades\Excel;
 class AdminCandidateController extends Controller
 {
     public function index(Request $request)
-    {
-        // 1. FILTER & SEARCH
-        $query = Candidate::query();
+{
+    // 1. FILTER & SEARCH
+    $query = Candidate::query();
 
-        if ($request->has('search') && $request->search != '') {
-            $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                  ->orWhere('no_daftar', 'like', '%' . $request->search . '%')
-                  ->orWhere('nisn', 'like', '%' . $request->search . '%');
-        }
-
-        if ($request->has('jenjang') && $request->jenjang != 'Semua') {
-            $query->where('jenjang', $request->jenjang);
-        }
-
-        if ($request->has('status') && $request->status != 'Semua') {
-            $query->where('status_seleksi', $request->status); // Sesuaikan nama kolom di DB (status/status_seleksi)
-        }
-
-        // Ambil Data Pagination
-        $candidates = $query->latest()->paginate(10)->withQueryString();
-
-        // 2. DATA KPI (STATISTIK)
-        $kpi = [
-            'total' => Candidate::count(),
-            'laki' => Candidate::where('jenis_kelamin', 'L')->count(),
-            'perempuan' => Candidate::where('jenis_kelamin', 'P')->count(),
-            'pending' => Candidate::where('status_seleksi', 'Pending')->count(),
-            'diterima' => Candidate::where('status_seleksi', 'Lulus')->count(),
-        ];
-
-        // [BARU] Ambil Daftar Jenjang Dinamis dari Setting
-        $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
-
-        return view('admin.candidates.index', compact('candidates', 'kpi', 'jenjangs'));
+    // Filter Pencarian (Nama/No Daftar/NISN)
+    if ($request->has('search') && $request->search != '') {
+        $query->where(function($q) use ($request) {
+            $q->where('nama_lengkap', 'like', '%' . $request->search . '%')
+              ->orWhere('no_daftar', 'like', '%' . $request->search . '%')
+              ->orWhere('nisn', 'like', '%' . $request->search . '%');
+        });
     }
+
+    // Filter Jenjang
+    if ($request->has('jenjang') && $request->jenjang != 'Semua') {
+        $query->where('jenjang', $request->jenjang);
+    }
+
+    // [PERBAIKAN DISINI] Filter Status Seleksi
+    if ($request->has('status') && $request->status != 'Semua') {
+        // Kita gunakan 'status_seleksi' BUKAN 'status'
+        if ($request->status == 'Lulus') {
+            // Jaga-jaga jika di database ada yang tertulis 'Lulus' atau 'Diterima'
+            $query->whereIn('status_seleksi', ['Lulus', 'Diterima', 'Approved']); 
+        } else {
+            $query->where('status_seleksi', $request->status);
+        }
+    }
+
+    // Ambil Data Pagination
+    $candidates = $query->latest()->paginate(10)->withQueryString();
+
+    // ... (kode KPI dan Jenjang tetap sama) ...
+    
+    // Copy ulang bagian KPI biar aman
+    $kpi = [
+        'total' => Candidate::count(),
+        'laki' => Candidate::where('jenis_kelamin', 'L')->count(),
+        'perempuan' => Candidate::where('jenis_kelamin', 'P')->count(),
+        'pending' => Candidate::where('status_seleksi', 'Pending')->count(),
+        'diterima' => Candidate::whereIn('status_seleksi', ['Lulus', 'Diterima'])->count(),
+    ];
+
+    $jenjangs = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+
+    return view('admin.candidates.index', compact('candidates', 'kpi', 'jenjangs'));
+}
 
     // Method Baru untuk Export Excel
     public function export()

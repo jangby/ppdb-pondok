@@ -4,115 +4,127 @@
     <meta charset="UTF-8">
     <title>Struk Pembayaran</title>
     <style>
-        /* Reset margin agar printer tidak memotong konten */
-        @page { margin: 0px; }
-        body { margin: 0px; padding: 5px; }
-        
-        /* Font Thermal yang Rapi */
-        body, table {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 10px; /* Ukuran kecil agar muat */
+        @page { margin: 0; }
+        body { 
+            margin: 0; 
+            padding: 10px 5px 20px 5px; /* Atas Kanan Bawah Kiri */
+            font-family: 'Courier New', Courier, monospace; /* Font struk standar */
+            font-size: 9pt; 
+            color: #000;
         }
         
         .container { width: 100%; }
-        
-        .center { text-align: center; }
-        .right { text-align: right; }
-        .left { text-align: left; }
-        
-        /* Garis Putus-putus Khas Struk */
-        .dashed-line {
-            border-top: 1px dashed #000;
-            margin: 5px 0;
-            width: 100%;
-        }
-
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
         .bold { font-weight: bold; }
         
-        /* Layout Tabel Rincian */
-        .item-table { width: 100%; }
-        .item-table td { padding: 2px 0; vertical-align: top; }
+        /* Header Sekolah */
+        .school-name { font-size: 11pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2px; }
+        .school-address { font-size: 7pt; margin-bottom: 5px; line-height: 1.2; }
         
-        /* Spacer */
-        .mb-1 { margin-bottom: 5px; }
-        .mb-2 { margin-bottom: 10px; }
+        /* Garis Pemisah */
+        .divider { border-top: 1px dashed #000; margin: 5px 0; width: 100%; }
+        .divider-double { border-top: 2px dashed #000; margin: 5px 0; width: 100%; }
+
+        /* Tabel Info Transaksi */
+        .info-table { width: 100%; margin-bottom: 5px; }
+        .info-table td { padding: 1px 0; vertical-align: top; }
+        .label { width: 35%; }
+        
+        /* Tabel Rincian Item */
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table td { padding: 2px 0; vertical-align: top; }
+        
+        .item-name { font-weight: bold; }
+        .item-sub { font-size: 7pt; color: #333; font-style: italic; }
+        
+        /* Total Section */
+        .total-section { margin-top: 5px; font-size: 11pt; }
+        
+        /* Footer */
+        .footer { font-size: 7pt; margin-top: 10px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         
-        <div class="center">
-            <div class="bold" style="font-size: 12px;">PP. AL-HIKAM</div>
-            <div>Galeuhpakuwan</div>
-            <div>Garut</div>
+        <div class="text-center">
+            <div class="school-name">{{ $settings['nama_sekolah'] ?? 'PONDOK PESANTREN' }}</div>
+            <div class="school-address">{{ $settings['alamat_sekolah'] ?? 'Alamat Belum Diatur' }}</div>
         </div>
 
-        <div class="dashed-line"></div>
+        <div class="divider-double"></div>
 
-        <table style="width: 100%">
+        <table class="info-table">
             <tr>
-                <td>No</td>
-                <td class="right">{{ $transaction->kode_transaksi }}</td>
+                <td class="label">No. TRX</td>
+                <td>: {{ $transaction->kode_transaksi }}</td>
             </tr>
             <tr>
-                <td>Tgl</td>
-                <td class="right">{{ date('d/m/y H:i', strtotime($transaction->created_at)) }}</td>
+                <td class="label">Tanggal</td>
+                <td>: {{ date('d/m/y H:i', strtotime($transaction->created_at)) }}</td>
             </tr>
             <tr>
-                <td>Siswa</td>
-                <td class="right">{{ substr($transaction->candidate->nama_lengkap, 0, 15) }}</td>
+                <td class="label">Santri</td>
+                <td>: {{ substr($transaction->candidate->nama_lengkap, 0, 18) }}</td>
             </tr>
             <tr>
-                <td>Admin</td>
-                <td class="right">{{ $transaction->admin->name ?? 'Kasir' }}</td>
+                <td class="label">Jenjang</td>
+                <td>: {{ $transaction->candidate->jenjang }}</td>
+            </tr>
+            <tr>
+                <td class="label">Kasir</td>
+                <td>: {{ substr($transaction->admin->name ?? 'Admin', 0, 15) }}</td>
             </tr>
         </table>
 
-        <div class="dashed-line"></div>
+        <div class="divider"></div>
 
-        <table class="item-table">
+        <table class="items-table">
             @foreach($transaction->details as $detail)
             <tr>
-                <td colspan="2" class="bold">
+                <td colspan="2" class="item-name">
                     {{ $detail->bill->payment_type->nama_pembayaran }}
                 </td>
             </tr>
             <tr>
-                <td class="left">
-                    @if($detail->bill->sisa_tagihan == 0)
-                        (Lunas)
+                <td class="text-left item-sub">
+                    @if($detail->bill->sisa_tagihan <= 0)
+                        [LUNAS]
                     @else
-                        (Sisa: {{ number_format($detail->bill->sisa_tagihan, 0, ',', '.') }})
+                        Sisa: Rp{{ number_format($detail->bill->sisa_tagihan, 0, ',', '.') }}
                     @endif
                 </td>
-                <td class="right">
-                    {{ number_format($detail->nominal, 0, ',', '.') }}
+                <td class="text-right bold">
+                    Rp {{ number_format($detail->nominal, 0, ',', '.') }}
                 </td>
             </tr>
-            @endforeach
+            <tr><td colspan="2" style="height: 3px;"></td></tr> @endforeach
         </table>
 
-        <div class="dashed-line"></div>
+        <div class="divider"></div>
 
         <table style="width: 100%">
-            <tr style="font-size: 12px;">
-                <td class="bold">TOTAL BAYAR</td>
-                <td class="right bold">Rp {{ number_format($transaction->total_bayar, 0, ',', '.') }}</td>
+            <tr class="total-section">
+                <td class="text-left bold">TOTAL</td>
+                <td class="text-right bold">Rp {{ number_format($transaction->total_bayar, 0, ',', '.') }}</td>
             </tr>
         </table>
 
-        <div class="dashed-line"></div>
+        <div class="divider"></div>
 
-        <div class="center mb-2">
+        <div class="text-center footer">
             <div>Terima Kasih</div>
-            <div>Simpan struk ini sebagai</div>
-            <div>bukti pembayaran yang sah</div>
+            <div>"Semoga Berkah & Bermanfaat"</div>
+            <br>
+            <div>- Simpan struk ini sebagai bukti sah -</div>
         </div>
         
-        <br>
-        <div class="center">.</div> 
-        </div>
+        <div class="text-center">.</div> 
+
+    </div>
 
 </body>
 </html>

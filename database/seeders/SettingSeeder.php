@@ -11,7 +11,8 @@ class SettingSeeder extends Seeder
     {
         // Data Default dengan format Key-Value
         $defaults = [
-            'nama_sekolah' => 'Pondok Pesantren Al-Hidayah',
+            'nama_sekolah' => 'Pondok Pesantren Al-Hikam',
+            'alamat_sekolah' => 'Jl. Raya Pesantren No. 99, Desa Santri, Kec. Barokah, Kab. Sejahtera',
             'nama_gelombang' => 'Gelombang 1 Tahun 2026',
             'status_ppdb' => 'buka',
             'tgl_buka' => date('Y-m-d'),
