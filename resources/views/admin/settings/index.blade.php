@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-bold text-2xl text-gray-800 leading-tight">
-            {{ __('Pengaturan Sistem PPDB') }}
+            {{ __('Pengaturan PPDB & Tampilan') }}
         </h2>
     </x-slot>
 
@@ -15,160 +15,193 @@
                 </div>
             @endif
 
-            <form action="{{ route('admin.settings.update') }}" method="POST">
+            <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {{-- BAGIAN KIRI: PENGATURAN UMUM --}}
-                    <div class="lg:col-span-2 space-y-6">
-                        
-                        {{-- Card 1: Identitas & Status --}}
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Identitas & Status PPDB
-                            </h3>
-                            
-                            <div class="space-y-4">
-                                {{-- Nama Sekolah --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pondok / Sekolah</label>
-                                    <input type="text" name="nama_sekolah" value="{{ $settings['nama_sekolah'] ?? 'Pondok Pesantren Al-Hidayah' }}" 
-                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                </div>
+                {{-- TABS NAVIGATION (Simple) --}}
+                <div class="mb-6 border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button type="button" @click="activeTab = 'umum'" 
+                            :class="activeTab === 'umum' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Pengaturan Umum
+                        </button>
+                        <button type="button" @click="activeTab = 'media'" 
+                            :class="activeTab === 'media' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Tampilan & Media (Banner/Galeri)
+                        </button>
+                        <button type="button" @click="activeTab = 'syarat'" 
+                            :class="activeTab === 'syarat' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                            Persyaratan Dokumen
+                        </button>
+                    </nav>
+                </div>
 
-                                {{-- Status Pendaftaran --}}
-                                <div class="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Status Pendaftaran Saat Ini:</label>
-                                    <div class="flex items-center gap-6">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="status_ppdb" value="buka" class="w-4 h-4 text-green-600 focus:ring-green-500"
-                                                {{ ($settings['status_ppdb'] ?? 'tutup') == 'buka' ? 'checked' : '' }}>
-                                            <span class="text-green-700 font-bold bg-green-100 px-3 py-1 rounded-full text-sm">DIBUKA</span>
-                                        </label>
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="radio" name="status_ppdb" value="tutup" class="w-4 h-4 text-red-600 focus:ring-red-500"
-                                                {{ ($settings['status_ppdb'] ?? 'tutup') == 'tutup' ? 'checked' : '' }}>
-                                            <span class="text-red-700 font-bold bg-red-100 px-3 py-1 rounded-full text-sm">DITUTUP</span>
-                                        </label>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-2">Jika ditutup, calon santri tidak akan bisa mengakses formulir pendaftaran.</p>
-                                </div>
-
-                                {{-- Tanggal --}}
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Buka</label>
-                                        <input type="date" name="tgl_buka" value="{{ $settings['tgl_buka'] ?? '' }}" 
-                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Tutup</label>
-                                        <input type="date" name="tgl_tutup" value="{{ $settings['tgl_tutup'] ?? '' }}" 
-                                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                    </div>
-                                </div>
+                {{-- TAB CONTENT: UMUM --}}
+                <div x-show="activeTab === 'umum'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4">Identitas Sekolah</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nama Sekolah</label>
+                                <input type="text" name="nama_sekolah" value="{{ $settings['nama_sekolah'] ?? '' }}" class="w-full rounded-lg border-gray-300">
                             </div>
-                        </div>
-
-                        {{-- Card 2: Kontak & Informasi --}}
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                Kontak & Informasi
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor WhatsApp Admin</label>
-                                    <input type="text" name="whatsapp_admin" value="{{ $settings['whatsapp_admin'] ?? '' }}" placeholder="Contoh: 628123456789"
-                                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Pengumuman Dashboard</label>
-                                    <textarea name="pengumuman" rows="3" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Informasi yang akan tampil di dashboard calon santri...">{{ $settings['pengumuman'] ?? '' }}</textarea>
-                                </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Nama Gelombang</label>
+                                <input type="text" name="nama_gelombang" value="{{ $settings['nama_gelombang'] ?? 'Gelombang 1' }}" class="w-full rounded-lg border-gray-300">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">WhatsApp Admin (Format: 628...)</label>
+                                <input type="number" name="whatsapp_admin" value="{{ $settings['whatsapp_admin'] ?? '' }}" class="w-full rounded-lg border-gray-300">
                             </div>
                         </div>
                     </div>
 
-                    {{-- BAGIAN KANAN: PERSYARATAN (DINAMIS) --}}
-                    <div class="lg:col-span-1">
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full flex flex-col">
-                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                Persyaratan Dokumen
-                            </h3>
-                            
-                            <div class="bg-blue-50 text-blue-700 text-xs p-3 rounded-lg mb-4">
-                                Tambahkan daftar dokumen yang wajib dibawa/dikumpulkan santri. 
-                            </div>
-
-                            {{-- LIST PERSYARATAN --}}
-                            <div class="flex-1 space-y-3 overflow-y-auto max-h-[500px] pr-1">
-                                <template x-for="(item, index) in requirements" :key="index">
-                                    <div class="flex gap-2 items-start bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                        <div class="flex-1 space-y-2">
-                                            <input type="text" name="syarat_nama[]" x-model="item.nama" 
-                                                   placeholder="Nama Dokumen (Misal: FC KK)" 
-                                                   class="w-full text-sm rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500" required>
-                                            
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-xs text-gray-500">Jumlah:</span>
-                                                <input type="number" name="syarat_jumlah[]" x-model="item.jumlah" min="1" 
-                                                       class="w-20 text-sm rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500" required>
-                                                <span class="text-xs text-gray-500">lembar</span>
-                                            </div>
-                                        </div>
-                                        <button type="button" @click="removeRequirement(index)" class="text-red-400 hover:text-red-600 p-1">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
-                                    </div>
-                                </template>
-                                
-                                <div x-show="requirements.length === 0" class="text-center py-6 text-gray-400 text-sm italic border-2 border-dashed border-gray-200 rounded-lg">
-                                    Belum ada persyaratan.
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4">Status & Jadwal</h3>
+                        <div class="space-y-4">
+                            <div class="p-3 bg-gray-50 rounded-lg border">
+                                <span class="block text-sm font-bold text-gray-700 mb-2">Status Pendaftaran:</span>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="status_ppdb" value="buka" {{ ($settings['status_ppdb'] ?? '') == 'buka' ? 'checked' : '' }}> <span class="text-green-600 font-bold">DIBUKA</span></label>
+                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="status_ppdb" value="tutup" {{ ($settings['status_ppdb'] ?? '') == 'tutup' ? 'checked' : '' }}> <span class="text-red-600 font-bold">DITUTUP</span></label>
                                 </div>
                             </div>
-
-                            <button type="button" @click="addRequirement()" 
-                                    class="mt-4 w-full py-2 border-2 border-dashed border-blue-300 text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                Tambah Item
-                            </button>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><label class="text-xs">Tgl Buka</label><input type="date" name="tgl_buka" value="{{ $settings['tgl_buka'] ?? '' }}" class="w-full rounded-lg border-gray-300"></div>
+                                <div><label class="text-xs">Tgl Tutup</label><input type="date" name="tgl_tutup" value="{{ $settings['tgl_tutup'] ?? '' }}" class="w-full rounded-lg border-gray-300"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Action Bar --}}
+                {{-- TAB CONTENT: MEDIA (BANNER & GALERI) --}}
+                <div x-show="activeTab === 'media'" class="space-y-6">
+                    
+                    {{-- Banner Section --}}
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">1. Banner Halaman Utama</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Upload Foto Banner (Landscape)</label>
+                                <input type="file" name="banner_image" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="text-xs text-gray-400 mt-1">*Otomatis dikompres. Disarankan ukuran 1200x600px.</p>
+                                
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul / Slogan Banner</label>
+                                    <textarea name="pengumuman" rows="2" class="w-full rounded-lg border-gray-300" placeholder="Contoh: Mewujudkan Generasi Rabbani...">{{ $settings['pengumuman'] ?? '' }}</textarea>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat</label>
+                                    <textarea name="deskripsi_banner" rows="2" class="w-full rounded-lg border-gray-300" placeholder="Sub-text di bawah judul...">{{ $settings['deskripsi_banner'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="border rounded-lg p-2 bg-gray-50 flex items-center justify-center min-h-[150px]">
+                                @if(!empty($settings['banner_image']))
+                                    <img src="{{ asset('storage/'.$settings['banner_image']) }}" class="max-h-48 rounded shadow-sm object-cover w-full">
+                                @else
+                                    <span class="text-gray-400 text-sm">Belum ada banner upload</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+    <h4 class="font-bold text-yellow-800 mb-2">Berkas Perjanjian Santri</h4>
+    <div class="flex flex-col gap-2">
+        <label class="text-sm text-gray-600">Upload Template (PDF/Word) untuk didownload calon santri:</label>
+        <input type="file" name="template_perjanjian" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-100 file:text-yellow-700 hover:file:bg-yellow-200">
+        
+        @if(!empty($settings['template_perjanjian']))
+            <a href="{{ asset('storage/'.$settings['template_perjanjian']) }}" target="_blank" class="text-sm text-blue-600 underline mt-2">
+                Lihat Template Saat Ini
+            </a>
+        @endif
+    </div>
+</div>
+
+                    {{-- Fasilitas Section --}}
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">2. Daftar Fasilitas Unggulan</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <template x-for="(fac, index) in facilities" :key="index">
+                                <div class="flex gap-2">
+                                    <input type="text" name="fasilitas_nama[]" x-model="facilities[index]" class="w-full rounded-lg border-gray-300 text-sm" placeholder="Nama Fasilitas">
+                                    <button type="button" @click="facilities.splice(index, 1)" class="text-red-500 hover:text-red-700 font-bold px-2">X</button>
+                                </div>
+                            </template>
+                        </div>
+                        <button type="button" @click="facilities.push('')" class="mt-3 text-sm text-blue-600 font-bold hover:underline">+ Tambah Fasilitas</button>
+                    </div>
+
+                    {{-- Gallery Section --}}
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">3. Galeri Kegiatan (Upload Banyak)</h3>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tambah Foto Baru</label>
+                            <input type="file" name="gallery_files[]" multiple accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                            <p class="text-xs text-gray-400 mt-1">*Bisa pilih banyak foto sekaligus. Otomatis dikompres.</p>
+                        </div>
+
+                        {{-- Preview Existing Gallery --}}
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+                            @foreach($galleries as $index => $img)
+                                <div class="relative group rounded-lg overflow-hidden border border-gray-200">
+                                    <img src="{{ asset('storage/'.$img) }}" class="w-full h-24 object-cover">
+                                    {{-- Delete Button (Overlay) --}}
+                                    <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center transition">
+                                        <button type="submit" form="delete-gallery-{{ $index }}" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Hapus</button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+
+                {{-- TAB CONTENT: SYARAT --}}
+                <div x-show="activeTab === 'syarat'" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 mb-4">Daftar Dokumen Persyaratan</h3>
+                    <div class="space-y-3">
+                        <template x-for="(item, index) in requirements" :key="index">
+                            <div class="flex gap-3">
+                                <input type="text" name="syarat_nama[]" x-model="item.nama" placeholder="Nama Dokumen" class="flex-1 rounded-lg border-gray-300 text-sm">
+                                <input type="number" name="syarat_jumlah[]" x-model="item.jumlah" class="w-20 rounded-lg border-gray-300 text-sm text-center" placeholder="Jml">
+                                <button type="button" @click="requirements.splice(index, 1)" class="text-red-500 hover:text-red-700 font-bold px-2">X</button>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="requirements.push({nama:'', jumlah:1})" class="mt-4 w-full py-2 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-blue-400 hover:text-blue-500 transition">+ Tambah Item</button>
+                </div>
+
+                {{-- ACTION BAR --}}
                 <div class="mt-8 flex justify-end">
-                    <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition flex items-center gap-2 transform hover:scale-105 duration-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        Simpan Semua Pengaturan
+                    <button type="submit" class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:bg-blue-700 transition transform hover:scale-105">
+                        Simpan Semua Perubahan
                     </button>
                 </div>
             </form>
+
+            {{-- Hidden Forms for Delete Gallery --}}
+            @foreach($galleries as $index => $img)
+                <form id="delete-gallery-{{ $index }}" action="{{ route('admin.settings.delete_gallery') }}" method="POST" class="hidden">
+                    @csrf @method('DELETE')
+                    <input type="hidden" name="index" value="{{ $index }}">
+                </form>
+            @endforeach
+
         </div>
     </div>
 
-    {{-- Script Logic AlpineJS --}}
     <script>
         function settingsHandler() {
             return {
-                // Ambil data dari Controller, atau default kosong
+                activeTab: 'media', // Default tab open
                 requirements: @json($requirements),
-
-                addRequirement() {
-                    this.requirements.push({
-                        nama: '',
-                        jumlah: 1
-                    });
-                },
-
-                removeRequirement(index) {
-                    this.requirements.splice(index, 1);
-                }
+                facilities: @json($facilities),
             }
         }
     </script>

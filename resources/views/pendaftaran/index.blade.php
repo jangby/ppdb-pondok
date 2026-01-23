@@ -1,316 +1,355 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="id">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <title>Formulir Pendaftaran</title>
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
+    <title>Formulir Biodata Santri</title>
+    
+    {{-- Fonts --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="font-sans antialiased text-gray-900 bg-gray-50">
-
-    <div class="min-h-screen pb-32 md:pb-12">
+    
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         
-        <div class="bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 pt-8 pb-32 rounded-b-[30px] md:rounded-b-[50px] shadow-2xl relative overflow-hidden">
-            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
+        /* Custom Scrollbar (Valid CSS) */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Hiding Radio Input Default */
+        .radio-input { position: absolute; opacity: 0; width: 0; height: 0; }
+        
+        /* Peer Checked Logic for Cards */
+        .radio-input:checked + .radio-content {
+            border-color: #10b981; /* Emerald-500 */
+            background-color: rgba(16, 185, 129, 0.05);
+            box-shadow: 0 0 0 1px #10b981;
+        }
+        .radio-input:checked + .radio-content .radio-icon {
+            color: #059669; /* Emerald-600 */
+            background-color: #d1fae5; /* Emerald-100 */
+        }
+
+        /* Focus Ring Animation for Inputs */
+        .custom-input:focus ~ .input-icon { color: #059669; transform: translateY(-50%) scale(1.1); }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen py-8 px-4 sm:py-12">
+
+    {{-- Background Decoration --}}
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-emerald-700 to-slate-100"></div>
+    </div>
+
+    <div class="relative z-10 max-w-5xl mx-auto">
+        
+        {{-- Header Card --}}
+        <div class="bg-white rounded-t-3xl shadow-xl overflow-hidden mb-1">
+            <div class="relative bg-slate-900 p-8 sm:p-10 text-center overflow-hidden">
+                {{-- Decorative Pattern --}}
+                <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                
+                {{-- Blobs --}}
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500 rounded-full blur-3xl opacity-20"></div>
+                <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
+
+                <div class="relative z-10">
+                    <span class="inline-block py-1 px-3 rounded-full bg-white/10 border border-white/20 text-emerald-300 text-[10px] font-bold uppercase tracking-widest mb-4">
+                        Langkah 2 dari 2
+                    </span>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">Formulir Pendaftaran</h1>
+                    <p class="text-slate-400 text-sm max-w-lg mx-auto">
+                        Silakan lengkapi biodata calon santri di bawah ini dengan data yang valid dan terbaru.
+                    </p>
+                </div>
+            </div>
             
-            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
-                <a href="{{ url('/') }}" class="inline-flex items-center text-blue-200 hover:text-white mb-6 md:mb-8 transition group bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm hover:bg-white/20">
-                    <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    <span class="font-medium text-sm">Kembali ke Beranda</span>
-                </a>
-                <h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight mb-2 md:mb-4">
-                    Formulir Pendaftaran
-                </h1>
-                <p class="text-base md:text-xl text-blue-100 max-w-2xl mx-auto font-light px-2">
-                    Lengkapi biodata calon santri di bawah ini dengan data yang valid dan benar.
-                </p>
+            {{-- Progress Bar --}}
+            <div class="h-1.5 w-full bg-slate-100">
+                <div class="h-full bg-gradient-to-r from-emerald-400 to-green-600 w-full rounded-r-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 -mt-20 md:-mt-24 relative z-20">
-            
-            @if($errors->any())
-                <div class="bg-white border-l-8 border-red-500 p-4 md:p-6 mb-6 md:mb-8 rounded-r-xl shadow-xl animate-fade-in-down mx-1 md:mx-0">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 bg-red-100 rounded-full p-2">
-                            <svg class="h-5 w-5 md:h-6 md:w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                        </div>
-                        <div class="ml-3 md:ml-4">
-                            <h3 class="text-base md:text-lg font-bold text-gray-900">Mohon Periksa Kembali Inputan Anda</h3>
-                            <ul class="mt-2 list-disc list-inside text-sm text-red-600 space-y-1">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+        <form action="{{ route('pendaftaran.store') }}" method="POST" class="bg-white rounded-b-3xl shadow-xl p-6 sm:p-10 space-y-10">
+            @csrf
+            <input type="hidden" name="token" value="{{ $token ?? '' }}">
+
+            {{-- SECTION A: DATA PRIBADI --}}
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg">A</div>
+                    <h2 class="text-xl font-bold text-slate-800">Data Pribadi Santri</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {{-- Jenjang Selection (Card Style) --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="jenjang" value="SMP" required class="radio-input">
+                                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all duration-200">
+                                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                    </div>
+                                    <div>
+                                        <span class="block font-bold text-slate-800">SMP (Reguler)</span>
+                                        <span class="text-xs text-slate-500">Sekolah Menengah Pertama</span>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="jenjang" value="SMK" class="radio-input">
+                                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all duration-200">
+                                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <span class="block font-bold text-slate-800">SMK (Kejuruan)</span>
+                                        <span class="text-xs text-slate-500">Sekolah Menengah Kejuruan</span>
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
-                </div>
-            @endif
 
-            <form action="{{ route('pendaftaran.store') }}" method="POST" class="space-y-6 md:space-y-8">
-                @csrf
+                    {{-- Nama Lengkap --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Nama Lengkap</label>
+                        <div class="relative">
+                            <input type="text" name="nama_lengkap" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" placeholder="Contoh: Muhammad Rizky" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </div>
+                    </div>
+
+                    {{-- Jenis Kelamin (Card Style) --}}
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Jenis Kelamin</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="jenis_kelamin" value="L" required class="radio-input">
+                                <div class="radio-content flex flex-col items-center justify-center text-center py-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
+                                    <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1 transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </div>
+                                    <span class="font-bold text-slate-700">Laki-laki</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="jenis_kelamin" value="P" class="radio-input">
+                                <div class="radio-content flex flex-col items-center justify-center text-center py-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
+                                    <div class="w-12 h-12 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center mb-1 transition-colors">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </div>
+                                    <span class="font-bold text-slate-700">Perempuan</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Detail Kelahiran --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Tempat Lahir</label>
+                        <div class="relative">
+                            <input type="text" name="tempat_lahir" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" placeholder="Kota Kelahiran" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Tanggal Lahir</label>
+                        <div class="relative">
+                            <input type="date" name="tanggal_lahir" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+
+                    {{-- NISN & NIK --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NISN</label>
+                        <div class="relative">
+                            <input type="number" name="nisn" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" placeholder="Nomor Induk Siswa" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NIK</label>
+                        <div class="relative">
+                            <input type="number" name="nik" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" placeholder="NIK (Sesuai KK)" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                        </div>
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Asal Sekolah</label>
+                        <div class="relative">
+                            <input type="text" name="asal_sekolah" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 transition-all outline-none font-medium" placeholder="Nama Sekolah Asal" required>
+                            <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                    </div>
+
+                    {{-- Data Tambahan --}}
+                    <div class="grid grid-cols-3 gap-4 md:col-span-2">
+                         <div class="col-span-1">
+                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">No. KK</label>
+                             <input type="number" name="no_kk" class="custom-input w-full px-4 text-center py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="No. KK" required>
+                         </div>
+                         <div class="col-span-1">
+                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Anak Ke</label>
+                             <input type="number" name="anak_ke" class="custom-input w-full px-4 text-center py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="1">
+                         </div>
+                         <div class="col-span-1">
+                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Jml Saudara</label>
+                             <input type="number" name="jumlah_saudara" class="custom-input w-full px-4 text-center py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="2">
+                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-dashed border-slate-200">
+
+            {{-- SECTION B: ALAMAT --}}
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">B</div>
+                    <h2 class="text-xl font-bold text-slate-800">Alamat Domisili</h2>
+                </div>
                 
-                <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-blue-50 to-white px-5 py-4 md:px-8 md:py-6 border-b border-gray-100 flex items-center gap-3 md:gap-4">
-                        <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-600 text-white font-bold text-lg md:text-xl shadow-lg shadow-blue-600/20">1</span>
-                        <div>
-                            <h2 class="text-xl md:text-2xl font-bold text-gray-800">Identitas Diri</h2>
-                            <p class="text-xs md:text-sm text-gray-500">Data pribadi calon santri sesuai dokumen.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Alamat Lengkap</label>
+                        <div class="relative">
+                            <textarea name="alamat" rows="2" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none resize-none" placeholder="Nama Jalan, Dusun, atau Patokan Rumah" required></textarea>
+                            <svg class="input-icon absolute left-4 top-6 text-slate-400 w-5 h-5 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
                     </div>
                     
-                    <div class="p-5 md:p-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8">
-                            
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
-                                <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Sesuai Akta Kelahiran / Ijazah" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Daftar Ke Jenjang <span class="text-red-500">*</span></label>
-                                <div class="relative">
-                                    <select name="jenjang" class="w-full appearance-none rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition cursor-pointer text-base" required>
-                                        <option value="">Pilih Jenjang</option>
-                                        <option value="SMP" {{ old('jenjang') == 'SMP' ? 'selected' : '' }}>SMP / MTs</option>
-                                        <option value="SMK" {{ old('jenjang') == 'SMK' ? 'selected' : '' }}>SMK / MA</option>
-                                    </select>
-                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">NISN <span class="text-red-500">*</span></label>
-                                <input type="number" name="nisn" value="{{ old('nisn') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="10 Digit" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">NIK Santri <span class="text-red-500">*</span></label>
-                                <input type="number" name="nik" value="{{ old('nik') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="16 Digit" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">No. KK</label>
-                                <input type="number" name="no_kk" value="{{ old('no_kk') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="16 Digit">
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Tempat Lahir <span class="text-red-500">*</span></label>
-                                <input type="text" name="tempat_lahir" value="{{ old('tempat_lahir') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Tanggal Lahir <span class="text-red-500">*</span></label>
-                                <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition cursor-pointer text-base" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
-                                <select name="jenis_kelamin" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                                    <option value="">- Pilih -</option>
-                                    <option value="L" {{ old('jenis_kelamin') == 'L' ? 'selected' : '' }}>Laki-laki</option>
-                                    <option value="P" {{ old('jenis_kelamin') == 'P' ? 'selected' : '' }}>Perempuan</option>
-                                </select>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Anak Ke-</label>
-                                    <input type="number" name="anak_ke" value="{{ old('anak_ke') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Jml Sdr</label>
-                                    <input type="number" name="jumlah_saudara" value="{{ old('jumlah_saudara') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                            </div>
-
-                             <div class="lg:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Asal Sekolah</label>
-                                <input type="text" name="asal_sekolah" value="{{ old('asal_sekolah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Nama SD/MI/SMP Asal">
-                            </div>
-
-                            <div class="lg:col-span-3">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Riwayat Penyakit (Opsional)</label>
-                                <input type="text" name="riwayat_penyakit" value="{{ old('riwayat_penyakit') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Sebutkan jika ada riwayat penyakit berat / alergi">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-green-50 to-white px-5 py-4 md:px-8 md:py-6 border-b border-gray-100 flex items-center gap-3 md:gap-4">
-                        <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-green-600 text-white font-bold text-lg md:text-xl shadow-lg shadow-green-600/20">2</span>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <h2 class="text-xl md:text-2xl font-bold text-gray-800">Alamat Domisili</h2>
-                            <p class="text-xs md:text-sm text-gray-500">Alamat tempat tinggal saat ini.</p>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">RT</label>
+                            <input type="number" name="rt" class="custom-input w-full px-3 text-center py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="001">
                         </div>
-                    </div>
-                    
-                    <div class="p-5 md:p-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 lg:gap-8">
-                            
-                            <div class="lg:col-span-4">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Jalan / Kampung / Dusun <span class="text-red-500">*</span></label>
-                                <input type="text" name="alamat" value="{{ old('alamat') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Contoh: Jl. Merdeka No. 45" required>
-                            </div>
-                            
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">RT / RW</label>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <input type="text" name="rt" value="{{ old('rt') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-center text-base" placeholder="RT">
-                                    <input type="text" name="rw" value="{{ old('rw') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-center text-base" placeholder="RW">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Desa / Kelurahan <span class="text-red-500">*</span></label>
-                                <input type="text" name="desa" value="{{ old('desa') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Kecamatan <span class="text-red-500">*</span></label>
-                                <input type="text" name="kecamatan" value="{{ old('kecamatan') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Kabupaten / Kota <span class="text-red-500">*</span></label>
-                                <input type="text" name="kabupaten" value="{{ old('kabupaten') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Provinsi <span class="text-red-500">*</span></label>
-                                <input type="text" name="provinsi" value="{{ old('provinsi') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                            </div>
-                            
-                            <div class="lg:col-span-2">
-                                <label class="block text-sm font-bold text-gray-700 mb-2">Kode Pos</label>
-                                <input type="number" name="kode_pos" value="{{ old('kode_pos') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-                    <div class="bg-gradient-to-r from-purple-50 to-white px-5 py-4 md:px-8 md:py-6 border-b border-gray-100 flex items-center gap-3 md:gap-4">
-                        <span class="flex-shrink-0 flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-purple-600 text-white font-bold text-lg md:text-xl shadow-lg shadow-purple-600/20">3</span>
                         <div>
-                            <h2 class="text-xl md:text-2xl font-bold text-gray-800">Data Orang Tua</h2>
-                            <p class="text-xs md:text-sm text-gray-500">Informasi Ayah dan Ibu kandung.</p>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">RW</label>
+                            <input type="number" name="rw" class="custom-input w-full px-3 text-center py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="002">
+                        </div>
+                        <div class="col-span-2">
+                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Kode Pos</label>
+                             <input type="number" name="kode_pos" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="45218">
                         </div>
                     </div>
 
-                    <div class="p-5 md:p-8">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 relative">
-                            
-                            <div class="hidden lg:block absolute left-1/2 top-4 bottom-4 w-px bg-gray-200"></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Desa / Kelurahan</label>
+                            <input type="text" name="desa" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Kecamatan</label>
+                            <input type="text" name="kecamatan" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Kabupaten / Kota</label>
+                            <input type="text" name="kabupaten" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Provinsi</label>
+                            <input type="text" name="provinsi" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                            <div class="space-y-5 md:space-y-6">
-                                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-800 font-bold text-sm tracking-wide mb-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    DATA AYAH
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Nama Ayah <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_ayah" value="{{ old('nama_ayah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">NIK Ayah</label>
-                                        <input type="number" name="nik_ayah" value="{{ old('nik_ayah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Tahun Lahir</label>
-                                        <input type="number" name="thn_lahir_ayah" value="{{ old('thn_lahir_ayah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Contoh: 1980">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Pendidikan</label>
-                                    <select name="pendidikan_ayah" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                        <option value="">- Pilih -</option>
-                                        <option value="SD" {{ old('pendidikan_ayah') == 'SD' ? 'selected' : '' }}>SD</option>
-                                        <option value="SMP" {{ old('pendidikan_ayah') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                        <option value="SMA" {{ old('pendidikan_ayah') == 'SMA' ? 'selected' : '' }}>SMA</option>
-                                        <option value="S1" {{ old('pendidikan_ayah') == 'S1' ? 'selected' : '' }}>S1 (Sarjana)</option>
-                                        <option value="S2" {{ old('pendidikan_ayah') == 'S2' ? 'selected' : '' }}>S2 (Magister)</option>
-                                        <option value="Lainnya" {{ old('pendidikan_ayah') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Pekerjaan</label>
-                                    <input type="text" name="pekerjaan_ayah" value="{{ old('pekerjaan_ayah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Penghasilan (Rp)</label>
-                                    <input type="number" name="penghasilan_ayah" value="{{ old('penghasilan_ayah', 0) }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">No. HP / WA Ayah <span class="text-red-500">*</span></label>
-                                    <input type="number" name="no_hp_ayah" value="{{ old('no_hp_ayah') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                                </div>
+            <hr class="border-dashed border-slate-200">
+
+            {{-- SECTION C: ORANG TUA --}}
+            <section>
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-lg">C</div>
+                    <h2 class="text-xl font-bold text-slate-800">Data Orang Tua</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- AYAH CARD --}}
+                    <div class="bg-blue-50/50 rounded-2xl p-5 border border-blue-100 relative group hover:border-blue-300 transition-colors">
+                        <div class="absolute -top-3 left-4 bg-blue-100 text-blue-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                            Ayah Kandung
+                        </div>
+                        <div class="mt-2 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 ml-1">Nama Ayah</label>
+                                <input type="text" name="nama_ayah" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none" required>
                             </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 ml-1">NIK Ayah</label>
+                                <input type="number" name="nik_ayah" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 ml-1">Pekerjaan</label>
+                                <input type="text" name="pekerjaan_ayah" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 ml-1">No. HP / WA</label>
+                                <input type="number" name="no_hp_ayah" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 ml-1">Penghasilan (Rp)</label>
+                                <input type="text" name="penghasilan_ayah" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none" placeholder="Contoh: 3.000.000">
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="space-y-5 md:space-y-6 pt-8 lg:pt-0 border-t-2 border-dashed lg:border-t-0 border-gray-100 lg:border-gray-200">
-                                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-100 text-pink-800 font-bold text-sm tracking-wide mb-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    DATA IBU
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Nama Ibu <span class="text-red-500">*</span></label>
-                                    <input type="text" name="nama_ibu" value="{{ old('nama_ibu') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" required>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">NIK Ibu</label>
-                                        <input type="number" name="nik_ibu" value="{{ old('nik_ibu') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Tahun Lahir</label>
-                                        <input type="number" name="thn_lahir_ibu" value="{{ old('thn_lahir_ibu') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base" placeholder="Contoh: 1982">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Pendidikan</label>
-                                    <select name="pendidikan_ibu" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                        <option value="">- Pilih -</option>
-                                        <option value="SD" {{ old('pendidikan_ibu') == 'SD' ? 'selected' : '' }}>SD</option>
-                                        <option value="SMP" {{ old('pendidikan_ibu') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                        <option value="SMA" {{ old('pendidikan_ibu') == 'SMA' ? 'selected' : '' }}>SMA</option>
-                                        <option value="S1" {{ old('pendidikan_ibu') == 'S1' ? 'selected' : '' }}>S1 (Sarjana)</option>
-                                        <option value="S2" {{ old('pendidikan_ibu') == 'S2' ? 'selected' : '' }}>S2 (Magister)</option>
-                                        <option value="Lainnya" {{ old('pendidikan_ibu') == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Pekerjaan</label>
-                                    <input type="text" name="pekerjaan_ibu" value="{{ old('pekerjaan_ibu') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Penghasilan (Rp)</label>
-                                    <input type="number" name="penghasilan_ibu" value="{{ old('penghasilan_ibu', 0) }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">No. HP / WA Ibu</label>
-                                    <input type="number" name="no_hp_ibu" value="{{ old('no_hp_ibu') }}" class="w-full rounded-xl border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-3 px-4 bg-gray-50 focus:bg-white transition text-base">
-                                </div>
+                    {{-- IBU CARD --}}
+                    <div class="bg-pink-50/50 rounded-2xl p-5 border border-pink-100 relative group hover:border-pink-300 transition-colors">
+                        <div class="absolute -top-3 left-4 bg-pink-100 text-pink-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                            Ibu Kandung
+                        </div>
+                        <div class="mt-2 space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-2 ml-1">Nama Ibu</label>
+                                <input type="text" name="nama_ibu" class="w-full px-4 py-3 bg-white border border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-2 ml-1">NIK Ibu</label>
+                                <input type="number" name="nik_ibu" class="w-full px-4 py-3 bg-white border border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-2 ml-1">Pekerjaan</label>
+                                <input type="text" name="pekerjaan_ibu" class="w-full px-4 py-3 bg-white border border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-2 ml-1">No. HP / WA</label>
+                                <input type="number" name="no_hp_ibu" class="w-full px-4 py-3 bg-white border border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-pink-800 uppercase tracking-wider mb-2 ml-1">Penghasilan (Rp)</label>
+                                <input type="text" name="penghasilan_ibu" class="w-full px-4 py-3 bg-white border border-pink-200 rounded-xl focus:ring-2 focus:ring-pink-400 outline-none" placeholder="Contoh: 0">
                             </div>
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <div class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 p-4 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] md:static md:bg-transparent md:border-0 md:p-0 md:shadow-none z-50">
-                    <div class="max-w-7xl mx-auto flex justify-center">
-                        <button type="submit" class="w-full md:w-auto md:min-w-[320px] px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 text-lg group">
-                            <span>Kirim Pendaftaran</span>
-                            <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-                        </button>
-                    </div>
-                </div>
+            {{-- SUBMIT --}}
+            <div class="pt-6">
+                <button type="submit" class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-lg font-bold rounded-2xl text-white bg-slate-900 hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-xl transition-all duration-300 hover:scale-[1.01]">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-6 w-6 text-white/50 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </span>
+                    Simpan & Daftar Sekarang
+                </button>
+                <p class="text-center text-xs text-slate-400 mt-4">
+                    Data yang dikirim akan disimpan dengan aman dan digunakan untuk keperluan administrasi PPDB.
+                </p>
+            </div>
 
-            </form>
-        </div>
+        </form>
     </div>
+
 </body>
 </html>

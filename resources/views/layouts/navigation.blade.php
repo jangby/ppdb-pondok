@@ -36,6 +36,24 @@
                 Manajemen
             </p>
 
+            <x-nav-link-sidebar :href="route('admin.verifications.index')" :active="request()->routeIs('admin.verifications.*')" icon="verify">
+                {{ __('Verifikasi Berkas') }}
+                
+                {{-- Badge Notification (Opsional: Menghitung Pending) --}}
+                @php
+                    $pendingCount = \App\Models\Verification::where('status', 'pending')->count();
+                @endphp
+                @if($pendingCount > 0)
+                    <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
+                          :class="sidebarExpanded ? 'block' : 'hidden'">
+                        {{ $pendingCount }}
+                    </span>
+                    {{-- Dot kecil jika sidebar tertutup --}}
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"
+                          :class="sidebarExpanded ? 'hidden' : 'block'"></span>
+                @endif
+            </x-nav-link-sidebar>
+
             <x-nav-link-sidebar :href="route('admin.candidates.index')" :active="request()->routeIs('admin.candidates.*')" icon="users">
                 {{ __('Data Santri') }}
             </x-nav-link-sidebar>

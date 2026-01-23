@@ -1,234 +1,320 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <title>PPDB {{ $settings['nama_sekolah'] ?? 'Pondok Pesantren' }}</title>
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
+    
+    {{-- Fonts --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="font-sans antialiased text-gray-700 bg-gray-50">
 
-    {{-- NAVBAR --}}
-    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        
+        /* Glassmorphism Navbar */
+        .glass-nav { 
+            background: rgba(255, 255, 255, 0.9); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(0,0,0,0.05); 
+        }
+
+        /* Hero Gradient Overlay */
+        .hero-overlay {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.8) 100%);
+        }
+
+        /* Horizontal Scroll Hide */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased text-slate-600 bg-slate-50 selection:bg-emerald-500 selection:text-white">
+
+    {{-- 1. NAVBAR (Sticky & Compact) --}}
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    {{-- Logo Placeholder --}}
-                    <div class="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white font-bold">
+            <div class="flex justify-between items-center h-16">
+                {{-- Logo --}}
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-lg shadow-emerald-500/20">
                         P
                     </div>
-                    <span class="font-bold text-xl tracking-tight text-gray-900">
-                        PPDB Online
-                    </span>
+                    <div class="flex flex-col">
+                        <span class="font-bold text-slate-900 leading-none text-sm">PPDB Online</span>
+                        <span class="text-[10px] text-slate-500 font-medium tracking-wide uppercase mt-0.5">Penerimaan Santri</span>
+                    </div>
                 </div>
+
+                {{-- Login Button --}}
                 <div>
-                    @if (Route::has('login'))
-                        @auth
-                            <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-green-600">Dashboard</a>
-                        @else
-                            <a href="{{ route('login') }}" class="font-semibold text-gray-600 hover:text-green-600 mr-4">Masuk</a>
-                        @endauth
-                    @endif
+                    @auth
+                        <a href="{{ url('/dashboard') }}" class="text-[10px] font-bold text-white bg-slate-900 px-4 py-2 rounded-full shadow-md">
+                            Dashboard
+                        </a>
+                    @else
+                        <a href="{{ route('login') }}" class="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-4 py-2 rounded-full hover:bg-white transition">
+                            Masuk Admin
+                        </a>
+                    @endauth
                 </div>
             </div>
         </div>
     </nav>
 
-    {{-- HERO SECTION --}}
-    <div class="relative bg-white overflow-hidden">
-        <div class="absolute inset-0">
-            {{-- Pattern Background --}}
-            <svg class="absolute right-0 top-0 h-full w-1/2 translate-x-1/2 transform text-gray-50 lg:w-full" fill="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <polygon points="50,0 100,0 50,100 0,100" />
-            </svg>
-        </div>
+    {{-- 2. HERO SECTION (Immersive & Rapi) --}}
+    @php
+        $bannerUrl = !empty($settings['banner_image']) ? asset('storage/'.$settings['banner_image']) : null;
+    @endphp
+    <div class="relative min-h-[75vh] flex items-center justify-center overflow-hidden pt-16">
         
-        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-32">
-            <div class="text-center">
-                {{-- STATUS BADGE --}}
-                <div class="flex justify-center mb-6">
-                    @if(($settings['status_ppdb'] ?? 'tutup') == 'buka')
-                        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-green-100 text-green-800 animate-pulse border border-green-200">
-                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                            Pendaftaran Sedang Dibuka
-                        </span>
-                    @else
-                        <span class="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-semibold bg-red-100 text-red-800 border border-red-200">
-                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-                            Pendaftaran Ditutup
-                        </span>
-                    @endif
+        {{-- Background Image --}}
+        <div class="absolute inset-0 z-0">
+            @if($bannerUrl)
+                <img src="{{ $bannerUrl }}" class="w-full h-full object-cover object-center" alt="Banner Sekolah">
+            @else
+                <div class="w-full h-full bg-slate-900 relative">
+                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                </div>
+            @endif
+            <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+
+        {{-- Content --}}
+        <div class="relative z-10 max-w-7xl mx-auto px-5 text-center mt-4">
+            
+            {{-- Status Badge --}}
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 mb-6 shadow-xl">
+                @if(($settings['status_ppdb'] ?? 'tutup') == 'buka')
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="text-[10px] font-bold text-emerald-200 tracking-wider uppercase">Pendaftaran Dibuka</span>
+                @else
+                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                    <span class="text-[10px] font-bold text-red-200 tracking-wider uppercase">Ditutup</span>
+                @endif
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight tracking-tight mb-3 drop-shadow-lg">
+                {{ $settings['pengumuman'] ?? 'Penerimaan Santri Baru' }}
+            </h1>
+            
+            <p class="text-slate-300 text-xs sm:text-base max-w-lg mx-auto mb-8 leading-relaxed font-light opacity-90 px-2">
+                {{ $settings['deskripsi_banner'] ?? $settings['nama_sekolah'] ?? 'Mewujudkan generasi Rabbani yang unggul dalam IMTAQ dan IPTEK.' }}
+            </p>
+
+            {{-- Action Buttons --}}
+            <div class="flex flex-col gap-3 w-full max-w-xs mx-auto">
+                @if(($settings['status_ppdb'] ?? 'tutup') == 'buka')
+                    <a href="{{ route('pendaftaran.create') }}" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/20 transition active:scale-95 flex items-center justify-center gap-2">
+                        <span>Daftar Sekarang</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </a>
+                @else
+                    <button disabled class="w-full py-3.5 bg-slate-800 text-slate-500 text-sm font-bold rounded-xl cursor-not-allowed border border-slate-700">
+                        Belum Dibuka
+                    </button>
+                @endif
+                
+                <a href="#alur" class="w-full py-3.5 bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-bold rounded-xl hover:bg-white/20 transition active:scale-95">
+                    Lihat Alur & Biaya
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- 3. QUICK STATS (Floating Card) --}}
+    <div class="relative z-20 px-4 -mt-8">
+        <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 p-4 max-w-4xl mx-auto flex justify-between items-center text-center divide-x divide-slate-100">
+            <div class="w-1/3 px-1">
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Gelombang</p>
+                <p class="text-slate-900 font-bold text-xs sm:text-sm truncate">{{ $settings['nama_gelombang'] ?? 'Satu' }}</p>
+            </div>
+            <div class="w-1/3 px-1">
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Buka</p>
+                <p class="text-emerald-600 font-bold text-xs sm:text-sm">{{ $settings['tgl_buka'] ? \Carbon\Carbon::parse($settings['tgl_buka'])->format('d M') : '-' }}</p>
+            </div>
+            <div class="w-1/3 px-1">
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tutup</p>
+                <p class="text-red-500 font-bold text-xs sm:text-sm">{{ $settings['tgl_tutup'] ? \Carbon\Carbon::parse($settings['tgl_tutup'])->format('d M') : '-' }}</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- 4. ALUR PENDAFTARAN (Timeline Style - Lebih Rapi di Mobile) --}}
+    <div id="alur" class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-5">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="h-6 w-1 bg-emerald-500 rounded-full"></div>
+                <h2 class="text-lg font-bold text-slate-900">Alur Pendaftaran</h2>
+            </div>
+
+            <div class="space-y-4">
+                {{-- Step 1 --}}
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">1</div>
+                        <div class="h-full w-0.5 bg-slate-100 my-1"></div>
+                    </div>
+                    <div class="pb-6">
+                        <h3 class="text-sm font-bold text-slate-800">Ambil & Isi Berkas</h3>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Download template surat perjanjian, cetak, isi lengkap, dan tanda tangani.</p>
+                    </div>
                 </div>
 
-                <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
-                    <span class="block xl:inline">Selamat Datang di PPDB</span>
-                    <span class="block text-green-600 xl:inline">{{ $settings['nama_sekolah'] ?? 'Pondok Pesantren' }}</span>
-                </h1>
-                <p class="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-                    {{ $settings['pengumuman'] ?? 'Mewujudkan generasi santri yang berakhlak mulia, cerdas, dan mandiri berlandaskan Ahlussunnah wal Jamaah.' }}
-                </p>
-                
-                <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center gap-4">
+                {{-- Step 2 --}}
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-sm">2</div>
+                        <div class="h-full w-0.5 bg-slate-100 my-1"></div>
+                    </div>
+                    <div class="pb-6">
+                        <h3 class="text-sm font-bold text-slate-800">Upload Verifikasi</h3>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Foto berkas tersebut lalu upload di menu pendaftaran beserta No WA aktif.</p>
+                    </div>
+                </div>
+
+                {{-- Step 3 --}}
+                <div class="flex gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">3</div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Terima Link Formulir</h3>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">Jika disetujui, Admin akan mengirim link formulir biodata via WhatsApp.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- 5. FASILITAS (Horizontal Scroll - App Like Feel) --}}
+    @php $facilities = json_decode($settings['fasilitas_sekolah'] ?? '[]', true); @endphp
+    @if(count($facilities) > 0)
+    <div class="py-10 bg-slate-50 border-y border-slate-200 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-5">
+            <h2 class="text-lg font-bold text-slate-900 mb-4">Fasilitas</h2>
+            
+            {{-- Scroll Container --}}
+            <div class="flex overflow-x-auto gap-3 pb-4 hide-scroll">
+                @foreach($facilities as $fac)
+                    <div class="flex-shrink-0 px-4 py-2 bg-white border border-slate-200 rounded-xl shadow-sm flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span class="text-xs font-semibold text-slate-700 whitespace-nowrap">{{ $fac }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- 6. GALLERY (Compact Grid) --}}
+    @php $galleries = json_decode($settings['galeri_sekolah'] ?? '[]', true); @endphp
+    @if(count($galleries) > 0)
+    <div class="py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-5">
+            <div class="flex justify-between items-end mb-5">
+                <h2 class="text-lg font-bold text-slate-900">Galeri</h2>
+                <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kegiatan</span>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                @foreach($galleries as $img)
+                    <div class="aspect-square rounded-lg overflow-hidden bg-slate-100">
+                        <img src="{{ asset('storage/'.$img) }}" loading="lazy" class="h-full w-full object-cover">
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- 7. BIAYA (Clean Cards) --}}
+    <div id="biaya" class="py-12 bg-slate-50">
+        <div class="max-w-7xl mx-auto px-5">
+            <h2 class="text-lg font-bold text-slate-900 mb-2">Biaya Pendidikan</h2>
+            <p class="text-xs text-slate-500 mb-6">Estimasi biaya masuk awal.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @foreach($rincianBiaya as $jenjang => $data)
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jenjang</span>
+                            <h3 class="text-base font-bold text-slate-800">{{ $jenjang }}</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total</span>
+                            <p class="text-lg font-black text-emerald-600">Rp {{ number_format($data['total'], 0, ',', '.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 border-t border-slate-100 pt-3 mb-4">
+                        @foreach($data['items'] as $item)
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">{{ $item->nama_pembayaran }}</span>
+                            <span class="font-bold text-slate-700">{{ number_format($item->nominal, 0, ',', '.') }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+
                     @if(($settings['status_ppdb'] ?? 'tutup') == 'buka')
-                        <a href="{{ route('pendaftaran.create') }}" class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 shadow-lg hover:shadow-green-500/30 transition transform hover:-translate-y-1">
-                            Daftar Sekarang
+                        <a href="{{ route('pendaftaran.create') }}" class="block w-full py-2.5 bg-slate-900 text-white text-xs font-bold text-center rounded-lg hover:bg-emerald-600 transition">
+                            Daftar {{ $jenjang }}
                         </a>
                     @else
-                        <button disabled class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-xl text-gray-400 bg-gray-100 cursor-not-allowed md:py-4 md:text-lg md:px-10">
-                            Pendaftaran Belum Dibuka
+                         <button disabled class="block w-full py-2.5 bg-slate-100 text-slate-400 text-xs font-bold text-center rounded-lg cursor-not-allowed">
+                            Ditutup
                         </button>
                     @endif
-                    <a href="#biaya" class="mt-3 w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-xl text-green-700 bg-green-100 hover:bg-green-200 md:py-4 md:text-lg md:px-10 sm:mt-0">
-                        Lihat Biaya
-                    </a>
                 </div>
-                
-                <p class="mt-4 text-sm text-gray-400">
-                    Gelombang: {{ $settings['nama_gelombang'] ?? '-' }} • 
-                    Buka: {{ $settings['tgl_buka'] ?? '-' }} s/d {{ $settings['tgl_tutup'] ?? '-' }}
-                </p>
+                @endforeach
             </div>
         </div>
     </div>
 
-    {{-- PERSYARATAN SECTION --}}
-    <div class="py-16 bg-white border-y border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-base font-semibold text-green-600 tracking-wide uppercase">Persyaratan</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Dokumen yang Diperlukan
-                </p>
-                <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
-                    Persiapkan dokumen fisik berikut untuk diserahkan saat validasi data di sekretariat.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @forelse($syarat as $item)
-                <div class="flex items-start p-4 rounded-xl border border-gray-100 hover:shadow-lg transition bg-gray-50">
-                    <div class="flex-shrink-0">
-                        <div class="flex items-center justify-center h-10 w-10 rounded-lg bg-green-100 text-green-600">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-900">{{ $item['nama'] }}</h3>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Sebanyak <span class="font-bold text-gray-700">{{ $item['jumlah'] }} rangkap</span>
-                        </p>
-                    </div>
-                </div>
-                @empty
-                <div class="col-span-3 text-center text-gray-400 italic">
-                    Belum ada persyaratan yang diinput oleh panitia.
-                </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    {{-- BIAYA SECTION --}}
-    <div id="biaya" class="py-16 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-12">
-                <h2 class="text-base font-semibold text-green-600 tracking-wide uppercase">Rincian Biaya</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Investasi Pendidikan
-                </p>
-                <p class="mt-4 max-w-2xl text-xl text-gray-500 mx-auto">
-                    Rincian biaya pendaftaran ulang berdasarkan jenjang pendidikan.
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                @forelse($rincianBiaya as $jenjang => $data)
-                <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-300 border border-gray-200 overflow-hidden flex flex-col">
-                    <div class="p-6 bg-gray-900 text-white text-center">
-                        <h3 class="text-xl font-bold uppercase tracking-wider">{{ $jenjang }}</h3>
-                        <div class="mt-4 flex justify-center items-baseline text-4xl font-extrabold">
-                            <span class="text-xl mr-1">Rp</span>
-                            {{ number_format($data['total'], 0, ',', '.') }}
-                        </div>
-                        <p class="mt-1 text-sm text-gray-400">Total Biaya Awal Masuk</p>
-                    </div>
-                    
-                    <div class="flex-1 p-6 bg-white">
-                        <ul class="space-y-4">
-                            @foreach($data['items'] as $item)
-                            <li class="flex items-start justify-between">
-                                <div class="flex items-center">
-                                    <svg class="flex-shrink-0 h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    <span class="ml-3 text-sm text-gray-700">{{ $item->nama_pembayaran }}</span>
-                                </div>
-                                <span class="text-sm font-semibold text-gray-900">
-                                    {{ number_format($item->nominal, 0, ',', '.') }}
-                                </span>
-                            </li>
-                            @endforeach
-                        </ul>
-                    </div>
-
-                    <div class="p-6 bg-gray-50 border-t border-gray-100">
-                        @if(($settings['status_ppdb'] ?? 'tutup') == 'buka')
-                            <a href="{{ route('pendaftaran.create') }}" class="block w-full bg-green-600 border border-transparent rounded-lg py-3 px-4 text-center text-sm font-bold text-white hover:bg-green-700 transition">
-                                Daftar Jenjang {{ $jenjang }}
-                            </a>
-                        @else
-                             <button disabled class="block w-full bg-gray-200 border border-transparent rounded-lg py-3 px-4 text-center text-sm font-bold text-gray-400 cursor-not-allowed">
-                                Pendaftaran Ditutup
-                            </button>
-                        @endif
-                    </div>
-                </div>
-                @empty
-                <div class="col-span-3 text-center py-12">
-                    <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
-                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <p class="text-gray-500">Belum ada rincian biaya yang diatur oleh admin.</p>
-                </div>
-                @endforelse
+    {{-- 8. PERSYARATAN (Simple List) --}}
+    <div class="py-10 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-5">
+            <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-100">
+                <h3 class="text-sm font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Persyaratan Fisik
+                </h3>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @forelse($syarat as $item)
+                        <li class="flex items-center justify-between text-xs text-emerald-800 bg-white px-3 py-2 rounded-lg border border-emerald-100/50">
+                            <span>{{ $item['nama'] }}</span>
+                            <span class="font-bold bg-emerald-100 px-1.5 py-0.5 rounded text-[10px]">{{ $item['jumlah'] }}x</span>
+                        </li>
+                    @empty
+                        <li class="text-xs text-emerald-600/50 italic">Belum ada data.</li>
+                    @endforelse
+                </ul>
             </div>
         </div>
     </div>
 
     {{-- FOOTER --}}
-    <footer class="bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div>
-                    <h3 class="text-xl font-bold mb-4">{{ $settings['nama_sekolah'] ?? 'PPDB Online' }}</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">
-                        Sistem Penerimaan Peserta Didik Baru Online. Memudahkan proses pendaftaran, seleksi, dan daftar ulang calon santri.
-                    </p>
-                </div>
-                <div>
-                    <h4 class="text-lg font-bold mb-4">Kontak Panitia</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                            WhatsApp: {{ $settings['whatsapp_admin'] ?? '-' }}
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            Sekretariat Pondok
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-bold mb-4">Menu</h4>
-                    <ul class="space-y-2 text-gray-400 text-sm">
-                        <li><a href="{{ route('login') }}" class="hover:text-white">Login Admin</a></li>
-                        <li><a href="{{ route('pendaftaran.create') }}" class="hover:text-white">Daftar Sekarang</a></li>
-                    </ul>
-                </div>
+    <footer class="bg-slate-900 text-white py-10">
+        <div class="max-w-7xl mx-auto px-5 text-center">
+            <h2 class="text-base font-bold">{{ $settings['nama_sekolah'] ?? 'PPDB Online' }}</h2>
+            <p class="text-[10px] text-slate-400 mt-1">Platform Pendaftaran Digital.</p>
+            
+            <div class="mt-6">
+                <a href="https://wa.me/{{ $settings['whatsapp_admin'] ?? '' }}" target="_blank" class="inline-flex items-center gap-2 px-5 py-2 bg-emerald-600 rounded-full text-xs font-bold hover:bg-emerald-500 transition">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    WhatsApp Admin
+                </a>
             </div>
-            <div class="mt-8 border-t border-gray-800 pt-8 text-center text-sm text-gray-500">
-                &copy; {{ date('Y') }} {{ $settings['nama_sekolah'] ?? 'PPDB' }}. All rights reserved.
+            <div class="mt-8 text-[10px] text-slate-500">
+                &copy; {{ date('Y') }} All Rights Reserved.
             </div>
         </div>
     </footer>
