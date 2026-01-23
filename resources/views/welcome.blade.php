@@ -83,9 +83,15 @@
             <div class="flex justify-between items-center h-14 md:h-16">
                 {{-- Logo --}}
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md shadow-emerald-200">
-                        {{ substr($settings['nama_sekolah'] ?? 'P', 0, 1) }}
-                    </div>
+                    {{-- [DINAMIS] Tampilkan Logo jika ada, jika tidak pakai inisial --}}
+                    @if(!empty($settings['logo_sekolah']))
+                        <img src="{{ asset('storage/'.$settings['logo_sekolah']) }}" class="w-8 h-8 md:w-10 md:h-10 object-contain">
+                    @else
+                        <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md shadow-emerald-200">
+                            {{ substr($settings['nama_sekolah'] ?? 'P', 0, 1) }}
+                        </div>
+                    @endif
+                    
                     <div class="flex flex-col">
                         <span class="font-bold text-slate-800 text-xs md:text-sm tracking-tight leading-none">PPDB Online</span>
                         <span class="text-[9px] md:text-[10px] text-emerald-600 font-medium uppercase tracking-wide mt-0.5">
@@ -317,8 +323,12 @@
     {{-- FOOTER (Clean & Simple) --}}
     <footer class="bg-white py-8 border-t border-slate-100 text-center">
         <div class="max-w-md mx-auto px-4">
-            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
-                {{ substr($settings['nama_sekolah'] ?? 'P', 0, 1) }}
+            <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-4 overflow-hidden p-1">
+                @if(!empty($settings['logo_sekolah']))
+                    <img src="{{ asset('storage/'.$settings['logo_sekolah']) }}" class="w-full h-full object-contain">
+                @else
+                    {{ substr($settings['nama_sekolah'] ?? 'P', 0, 1) }}
+                @endif
             </div>
             <h3 class="text-sm font-bold text-slate-900 mb-1">{{ $settings['nama_sekolah'] ?? 'PPDB Online' }}</h3>
             <p class="text-[10px] text-slate-400 mb-6 leading-relaxed">{{ $settings['alamat_sekolah'] ?? 'Alamat belum diatur.' }}</p>

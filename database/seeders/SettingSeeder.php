@@ -13,6 +13,7 @@ class SettingSeeder extends Seeder
         $defaults = [
             'nama_sekolah' => 'Pondok Pesantren Al-Hikam',
             'alamat_sekolah' => 'Jl. Raya Pesantren No. 99, Desa Santri, Kec. Barokah, Kab. Sejahtera',
+            'logo_sekolah' => null,
             'nama_gelombang' => 'Gelombang 1 Tahun 2026',
             'status_ppdb' => 'buka',
             'tgl_buka' => date('Y-m-d'),

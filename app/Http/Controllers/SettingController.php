@@ -10,18 +10,13 @@ class SettingController extends Controller
 {
     public function index()
     {
-        // Ambil semua setting sebagai array [key => value]
         $settings = Setting::all()->pluck('value', 'key')->toArray();
         
-        // Decode JSON Data agar bisa dibaca View
         $requirements = json_decode($settings['syarat_pendaftaran'] ?? '[]', true) ?? [];
         $facilities = json_decode($settings['fasilitas_sekolah'] ?? '[]', true) ?? [];
         $galleries = json_decode($settings['galeri_sekolah'] ?? '[]', true) ?? [];
-        
-        // [PERBAIKAN] Ambil Data Jenjang (Default SMP & SMK jika kosong)
         $jenjangs = json_decode($settings['list_jenjang'] ?? '["SMP","SMK"]', true) ?? [];
 
-        // Kirim semua variabel ke View (termasuk $jenjangs)
         return view('admin.settings.index', compact('settings', 'requirements', 'facilities', 'galleries', 'jenjangs'));
     }
 
@@ -40,19 +35,25 @@ class SettingController extends Controller
             }
         }
 
-        // 2. Simpan Daftar Jenjang [BARU]
+        // 2. Simpan Daftar Jenjang
         $jenjangNames = $request->input('jenjang_nama', []);
-        // Hapus input yang kosong agar tidak tersimpan data blank
         $jenjangData = array_filter($jenjangNames, fn($val) => !empty($val)); 
         Setting::updateOrCreate(['key' => 'list_jenjang'], ['value' => json_encode(array_values($jenjangData))]);
 
-        // 3. Upload & Kompres Banner
+        // 3. Upload Banner
         if ($request->hasFile('banner_image')) {
             $path = $this->compressAndUpload($request->file('banner_image'), 'banners', 1200);
             Setting::updateOrCreate(['key' => 'banner_image'], ['value' => $path]);
         }
 
-        // 4. Upload & Kompres Galeri
+        // 4. [BARU] Upload Logo Sekolah
+        if ($request->hasFile('logo_sekolah')) {
+            // Ukuran logo lebih kecil (max 500px)
+            $path = $this->compressAndUpload($request->file('logo_sekolah'), 'logo', 500);
+            Setting::updateOrCreate(['key' => 'logo_sekolah'], ['value' => $path]);
+        }
+
+        // 5. Upload Galeri
         if ($request->hasFile('gallery_files')) {
             $currentGallery = json_decode(Setting::getValue('galeri_sekolah', '[]'), true) ?? [];
             foreach ($request->file('gallery_files') as $file) {
@@ -62,13 +63,13 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => 'galeri_sekolah'], ['value' => json_encode($currentGallery)]);
         }
 
-        // 5. Upload Template Perjanjian
+        // 6. Upload Template
         if ($request->hasFile('template_perjanjian')) {
             $path = $request->file('template_perjanjian')->store('templates', 'public');
             Setting::updateOrCreate(['key' => 'template_perjanjian'], ['value' => $path]);
         }
 
-        // 6. Simpan Persyaratan (JSON)
+        // 7. Simpan Persyaratan & Fasilitas
         $reqNames = $request->input('syarat_nama', []);
         $reqQtys = $request->input('syarat_jumlah', []);
         $reqData = [];
@@ -77,7 +78,6 @@ class SettingController extends Controller
         }
         Setting::updateOrCreate(['key' => 'syarat_pendaftaran'], ['value' => json_encode($reqData)]);
 
-        // 7. Simpan Fasilitas (JSON)
         $facNames = $request->input('fasilitas_nama', []);
         $facData = array_filter($facNames, fn($val) => !empty($val));
         Setting::updateOrCreate(['key' => 'fasilitas_sekolah'], ['value' => json_encode(array_values($facData))]);
@@ -102,7 +102,6 @@ class SettingController extends Controller
         return back()->with('success', 'Foto berhasil dihapus.');
     }
 
-    // --- Helper Kompresi Gambar ---
     private function compressAndUpload($file, $folder, $maxWidth = 1000)
     {
         $path = storage_path("app/public/{$folder}");
@@ -129,7 +128,6 @@ class SettingController extends Controller
 
         $virtualImage = imagecreatetruecolor($newWidth, $newHeight);
         
-        // Handle transparency
         if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_WEBP) {
             imagecolortransparent($virtualImage, imagecolorallocatealpha($virtualImage, 0, 0, 0, 127));
             imagealphablending($virtualImage, false);
