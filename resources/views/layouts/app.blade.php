@@ -25,20 +25,18 @@
         {{-- MAIN CONTENT WRAPPER --}}
         <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             
-            {{-- HEADER (Top Bar) --}}
+            {{-- TOP BAR (Navbar Atas: Toggle & Profil) --}}
             <header class="bg-white shadow-sm sticky top-0 z-30">
                 <div class="flex items-center justify-between px-6 py-3">
                     
-                    {{-- Tombol Toggle Sidebar (Mobile & Desktop) --}}
+                    {{-- Tombol Toggle Sidebar --}}
                     <div class="flex items-center gap-4">
-                        {{-- Mobile Toggle --}}
                         <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
 
-                        {{-- Desktop Collapse Toggle --}}
                         <button @click="sidebarExpanded = !sidebarExpanded" class="hidden lg:block text-gray-500 focus:outline-none hover:text-gray-700 transition">
                             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
@@ -46,7 +44,7 @@
                         </button>
                     </div>
 
-                    {{-- User Dropdown (Top Right) --}}
+                    {{-- User Dropdown --}}
                     <div class="flex items-center">
                         <x-dropdown align="right" width="48">
                             <x-slot name="trigger">
@@ -76,7 +74,16 @@
                 </div>
             </header>
 
-            {{-- PAGE CONTENT --}}
+            {{-- [PERBAIKAN] PAGE HEADER (Slot Header untuk Judul & Tombol Halaman) --}}
+            @if (isset($header))
+                <div class="bg-white border-b border-gray-200">
+                    <div class="px-6 py-4">
+                        {{ $header }}
+                    </div>
+                </div>
+            @endif
+
+            {{-- PAGE CONTENT (Slot Utama) --}}
             <main class="w-full grow p-6">
                 {{ $slot }}
             </main>
