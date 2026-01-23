@@ -12,16 +12,38 @@ class VerificationController extends Controller
     // Halaman Upload Berkas (Tahap 1)
     public function showUploadForm()
     {
-        // Cek status PPDB
+        // 1. Cek Apakah Pendaftaran Buka
         if (!Setting::isOpen()) {
             return redirect()->route('home')->with('error', 'Pendaftaran Tutup');
         }
+
+        // 2. [BARU] Cek Apakah Verifikasi Wajib?
+        $wajibVerifikasi = Setting::getValue('verification_active', '1'); // Default 1 (Wajib)
+
+        if ($wajibVerifikasi == '0') {
+            // -- LOGIKA BYPASS (LEWATI VERIFIKASI) --
+            
+            // Buat Token Otomatis
+            $autoToken = Str::random(60);
+
+            // Buat Data Verifikasi Dummy (Agar tidak error saat relasi)
+            Verification::create([
+                'no_wa'           => '000000000000',      // Nomor dummy
+                'file_perjanjian' => 'skipped_by_system', // Penanda dilewati
+                'token'           => $autoToken,
+                'status'          => 'approved'          // Langsung Status Lolos/Disetujui
+            ]);
+
+            // Langsung lempar ke halaman Form Biodata dengan Token tadi
+            return redirect()->route('pendaftaran.form', ['token' => $autoToken]);
+        }
         
+        // 3. Jika Wajib Verifikasi, Tampilkan Form Upload Biasa
         $template = Setting::getValue('template_perjanjian');
         return view('pendaftaran.verify', compact('template'));
     }
 
-    // Proses Simpan Berkas User
+    // Proses Simpan Berkas User (Jika Wajib)
     public function store(Request $request)
     {
         $request->validate([
@@ -49,7 +71,6 @@ class VerificationController extends Controller
         return redirect()->route('pendaftaran.verify.success');
     }
 
-    // TAMBAHKAN METHOD BARU INI
     public function showSuccess()
     {
         return view('pendaftaran.verify_success');

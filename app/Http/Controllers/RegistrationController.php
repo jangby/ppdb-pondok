@@ -8,17 +8,16 @@ use App\Models\CandidateParent;
 use App\Models\CandidateBill;
 use App\Models\PaymentType;
 use App\Models\Setting;
-use App\Models\Verification; // Import Verification untuk cek token
+use App\Models\Verification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http; // Wajib untuk WAHA
-use Illuminate\Support\Facades\Log;  // Wajib untuk Log
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class RegistrationController extends Controller
 {
     public function showForm($token)
     {
-        // Cek Token Valid dan Approved
         $verify = Verification::where('token', $token)
                     ->where('status', 'approved')
                     ->first();
@@ -32,18 +31,20 @@ class RegistrationController extends Controller
 
     public function store(Request $request)
     {
-        // 1. CEK STATUS PENDAFTARAN (Buka/Tutup)
+        // 1. CEK STATUS PENDAFTARAN
         $isClosed = Setting::where('key', 'status_ppdb')->value('value') == 'tutup';
         if ($isClosed) {
             return redirect()->route('home')->with('error', 'Mohon maaf, pendaftaran sudah ditutup.');
         }
 
-        // 2. VALIDASI INPUT FORMULIR
+        // 2. VALIDASI INPUT FORMULIR (DIPERBAIKI)
         $request->validate([
-            'token' => 'required', // Token dari hidden input
+            'token' => 'required',
             'nama_lengkap' => 'required|string|max:255',
-            'nisn' => 'required|numeric',
-            'nik' => 'required|numeric',
+            // Tambahkan 'unique:candidates,nisn' agar NISN tidak boleh kembar di tabel candidates
+            'nisn' => 'required|numeric|digits_between:10,12|unique:candidates,nisn', 
+            // Tambahkan 'unique:candidates,nik' agar NIK tidak boleh kembar
+            'nik' => 'required|numeric|digits:16|unique:candidates,nik', 
             'jenjang' => 'required|in:SMP,SMK',
             'no_hp_ayah' => 'required|numeric',
             'alamat' => 'required|string',
@@ -51,25 +52,31 @@ class RegistrationController extends Controller
             'kecamatan' => 'required|string',
             'kabupaten' => 'required|string',
             'provinsi' => 'required|string',
+            'no_kk' => 'required|numeric', // Tambahan validasi KK
+        ], [
+            // PESAN ERROR BAHASA INDONESIA
+            'nisn.unique' => 'NISN ini sudah terdaftar sebelumnya. Silakan cek kembali.',
+            'nik.unique' => 'NIK ini sudah terdaftar di sistem kami.',
+            'nisn.numeric' => 'NISN harus berupa angka.',
+            'nik.digits' => 'NIK harus 16 digit.',
+            'required' => 'Kolom ini wajib diisi.',
         ]);
 
-        // 3. AMBIL DATA VERIFIKASI (Untuk dapat path file perjanjian)
+        // 3. AMBIL DATA VERIFIKASI
         $verifyData = Verification::where('token', $request->token)->first();
         
-        // Security Check: Jika token dimanipulasi/hilang
         if (!$verifyData) {
             return back()->with('error', 'Token verifikasi tidak valid. Silakan ulangi proses dari awal.');
         }
 
         DB::beginTransaction();
         try {
-            // BERSIHKAN FORMAT RUPIAH (Hapus titik, koma, Rp)
             $gajiAyah = preg_replace('/[^0-9]/', '', $request->penghasilan_ayah);
             $gajiIbu = preg_replace('/[^0-9]/', '', $request->penghasilan_ibu);
 
-            // A. SIMPAN DATA SANTRI UTAMA
+            // A. SIMPAN DATA SANTRI
             $candidate = Candidate::create([
-                'no_daftar' => 'REG-' . date('Y') . date('His'), // No. Registrasi Otomatis
+                'no_daftar' => 'REG-' . date('Y') . date('His'),
                 'nisn' => $request->nisn,
                 'nik' => $request->nik,
                 'no_kk' => $request->no_kk,
@@ -85,8 +92,6 @@ class RegistrationController extends Controller
                 'tahun_masuk' => date('Y'),
                 'jalur_pendaftaran' => 'Online',
                 'status' => 'Baru',
-                
-                // PENTING: Simpan Path File Perjanjian dari Tabel Verifikasi ke Tabel Santri
                 'file_perjanjian' => $verifyData->file_perjanjian, 
             ]);
 
@@ -103,7 +108,7 @@ class RegistrationController extends Controller
                 'kode_pos' => $request->kode_pos,
             ]);
 
-            // C. SIMPAN DATA ORANG TUA
+            // C. SIMPAN ORANG TUA
             CandidateParent::create([
                 'candidate_id' => $candidate->id,
                 'nama_ayah' => $request->nama_ayah,
@@ -111,7 +116,6 @@ class RegistrationController extends Controller
                 'pekerjaan_ayah' => $request->pekerjaan_ayah,
                 'penghasilan_ayah' => (int) $gajiAyah,
                 'no_hp_ayah' => $request->no_hp_ayah,
-                
                 'nama_ibu' => $request->nama_ibu,
                 'nik_ibu' => $request->nik_ibu,
                 'pekerjaan_ibu' => $request->pekerjaan_ibu,
@@ -119,7 +123,7 @@ class RegistrationController extends Controller
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
-            // D. GENERATE TAGIHAN AWAL (Berdasarkan Jenjang)
+            // D. GENERATE TAGIHAN
             $biaya = PaymentType::where('jenjang', 'Semua')
                         ->orWhere('jenjang', $request->jenjang)
                         ->get();
@@ -134,7 +138,6 @@ class RegistrationController extends Controller
                 ]);
             }
 
-            // Simpan Perubahan ke Database
             DB::commit();
 
             // ---------------------------------------------------------
@@ -218,8 +221,9 @@ class RegistrationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error("Error Fatal Pendaftaran: " . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage())->withInput();
+            Log::error("Error Fatal: " . $e->getMessage());
+            // Tampilkan error ke user
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
         }
     }
 
