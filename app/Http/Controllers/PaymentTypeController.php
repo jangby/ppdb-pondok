@@ -3,23 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentType;
+use App\Models\Setting; // [BARU] Import Model Setting
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule; // [BARU] Import Rule Validation
 
 class PaymentTypeController extends Controller
 {
     public function index()
     {
-        // Mengambil data terbaru
+        // 1. Ambil Data Pembayaran Terbaru
         $payments = PaymentType::latest()->get();
-        return view('admin.payment_types.index', compact('payments'));
+
+        // 2. Ambil Daftar Jenjang dari Setting (untuk dikirim ke View/Modal)
+        $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+
+        return view('admin.payment_types.index', compact('payments', 'jenjangs'));
     }
 
     public function store(Request $request)
     {
+        // Ambil daftar jenjang valid dari Setting + Tambah opsi "Semua"
+        $jenjangList = json_decode(Setting::getValue('list_jenjang'), true) ?? [];
+        $validJenjangs = array_merge(['Semua'], $jenjangList);
+
         $request->validate([
             'nama_pembayaran' => 'required|string|max:255',
             'nominal' => 'required|numeric|min:0',
-            'jenjang' => 'required|in:Semua,SD,SMP,SMA,SMK', // Sesuaikan dengan enum di migrasi Anda (tambahkan jika perlu)
+            // Validasi Dinamis: Hanya terima 'Semua' atau salah satu jenjang yang terdaftar
+            'jenjang' => ['required', Rule::in($validJenjangs)], 
         ]);
 
         PaymentType::create($request->all());
@@ -29,10 +40,13 @@ class PaymentTypeController extends Controller
 
     public function update(Request $request, $id)
     {
+        $jenjangList = json_decode(Setting::getValue('list_jenjang'), true) ?? [];
+        $validJenjangs = array_merge(['Semua'], $jenjangList);
+
         $request->validate([
             'nama_pembayaran' => 'required|string|max:255',
             'nominal' => 'required|numeric|min:0',
-            'jenjang' => 'required|in:Semua,SD,SMP,SMA,SMK',
+            'jenjang' => ['required', Rule::in($validJenjangs)],
         ]);
 
         $payment = PaymentType::findOrFail($id);

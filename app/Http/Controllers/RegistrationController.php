@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class RegistrationController extends Controller
 {
@@ -37,6 +38,8 @@ class RegistrationController extends Controller
             return redirect()->route('home')->with('error', 'Mohon maaf, pendaftaran sudah ditutup.');
         }
 
+        $validJenjang = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+
         // 2. VALIDASI INPUT FORMULIR (DIPERBAIKI)
         $request->validate([
             'token' => 'required',
@@ -45,7 +48,7 @@ class RegistrationController extends Controller
             'nisn' => 'required|numeric|digits_between:10,12|unique:candidates,nisn', 
             // Tambahkan 'unique:candidates,nik' agar NIK tidak boleh kembar
             'nik' => 'required|numeric|digits:16|unique:candidates,nik', 
-            'jenjang' => 'required|in:SMP,SMK',
+            'jenjang' => ['required', Rule::in($validJenjang)],
             'no_hp_ayah' => 'required|numeric',
             'alamat' => 'required|string',
             'desa' => 'required|string',

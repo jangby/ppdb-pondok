@@ -21,6 +21,7 @@ class SettingSeeder extends Seeder
             
             // --- [BARU] Default Fitur Verifikasi (1 = Wajib, 0 = Matikan) ---
             'verification_active' => '1', 
+            'list_jenjang' => json_encode(['SMP', 'SMK']),
 
             'syarat_pendaftaran' => json_encode([
                 ['nama' => 'Foto Copy Kartu Keluarga', 'jumlah' => 2],

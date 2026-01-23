@@ -83,25 +83,30 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label class="cursor-pointer relative">
-                                <input type="radio" name="jenjang" value="SMP" {{ old('jenjang') == 'SMP' ? 'checked' : '' }} required class="radio-input">
-                                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
-                                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">SMP</div>
-                                    <div><span class="block font-bold text-slate-800">SMP (Reguler)</span></div>
-                                </div>
-                            </label>
-                            <label class="cursor-pointer relative">
-                                <input type="radio" name="jenjang" value="SMK" {{ old('jenjang') == 'SMK' ? 'checked' : '' }} class="radio-input">
-                                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
-                                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">SMK</div>
-                                    <div><span class="block font-bold text-slate-800">SMK (Kejuruan)</span></div>
-                                </div>
-                            </label>
-                        </div>
-                        @error('jenjang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
+    
+    @php
+        // Ambil Data Jenjang dari Setting
+        $listJenjang = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+    @endphp
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @foreach($listJenjang as $item)
+            <label class="cursor-pointer relative">
+                <input type="radio" name="jenjang" value="{{ $item }}" {{ old('jenjang') == $item ? 'checked' : '' }} required class="radio-input">
+                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
+                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg">
+                        {{ substr($item, 0, 1) }} </div>
+                    <div>
+                        <span class="block font-bold text-slate-800">{{ $item }}</span>
+                        <span class="text-xs text-slate-500">Program Pendidikan</span>
                     </div>
+                </div>
+            </label>
+        @endforeach
+    </div>
+    @error('jenjang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+</div>
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Nama Lengkap</label>

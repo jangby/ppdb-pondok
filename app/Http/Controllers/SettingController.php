@@ -10,23 +10,28 @@ class SettingController extends Controller
 {
     public function index()
     {
+        // Ambil semua setting sebagai array [key => value]
         $settings = Setting::all()->pluck('value', 'key')->toArray();
         
+        // Decode JSON Data agar bisa dibaca View
         $requirements = json_decode($settings['syarat_pendaftaran'] ?? '[]', true) ?? [];
         $facilities = json_decode($settings['fasilitas_sekolah'] ?? '[]', true) ?? [];
         $galleries = json_decode($settings['galeri_sekolah'] ?? '[]', true) ?? [];
+        
+        // [PERBAIKAN] Ambil Data Jenjang (Default SMP & SMK jika kosong)
+        $jenjangs = json_decode($settings['list_jenjang'] ?? '["SMP","SMK"]', true) ?? [];
 
-        return view('admin.settings.index', compact('settings', 'requirements', 'facilities', 'galleries'));
+        // Kirim semua variabel ke View (termasuk $jenjangs)
+        return view('admin.settings.index', compact('settings', 'requirements', 'facilities', 'galleries', 'jenjangs'));
     }
 
     public function update(Request $request)
     {
         // 1. Simpan Data Teks Biasa
-        // [MODIFIKASI] Tambahkan 'verification_active' ke array di bawah ini
         $generalKeys = [
             'nama_sekolah', 'status_ppdb', 'tgl_buka', 'tgl_tutup', 
             'whatsapp_admin', 'pengumuman', 'nama_gelombang', 'deskripsi_banner',
-            'verification_active' // <--- INI TAMBAHANNYA
+            'verification_active' 
         ];
 
         foreach ($generalKeys as $key) {
@@ -35,13 +40,19 @@ class SettingController extends Controller
             }
         }
 
-        // 2. Upload Banner
+        // 2. Simpan Daftar Jenjang [BARU]
+        $jenjangNames = $request->input('jenjang_nama', []);
+        // Hapus input yang kosong agar tidak tersimpan data blank
+        $jenjangData = array_filter($jenjangNames, fn($val) => !empty($val)); 
+        Setting::updateOrCreate(['key' => 'list_jenjang'], ['value' => json_encode(array_values($jenjangData))]);
+
+        // 3. Upload & Kompres Banner
         if ($request->hasFile('banner_image')) {
             $path = $this->compressAndUpload($request->file('banner_image'), 'banners', 1200);
             Setting::updateOrCreate(['key' => 'banner_image'], ['value' => $path]);
         }
 
-        // 3. Upload Galeri
+        // 4. Upload & Kompres Galeri
         if ($request->hasFile('gallery_files')) {
             $currentGallery = json_decode(Setting::getValue('galeri_sekolah', '[]'), true) ?? [];
             foreach ($request->file('gallery_files') as $file) {
@@ -51,13 +62,13 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => 'galeri_sekolah'], ['value' => json_encode($currentGallery)]);
         }
 
-        // 4. Upload Template
+        // 5. Upload Template Perjanjian
         if ($request->hasFile('template_perjanjian')) {
             $path = $request->file('template_perjanjian')->store('templates', 'public');
             Setting::updateOrCreate(['key' => 'template_perjanjian'], ['value' => $path]);
         }
 
-        // 5. Simpan Persyaratan JSON
+        // 6. Simpan Persyaratan (JSON)
         $reqNames = $request->input('syarat_nama', []);
         $reqQtys = $request->input('syarat_jumlah', []);
         $reqData = [];
@@ -66,7 +77,7 @@ class SettingController extends Controller
         }
         Setting::updateOrCreate(['key' => 'syarat_pendaftaran'], ['value' => json_encode($reqData)]);
 
-        // 6. Simpan Fasilitas JSON
+        // 7. Simpan Fasilitas (JSON)
         $facNames = $request->input('fasilitas_nama', []);
         $facData = array_filter($facNames, fn($val) => !empty($val));
         Setting::updateOrCreate(['key' => 'fasilitas_sekolah'], ['value' => json_encode(array_values($facData))]);
@@ -91,12 +102,15 @@ class SettingController extends Controller
         return back()->with('success', 'Foto berhasil dihapus.');
     }
 
+    // --- Helper Kompresi Gambar ---
     private function compressAndUpload($file, $folder, $maxWidth = 1000)
     {
         $path = storage_path("app/public/{$folder}");
         if (!file_exists($path)) mkdir($path, 0777, true);
+        
         $filename = uniqid() . '.jpg';
         $destination = "{$path}/{$filename}";
+        
         list($width, $height, $type) = getimagesize($file);
         switch ($type) {
             case IMAGETYPE_JPEG: $source = imagecreatefromjpeg($file); break;
@@ -104,6 +118,7 @@ class SettingController extends Controller
             case IMAGETYPE_WEBP: $source = imagecreatefromwebp($file); break;
             default: return $file->store($folder, 'public');
         }
+
         if ($width > $maxWidth) {
             $newWidth = $maxWidth;
             $newHeight = floor($height * ($maxWidth / $width));
@@ -111,16 +126,22 @@ class SettingController extends Controller
             $newWidth = $width;
             $newHeight = $height;
         }
+
         $virtualImage = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Handle transparency
         if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_WEBP) {
             imagecolortransparent($virtualImage, imagecolorallocatealpha($virtualImage, 0, 0, 0, 127));
             imagealphablending($virtualImage, false);
             imagesavealpha($virtualImage, true);
         }
+
         imagecopyresampled($virtualImage, $source, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
         imagejpeg($virtualImage, $destination, 80);
+        
         imagedestroy($virtualImage);
         imagedestroy($source);
+
         return "{$folder}/{$filename}";
     }
 }

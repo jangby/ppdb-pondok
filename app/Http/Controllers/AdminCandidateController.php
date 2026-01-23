@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Candidate;
-use Illuminate\Http\Request;
 use App\Models\CandidateAddress;
 use App\Models\CandidateParent;
 use App\Models\PaymentType;
 use App\Models\CandidateBill;
+use App\Models\Setting; // [BARU] Import Model Setting
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Exports\CandidatesExport; // Import Export Class
-use Maatwebsite\Excel\Facades\Excel; // Import Facade Excel
+use App\Exports\CandidatesExport; 
+use Maatwebsite\Excel\Facades\Excel; 
 
 class AdminCandidateController extends Controller
 {
@@ -21,7 +22,8 @@ class AdminCandidateController extends Controller
 
         if ($request->has('search') && $request->search != '') {
             $query->where('nama_lengkap', 'like', '%' . $request->search . '%')
-                  ->orWhere('no_daftar', 'like', '%' . $request->search . '%');
+                  ->orWhere('no_daftar', 'like', '%' . $request->search . '%')
+                  ->orWhere('nisn', 'like', '%' . $request->search . '%');
         }
 
         if ($request->has('jenjang') && $request->jenjang != 'Semua') {
@@ -29,22 +31,25 @@ class AdminCandidateController extends Controller
         }
 
         if ($request->has('status') && $request->status != 'Semua') {
-            $query->where('status', $request->status);
+            $query->where('status_seleksi', $request->status); // Sesuaikan nama kolom di DB (status/status_seleksi)
         }
 
         // Ambil Data Pagination
-        $candidates = $query->latest()->paginate(10);
+        $candidates = $query->latest()->paginate(10)->withQueryString();
 
         // 2. DATA KPI (STATISTIK)
         $kpi = [
             'total' => Candidate::count(),
             'laki' => Candidate::where('jenis_kelamin', 'L')->count(),
             'perempuan' => Candidate::where('jenis_kelamin', 'P')->count(),
-            'baru' => Candidate::where('status', 'Baru')->count(),
-            'diterima' => Candidate::where('status', 'Lulus')->count(),
+            'pending' => Candidate::where('status_seleksi', 'Pending')->count(),
+            'diterima' => Candidate::where('status_seleksi', 'Lulus')->count(),
         ];
 
-        return view('admin.candidates.index', compact('candidates', 'kpi'));
+        // [BARU] Ambil Daftar Jenjang Dinamis dari Setting
+        $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+
+        return view('admin.candidates.index', compact('candidates', 'kpi', 'jenjangs'));
     }
 
     // Method Baru untuk Export Excel
@@ -56,18 +61,18 @@ class AdminCandidateController extends Controller
     // 1. Tampilkan Form Tambah Santri (Offline)
     public function create()
     {
-        return view('admin.candidates.create');
+        // [BARU] Kirim data jenjang ke form create juga
+        $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+        return view('admin.candidates.create', compact('jenjangs'));
     }
 
     // 2. Proses Simpan Data Offline
     public function store(Request $request)
     {
-        // Validasi
         $request->validate([
             'nama_lengkap' => 'required',
             'jenis_kelamin' => 'required',
             'jenjang' => 'required',
-            // NISN/NIK boleh diisi nanti kalau lupa bawa berkas
             'nisn' => 'nullable|unique:candidates,nisn', 
             'nik' => 'nullable|unique:candidates,nik',
         ]);
@@ -89,12 +94,10 @@ class AdminCandidateController extends Controller
                 'jumlah_saudara' => $request->jumlah_saudara ?? 0,
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
-                // 'asal_sekolah' => $request->asal_sekolah, // Hapus jika kolom tidak ada di DB
-                
-                // Field Sistem
+                'asal_sekolah' => $request->asal_sekolah ?? '-', // Default strip jika kosong
                 'tahun_masuk' => date('Y'),
                 'jalur_pendaftaran' => 'Offline',
-                'status_seleksi' => 'Pending',
+                'status_seleksi' => 'Lulus', // Offline biasanya langsung diterima
             ]);
 
             // B. Simpan Alamat
@@ -106,8 +109,8 @@ class AdminCandidateController extends Controller
                 'desa' => $request->desa,
                 'kecamatan' => $request->kecamatan,
                 'kode_pos' => $request->kode_pos,
-                'kabupaten' => $request->kabupaten, // Pastikan sudah migrasi kolom ini
-                'provinsi' => $request->provinsi,   // Pastikan sudah migrasi kolom ini
+                'kabupaten' => $request->kabupaten,
+                'provinsi' => $request->provinsi,
             ]);
 
             // C. Simpan Orang Tua
@@ -115,18 +118,14 @@ class AdminCandidateController extends Controller
                 'candidate_id' => $candidate->id,
                 'nama_ayah' => $request->nama_ayah,
                 'nik_ayah' => $request->nik_ayah,
-                'thn_lahir_ayah' => $request->thn_lahir_ayah, 
-                'pendidikan_ayah' => $request->pendidikan_ayah,
                 'pekerjaan_ayah' => $request->pekerjaan_ayah,
-                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0, // TAMBAHKAN INI
+                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
                 'no_hp_ayah' => $request->no_hp_ayah,
                 
                 'nama_ibu' => $request->nama_ibu,
                 'nik_ibu' => $request->nik_ibu,
-                'thn_lahir_ibu' => $request->thn_lahir_ibu,
-                'pendidikan_ibu' => $request->pendidikan_ibu,
                 'pekerjaan_ibu' => $request->pekerjaan_ibu,
-                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0, // TAMBAHKAN INI
+                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
@@ -146,9 +145,7 @@ class AdminCandidateController extends Controller
             }
 
             DB::commit();
-
-            return redirect()->route('admin.candidates.show', $candidate->id)
-                             ->with('success', 'Pendaftaran Offline Berhasil!');
+            return redirect()->route('admin.candidates.show', $candidate->id)->with('success', 'Pendaftaran Offline Berhasil!');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -158,36 +155,26 @@ class AdminCandidateController extends Controller
 
     public function show($id)
     {
-        $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions'])
-                        ->findOrFail($id);
-
+        $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions'])->findOrFail($id);
         return view('admin.candidates.show', compact('candidate'));
     }
     
-    // Update Status Kelulusan
     public function updateStatus(Request $request, $id)
     {
         $candidate = Candidate::findOrFail($id);
-        
-        $candidate->update([
-            'status_seleksi' => $request->status_seleksi
-        ]);
-
+        $candidate->update(['status_seleksi' => $request->status_seleksi]);
         return back()->with('success', 'Status santri berhasil diperbarui.');
     }
 
-
-    // 3. Tampilkan Halaman Edit
     public function edit($id)
     {
         $candidate = Candidate::with(['address', 'parent'])->findOrFail($id);
-        return view('admin.candidates.edit', compact('candidate'));
+        $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK']; // [BARU]
+        return view('admin.candidates.edit', compact('candidate', 'jenjangs'));
     }
 
-    // 4. Proses Update Data
     public function update(Request $request, $id)
     {
-        // Validasi
         $request->validate([
             'nama_lengkap' => 'required',
             'jenjang' => 'required',
@@ -201,7 +188,7 @@ class AdminCandidateController extends Controller
         try {
             $candidate = Candidate::findOrFail($id);
 
-            // A. Update Data Pribadi
+            // Update Data Pribadi
             $candidate->update([
                 'nama_lengkap' => $request->nama_lengkap,
                 'nisn' => $request->nisn,
@@ -215,44 +202,36 @@ class AdminCandidateController extends Controller
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
                 'asal_sekolah' => $request->asal_sekolah,
-                // 'asal_sekolah' => $request->asal_sekolah, // Pastikan ada migrasi untuk ini jika ingin dipakai
             ]);
 
-            // B. Update Alamat (Sekarang KABUPATEN & PROVINSI dimasukkan)
+            // Update Alamat
             $candidate->address()->update([
                 'alamat' => $request->alamat,
                 'rt' => $request->rt,
                 'rw' => $request->rw,
                 'desa' => $request->desa,
                 'kecamatan' => $request->kecamatan,
-                'kabupaten' => $request->kabupaten, // SUDAH ADA DI DB
-                'provinsi' => $request->provinsi,   // SUDAH ADA DI DB
+                'kabupaten' => $request->kabupaten,
+                'provinsi' => $request->provinsi,
                 'kode_pos' => $request->kode_pos,
             ]);
 
-            // C. Update Orang Tua
+            // Update Orang Tua
             $candidate->parent()->update([
                 'nama_ayah' => $request->nama_ayah,
                 'nik_ayah' => $request->nik_ayah,
-                'thn_lahir_ayah' => $request->thn_lahir_ayah,
-                'pendidikan_ayah' => $request->pendidikan_ayah,
                 'pekerjaan_ayah' => $request->pekerjaan_ayah,
                 'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
                 'no_hp_ayah' => $request->no_hp_ayah,
-                
                 'nama_ibu' => $request->nama_ibu,
                 'nik_ibu' => $request->nik_ibu,
-                'thn_lahir_ibu' => $request->thn_lahir_ibu,
-                'pendidikan_ibu' => $request->pendidikan_ibu,
                 'pekerjaan_ibu' => $request->pekerjaan_ibu,
                 'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
             DB::commit();
-
-            return redirect()->route('admin.candidates.show', $id)
-                             ->with('success', 'Data santri berhasil diperbarui!');
+            return redirect()->route('admin.candidates.show', $id)->with('success', 'Data santri berhasil diperbarui!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -260,17 +239,9 @@ class AdminCandidateController extends Controller
         }
     }
 
-    // Menampilkan Kartu Diterima
-public function printCard($id)
-{
-    $candidate = Candidate::with(['address', 'parent'])->findOrFail($id);
-    
-    // Pastikan hanya yang statusnya "Lulus" atau "Diterima" yang bisa cetak
-    // if ($candidate->status_seleksi != 'Lulus') {
-    //    return back()->with('error', 'Santri belum dinyatakan lulus.');
-    // }
-
-    return view('admin.candidates.print_card', compact('candidate'));
+    public function printCard($id)
+    {
+        $candidate = Candidate::with(['address', 'parent'])->findOrFail($id);
+        return view('admin.candidates.print_card', compact('candidate'));
+    }
 }
-}
-
