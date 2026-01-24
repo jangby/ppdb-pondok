@@ -3,146 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kartu Tanda Diterima - {{ $candidate->nama_lengkap }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Kartu Kelulusan - {{ $candidate->nama_lengkap }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Noto+Serif:wght@400;700&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;700&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; 
+        @page { size: A4 portrait; margin: 0; }
+        body { 
+            font-family: 'Noto Serif', serif; 
+            background: #fdfdfd; 
+            color: #111;
+            margin: 0;
+            padding: 40px;
+            -webkit-print-color-adjust: exact;
         }
 
-        /* Konfigurasi Cetak */
-        @media print {
-            body {
-                background-color: white;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .no-print {
-                display: none !important;
-            }
-            .print-shadow-none {
-                box-shadow: none !important;
-                border: 1px solid #ddd;
-            }
+        /* CONTAINER DENGAN BINGKAI GANDA */
+        .certificate-border {
+            border: 5px double #166534; /* Emerald 800 */
+            padding: 5px;
+            height: 98vh;
+            box-sizing: border-box;
+            position: relative;
+            background: white;
+        }
+        .inner-border {
+            border: 2px solid #15803d; /* Emerald 700 */
+            height: 100%;
+            padding: 30px 50px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
         }
 
+        /* WATERMARK LOGO */
         .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            opacity: 0.05;
-            width: 80%;
-            z-index: 0;
+            opacity: 0.08;
+            z-index: 1;
+            width: 400px;
             pointer-events: none;
+        }
+
+        /* KOP SURAT */
+        header {
+            text-align: center;
+            border-bottom: 3px double #000;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .logo {
+            position: absolute;
+            top: 0;
+            left: 20px;
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+        }
+        .institution {
+            font-family: 'Merriweather', serif;
+            font-weight: 900;
+            font-size: 24px;
+            color: #166534;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        .subtitle {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 5px 0;
+            color: #333;
+        }
+        .address {
+            font-size: 11px;
+            color: #555;
+            font-style: italic;
+            max-width: 80%;
+            margin: 0 auto;
+        }
+
+        /* JUDUL SURAT */
+        .title-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .doc-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-decoration: underline;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .doc-number {
+            font-size: 12px;
+        }
+
+        /* ISI BIODATA */
+        .content {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .intro-text {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        table.biodata {
+            width: 100%;
+            margin-left: 20px;
+            margin-bottom: 30px;
+        }
+        table.biodata td {
+            padding: 6px 0;
+            vertical-align: top;
+        }
+        .label { width: 160px; font-weight: bold; }
+        .sep { width: 20px; }
+        .val { font-weight: bold; color: #000; font-size: 15px; }
+
+        /* KOTAK STATUS LULUS */
+        .status-box {
+            text-align: center;
+            margin: 30px auto;
+            padding: 15px;
+            border: 2px solid #166534;
+            background-color: #f0fdf4;
+            width: 70%;
+            font-weight: bold;
+            font-size: 18px;
+            color: #166534;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* TANDA TANGAN */
+        .footer {
+            margin-top: 60px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .signature-box {
+            text-align: center;
+            width: 250px;
+        }
+        .place-date { font-size: 14px; margin-bottom: 5px; }
+        .role { font-weight: bold; margin-bottom: 70px; }
+        .name { font-weight: bold; text-decoration: underline; font-size: 15px; }
+        .nip { font-size: 12px; }
+
+        /* TOMBOL PRINT (HILANG SAAT PRINT) */
+        .no-print {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .btn-print {
+            background: #166534;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-family: sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .btn-print:hover { background: #14532d; transform: scale(1.05); }
+
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; background: white; }
+            .certificate-border { border: none; height: auto; }
+            .inner-border { border: 3px double #000; height: auto; padding: 20px 40px; margin: 10px; }
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen py-10">
+<body>
 
-    <div class="no-print mb-6 flex gap-3">
-        <a href="{{ route('admin.candidates.show', $candidate->id) }}" class="px-5 py-2 bg-gray-500 text-white rounded-lg shadow hover:bg-gray-600 transition">
-            &larr; Kembali
-        </a>
-        <button onclick="window.print()" class="px-5 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+    <div class="no-print">
+        <button onclick="window.print()" class="btn-print">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
             Cetak Kartu
         </button>
     </div>
 
-    <div class="relative bg-white w-[800px] h-[500px] shadow-2xl rounded-xl overflow-hidden print-shadow-none border border-gray-200">
-        
-        <img src="https://via.placeholder.com/500x500.png?text=LOGO+SEKOLAH" alt="Watermark" class="watermark grayscale">
-
-        <div class="relative z-10 bg-indigo-900 text-white px-8 py-5 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md text-indigo-900 font-bold overflow-hidden">
-                   {{-- GANTI DENGAN LOGO ASLI --}}
-                   <img src="https://via.placeholder.com/100" class="w-full h-full object-cover">
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold uppercase tracking-wider font-[Cinzel]">Nama Pesantren / Sekolah</h1>
-                    <p class="text-indigo-200 text-sm font-light">Jl. Contoh Alamat No. 123, Kabupaten Tasikmalaya</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <h2 class="text-2xl font-bold text-yellow-400 tracking-widest">KARTU BUKTI</h2>
-                <p class="text-sm uppercase tracking-widest text-white/80">Kelulusan Santri Baru</p>
-            </div>
-        </div>
-
-        <div class="h-2 bg-yellow-500 w-full relative z-10"></div>
-
-        <div class="relative z-10 p-8 flex gap-8 h-full">
+    <div class="certificate-border">
+        <div class="inner-border">
             
-            <div class="w-1/3 flex flex-col items-center">
-                <div class="w-40 h-52 bg-gray-200 border-4 border-white shadow-lg mb-4 overflow-hidden relative">
-                    {{-- Placeholder jika foto kosong --}}
-                    @if(false) {{-- Ganti logic ini jika ada foto --}}
-                        <img src="{{ asset('storage/' . $candidate->foto) }}" class="w-full h-full object-cover">
-                    @else
-                        <div class="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
-                            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                    @endif
+            @if(!empty($settings['logo_sekolah']))
+                <img src="{{ asset('storage/'.$settings['logo_sekolah']) }}" class="watermark" alt="Watermark">
+            @endif
+
+            <header>
+                @if(!empty($settings['logo_sekolah']))
+                    <img src="{{ asset('storage/'.$settings['logo_sekolah']) }}" class="logo" alt="Logo">
+                @else
+                    <div class="logo" style="background:#ddd; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:30px; border-radius:50%;">P</div>
+                @endif
+
+                <h1 class="institution">{{ $settings['nama_sekolah'] ?? 'PONDOK PESANTREN AL-HIDAYAH' }}</h1>
+                <p class="subtitle">PANITIA PENERIMAAN SANTRI BARU (PPDB)</p>
+                <p class="subtitle">TAHUN AJARAN {{ date('Y') }}/{{ date('Y')+1 }}</p>
+                <p class="address">{{ $settings['alamat_sekolah'] ?? 'Alamat belum diatur di menu pengaturan.' }}</p>
+            </header>
+
+            <div class="title-section">
+                <div class="doc-title">SURAT KETERANGAN LULUS SELEKSI</div>
+                <div class="doc-number">Nomor: {{ $candidate->no_daftar }}/PPDB/{{ date('Y') }}</div>
+            </div>
+
+            <div class="content">
+                <p class="intro-text">
+                    Berdasarkan hasil seleksi administrasi dan tes yang telah dilakukan, Panitia Penerimaan Santri Baru (PPDB) 
+                    <strong>{{ $settings['nama_sekolah'] ?? 'Pondok Pesantren' }}</strong> dengan ini menerangkan bahwa:
+                </p>
+
+                <table class="biodata">
+                    <tr>
+                        <td class="label">Nama Lengkap</td>
+                        <td class="sep">:</td>
+                        <td class="val" style="text-transform: uppercase;">{{ $candidate->nama_lengkap }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">No. Pendaftaran</td>
+                        <td class="sep">:</td>
+                        <td class="val">{{ $candidate->no_daftar }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">NISN</td>
+                        <td class="sep">:</td>
+                        <td class="val">{{ $candidate->nisn ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Asal Sekolah</td>
+                        <td class="sep">:</td>
+                        <td class="val">{{ $candidate->asal_sekolah ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Jenjang Diterima</td>
+                        <td class="sep">:</td>
+                        <td class="val">{{ $candidate->jenjang }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Nama Orang Tua</td>
+                        <td class="sep">:</td>
+                        <td class="val">{{ $candidate->parent->nama_ayah ?? $candidate->parent->nama_ibu ?? '-' }}</td>
+                    </tr>
+                </table>
+
+                <p style="text-align: center;">Dinyatakan:</p>
+
+                <div class="status-box">
+                    LULUS / DITERIMA
                 </div>
 
-                <div class="bg-green-600 text-white px-6 py-1.5 rounded-full font-bold uppercase tracking-widest text-sm shadow-md border-2 border-green-700">
-                    DITERIMA
+                <p class="intro-text">
+                    Sebagai Santri Baru Tahun Ajaran {{ date('Y') }}/{{ date('Y')+1 }}. 
+                    Harap segera melakukan daftar ulang dengan membawa kartu ini sebagai bukti kelulusan yang sah.
+                </p>
+            </div>
+
+            <div class="footer">
+                <div class="signature-box">
+                    <div class="place-date">Ditetapkan di: Garut, {{ date('d F Y') }}</div>
+                    <div class="role">Panitia PPDB,</div>
+                    
+                    <div class="name">__________________________</div>
+                    <div class="nip">NIP/NIY. ...........................</div>
                 </div>
             </div>
 
-            <div class="w-2/3 flex flex-col justify-between pb-12">
-                <div>
-                    <h3 class="text-indigo-900 font-bold text-2xl mb-1">{{ $candidate->nama_lengkap }}</h3>
-                    <p class="text-gray-500 font-medium mb-6">No. Daftar: <span class="text-black">{{ $candidate->no_daftar }}</span></p>
-
-                    <table class="w-full text-sm">
-                        <tr class="border-b border-gray-100">
-                            <td class="py-2 text-gray-500 w-32">NISN</td>
-                            <td class="py-2 font-semibold text-gray-800">: {{ $candidate->nisn ?? '-' }}</td>
-                        </tr>
-                        <tr class="border-b border-gray-100">
-                            <td class="py-2 text-gray-500">Jenjang</td>
-                            <td class="py-2 font-semibold text-gray-800">: {{ $candidate->jenjang }}</td>
-                        </tr>
-                        <tr class="border-b border-gray-100">
-                            <td class="py-2 text-gray-500">Asal Sekolah</td>
-                            <td class="py-2 font-semibold text-gray-800">: {{ $candidate->asal_sekolah }}</td>
-                        </tr>
-                        <tr class="border-b border-gray-100">
-                            <td class="py-2 text-gray-500">Nama Ayah</td>
-                            <td class="py-2 font-semibold text-gray-800">: {{ $candidate->parent->nama_ayah ?? '-' }}</td>
-                        </tr>
-                         <tr class="border-b border-gray-100">
-                            <td class="py-2 text-gray-500">Alamat</td>
-                            <td class="py-2 font-semibold text-gray-800 truncate max-w-xs">: {{ $candidate->address->kabupaten ?? '-' }}, {{ $candidate->address->provinsi ?? '-' }}</td>
-                        </tr>
-                    </table>
-                </div>
-
-                <div class="flex justify-between items-end mt-4">
-                    <div class="text-center">
-                        {{-- Placeholder QR CODE --}}
-                        <div class="w-20 h-20 bg-white border border-gray-300 p-1">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ $candidate->no_daftar }}" class="w-full h-full">
-                        </div>
-                        <p class="text-[10px] text-gray-400 mt-1">Scan untuk validasi</p>
-                    </div>
-
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500 mb-10">Tasikmalaya, {{ date('d F Y') }} <br> Panitia PSB</p>
-                        <p class="font-bold text-indigo-900 underline">H. Admin Pesantren</p>
-                        <p class="text-xs text-gray-500">Ketua Panitia</p>
-                    </div>
-                </div>
-            </div>
         </div>
-
-        <div class="absolute bottom-0 w-full h-3 bg-indigo-900 z-10"></div>
     </div>
 
 </body>

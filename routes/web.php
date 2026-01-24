@@ -49,6 +49,24 @@ Route::post('/pendaftaran/store', [RegistrationController::class, 'store'])->nam
 Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->name('pendaftaran.sukses');
 
 
+// ROUTE KHUSUS WAWANCARA (Tanpa Login, Pakai Token)
+Route::prefix('e-interview')->name('interview.')->group(function () {
+    
+    // PERBAIKAN: Name routenya diganti jadi 'panitia.index'
+    Route::get('/panitia/{token}', [App\Http\Controllers\PanitiaInterviewController::class, 'index'])->name('panitia.index');
+    
+    Route::get('/panitia/{token}/form/{candidate_id}', [App\Http\Controllers\PanitiaInterviewController::class, 'form'])->name('panitia.form');
+    Route::post('/panitia/{token}/store/{candidate_id}', [App\Http\Controllers\PanitiaInterviewController::class, 'store'])->name('panitia.store');
+
+    // [BARU] 2. SANTRI (ASESMEN MANDIRI)
+    Route::get('/santri/login', [App\Http\Controllers\SantriInterviewController::class, 'login'])->name('santri.login');
+    Route::post('/santri/check', [App\Http\Controllers\SantriInterviewController::class, 'check'])->name('santri.check');
+    Route::get('/santri/form', [App\Http\Controllers\SantriInterviewController::class, 'form'])->name('santri.form');
+    Route::post('/santri/store', [App\Http\Controllers\SantriInterviewController::class, 'store'])->name('santri.store');
+    Route::get('/santri/success', [App\Http\Controllers\SantriInterviewController::class, 'success'])->name('santri.success');
+});
+
+
 // =========================================================================
 // 2. HALAMAN ADMIN (BUTUH LOGIN)
 // =========================================================================
@@ -107,6 +125,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
     Route::post('/admin/keuangan', [AdminFinanceController::class, 'store'])->name('admin.finance.store');
     Route::delete('/admin/keuangan/{id}', [AdminFinanceController::class, 'destroy'])->name('admin.finance.destroy');
+
+    Route::prefix('admin/interview')->name('admin.interview.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\InterviewDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/result/{id}', [App\Http\Controllers\InterviewDashboardController::class, 'result'])->name('result');
+    Route::get('/export', [App\Http\Controllers\InterviewDashboardController::class, 'exportExcel'])->name('export');
+    Route::get('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'index'])->name('questions.index');
+    Route::post('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'store'])->name('questions.store');
+    Route::delete('/questions/{id}', [App\Http\Controllers\InterviewQuestionController::class, 'destroy'])->name('questions.destroy');
+    // SESI & QR CODE
+    Route::get('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'index'])->name('sessions.index');
+    Route::post('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'store'])->name('sessions.store');
+    Route::patch('/sessions/{id}/toggle', [App\Http\Controllers\InterviewSessionController::class, 'toggle'])->name('sessions.toggle');
+    
+    Route::get('/result/{id}/print', [App\Http\Controllers\InterviewDashboardController::class, 'printResult'])->name('result.print');
+});
 });
 
 require __DIR__.'/auth.php';

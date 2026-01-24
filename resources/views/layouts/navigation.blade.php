@@ -5,6 +5,7 @@
        class="fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 text-white transition-all duration-300 transform lg:translate-x-0 lg:static lg:inset-0 shadow-xl"
        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'">
 
+    {{-- HEADER SIDEBAR --}}
     <div class="flex items-center justify-center h-16 bg-slate-800 shadow-md relative">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
             <div class="bg-blue-600 p-1.5 rounded-lg">
@@ -20,7 +21,8 @@
         </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto py-4">
+    {{-- MENU LIST --}}
+    <div class="flex-1 overflow-y-auto py-4 custom-scrollbar">
         <nav class="space-y-1 px-3">
             
             {{-- DASHBOARD --}}
@@ -30,8 +32,8 @@
 
             <div class="my-4 border-t border-slate-700 mx-2"></div>
             
-            {{-- GROUP: MANAJEMEN --}}
-            <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
+            {{-- GROUP: MANAJEMEN UTAMA --}}
+            <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 transition-all duration-300"
                :class="sidebarExpanded ? 'block' : 'hidden'">
                 Manajemen
             </p>
@@ -39,16 +41,13 @@
             <x-nav-link-sidebar :href="route('admin.verifications.index')" :active="request()->routeIs('admin.verifications.*')" icon="verify">
                 {{ __('Verifikasi Berkas') }}
                 
-                {{-- Badge Notification (Opsional: Menghitung Pending) --}}
-                @php
-                    $pendingCount = \App\Models\Verification::where('status', 'pending')->count();
-                @endphp
+                {{-- Badge Notification --}}
+                @php $pendingCount = \App\Models\Verification::where('status', 'pending')->count(); @endphp
                 @if($pendingCount > 0)
                     <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm"
                           :class="sidebarExpanded ? 'block' : 'hidden'">
                         {{ $pendingCount }}
                     </span>
-                    {{-- Dot kecil jika sidebar tertutup --}}
                     <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"
                           :class="sidebarExpanded ? 'hidden' : 'block'"></span>
                 @endif
@@ -62,14 +61,28 @@
                 {{ __('Keuangan') }}
             </x-nav-link-sidebar>
 
-            {{-- GROUP: SISTEM --}}
             <div class="my-4 border-t border-slate-700 mx-2"></div>
-             <p class="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2"
+
+            {{-- GROUP: SELEKSI & UJIAN (BARU) --}}
+            <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 transition-all duration-300"
                :class="sidebarExpanded ? 'block' : 'hidden'">
-                Sistem
+                Seleksi & Ujian
             </p>
 
-            {{-- MENU YANG HILANG TADI --}}
+            {{-- Menu Utama Wawancara (Dashboard Wawancara) --}}
+            {{-- Pastikan route ini nanti kita buat --}}
+            <x-nav-link-sidebar :href="url('admin/interview/dashboard')" :active="request()->is('admin/interview*')" icon="clipboard">
+                {{ __('Seleksi Tes') }}
+            </x-nav-link-sidebar>
+
+            <div class="my-4 border-t border-slate-700 mx-2"></div>
+
+            {{-- GROUP: PENGATURAN --}}
+            <p class="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 transition-all duration-300"
+               :class="sidebarExpanded ? 'block' : 'hidden'">
+                Konfigurasi
+            </p>
+
             <x-nav-link-sidebar :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')" icon="settings">
                 {{ __('Pengaturan PPDB') }}
             </x-nav-link-sidebar>
@@ -87,12 +100,13 @@
         </nav>
     </div>
 
+    {{-- FOOTER LOGOUT --}}
     <div class="p-4 bg-slate-900 border-t border-slate-800">
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="flex items-center gap-3 text-slate-400 hover:text-white transition w-full group">
-                <svg class="w-6 h-6 flex-shrink-0 group-hover:text-red-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                <span :class="sidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'" class="font-medium whitespace-nowrap">
+            <button type="submit" class="flex items-center gap-3 text-slate-400 hover:text-white transition w-full group p-2 rounded-lg hover:bg-slate-800">
+                <svg class="w-5 h-5 flex-shrink-0 group-hover:text-red-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <span :class="sidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'" class="font-medium text-sm whitespace-nowrap transition-all duration-300">
                     Keluar Aplikasi
                 </span>
             </button>

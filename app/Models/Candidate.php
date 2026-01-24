@@ -41,4 +41,25 @@ class Candidate extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    // Relasi ke Jawaban Wawancara
+    public function interview_answers()
+    {
+        return $this->hasMany(InterviewAnswer::class);
+    }
+
+    // Helper untuk cek apakah sudah wawancara (Untuk Auto Lulus)
+    public function hasCompletedInterview()
+    {
+        // Cek apakah ada jawaban dari kategori Santri DAN Wali
+        $hasSantri = $this->interview_answers()->whereHas('question', function($q){
+            $q->where('target', 'Santri');
+        })->exists();
+
+        $hasWali = $this->interview_answers()->whereHas('question', function($q){
+            $q->where('target', 'Wali');
+        })->exists();
+
+        return $hasSantri && $hasWali;
+    }
 }
