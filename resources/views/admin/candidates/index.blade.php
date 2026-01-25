@@ -167,10 +167,39 @@
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-center">
-                                        <a href="{{ route('admin.candidates.show', $candidate->id) }}" class="text-blue-600 hover:text-blue-900 font-medium text-xs border border-blue-200 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition">
-                                            Detail & Aksi
-                                        </a>
-                                    </td>
+    <div class="flex items-center justify-center gap-2">
+        {{-- 1. Tombol Detail --}}
+        <a href="{{ route('admin.candidates.show', $candidate->id) }}" 
+           class="text-blue-600 hover:text-white hover:bg-blue-600 bg-blue-50 border border-blue-200 p-2 rounded-lg transition" 
+           title="Detail & Edit">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        </a>
+
+        {{-- 2. Tombol Kirim QR Code (Ungu) --}}
+        <form action="{{ route('admin.attendance.send_qr', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim QR Code Absensi ke WA Wali Santri ini?');">
+            @csrf
+            <button type="submit" class="text-purple-600 hover:text-white hover:bg-purple-600 bg-purple-50 border border-purple-200 p-2 rounded-lg transition" title="Kirim QR Code ke WA">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+            </button>
+        </form>
+
+        {{-- 3. Tombol Pengingat / Status Hadir --}}
+        @if($candidate->waktu_hadir)
+            {{-- Jika Sudah Hadir (Tanda Ceklis Hijau) --}}
+            <div class="text-green-600 bg-green-50 border border-green-200 p-2 rounded-lg cursor-help" title="Sudah Hadir (Antrian: {{ $candidate->nomor_antrian }})">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+        @else
+            {{-- Jika Belum Hadir (Tombol Lonceng Kuning) --}}
+            <form action="{{ route('admin.attendance.remind', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim Pengingat Jadwal ke WA Wali?');">
+                @csrf
+                <button type="submit" class="text-orange-600 hover:text-white hover:bg-orange-600 bg-orange-50 border border-orange-200 p-2 rounded-lg transition" title="Kirim Pengingat (Belum Hadir)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </button>
+            </form>
+        @endif
+    </div>
+</td>
                                 </tr>
                             @empty
                                 <tr>

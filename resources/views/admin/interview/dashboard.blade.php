@@ -8,51 +8,119 @@
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-            {{-- 1. SHORTCUTS (MENU PINTAS) --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <a href="{{ route('admin.interview.questions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-500 hover:shadow-md transition flex items-center gap-4">
-                    <div class="p-4 bg-purple-100 text-purple-600 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">Bank Soal</h3>
-                        <p class="text-[10px] text-gray-500">Atur pertanyaan tes.</p>
-                    </div>
-                </a>
+            {{-- 1. MENU OPERASIONAL HARI-H (BARU) --}}
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                    <span class="bg-red-100 text-red-600 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </span>
+                    Menu Operasional (Hari Pelaksanaan)
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    {{-- Tombol Scanner --}}
+                    <a href="{{ route('admin.attendance.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-indigo-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-indigo-100 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Meja Registrasi</h3>
+                            <p class="text-[10px] text-gray-500">Scan QR & Cetak Antrian.</p>
+                        </div>
+                    </a>
 
-                <a href="{{ route('admin.interview.sessions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 hover:shadow-md transition flex items-center gap-4">
-                    <div class="p-4 bg-blue-100 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">Sesi Panitia</h3>
-                        <p class="text-[10px] text-gray-500">QR akses pewawancara.</p>
-                    </div>
-                </a>
+                    {{-- Tombol Rekap --}}
+                    <a href="{{ route('admin.attendance.recap') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-pink-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-pink-100 text-pink-600 rounded-xl group-hover:bg-pink-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Rekap Hadir</h3>
+                            <p class="text-[10px] text-gray-500">Pantau kehadiran real-time.</p>
+                        </div>
+                    </a>
 
-                <div class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-orange-500 hover:shadow-md transition flex items-center gap-4 cursor-pointer" 
-                     onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ route('interview.santri.login') }}', '_blank')">
-                    <div class="p-4 bg-orange-100 text-orange-600 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">QR Santri</h3>
-                        <p class="text-[10px] text-gray-500">Cetak QR login siswa.</p>
+                    {{-- Tombol Loket Panggilan --}}
+                    <a href="{{ route('public.queue.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-cyan-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-cyan-100 text-cyan-600 rounded-xl group-hover:bg-cyan-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Loket Panggil</h3>
+                            <p class="text-[10px] text-gray-500">Audio pemanggil antrian.</p>
+                        </div>
+                    </a>
+
+                    {{-- Tombol Salin Link --}}
+                    <div onclick="copyLink('{{ route('public.queue.index') }}')" class="cursor-pointer group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-gray-500 hover:shadow-md transition flex items-center gap-4 active:scale-95">
+                        <div class="p-4 bg-gray-100 text-gray-600 rounded-xl group-hover:bg-gray-800 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Salin Link</h3>
+                            <p class="text-[10px] text-gray-500">Klik untuk copy link loket.</p>
+                        </div>
                     </div>
                 </div>
-
-                <a href="{{ route('admin.interview.export') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition flex items-center gap-4">
-                    <div class="p-4 bg-emerald-100 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-800">Export Data</h3>
-                        <p class="text-[10px] text-gray-500">Unduh rekap Excel.</p>
-                    </div>
-                </a>
             </div>
 
-            {{-- 2. KPI & GRAFIK --}}
+            <hr class="border-gray-100">
+
+            {{-- 2. MANAJEMEN DATA (LAMA) --}}
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                    <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    </span>
+                    Manajemen & Persiapan
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <a href="{{ route('admin.interview.questions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-purple-100 text-purple-600 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Bank Soal</h3>
+                            <p class="text-[10px] text-gray-500">Atur pertanyaan tes.</p>
+                        </div>
+                    </a>
+
+                    <a href="{{ route('admin.interview.sessions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-blue-100 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Sesi Panitia</h3>
+                            <p class="text-[10px] text-gray-500">QR akses pewawancara.</p>
+                        </div>
+                    </a>
+
+                    <div class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-orange-500 hover:shadow-md transition flex items-center gap-4 cursor-pointer" 
+                         onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ route('interview.santri.login') }}', '_blank')">
+                        <div class="p-4 bg-orange-100 text-orange-600 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">QR Santri</h3>
+                            <p class="text-[10px] text-gray-500">Cetak QR login siswa.</p>
+                        </div>
+                    </div>
+
+                    <a href="{{ route('admin.interview.export') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-emerald-100 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Export Data</h3>
+                            <p class="text-[10px] text-gray-500">Unduh rekap Excel.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            {{-- 3. KPI & GRAFIK (LAMA) --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {{-- Statistik Progress --}}
@@ -102,7 +170,7 @@
                 </div>
             </div>
 
-            {{-- 3. TABEL MONITORING --}}
+            {{-- 4. TABEL MONITORING --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="px-6 py-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <div>
@@ -124,7 +192,6 @@
                         <tbody class="divide-y divide-gray-100">
                             @foreach($candidates as $c)
                                 @php
-                                    // Cek apakah ada jawaban dari target tertentu
                                     $hasSantriAnswer = $c->interview_answers->contains(fn($a) => $a->question->target == 'Santri');
                                     $hasWaliAnswer = $c->interview_answers->contains(fn($a) => $a->question->target == 'Wali');
                                 @endphp
@@ -186,9 +253,15 @@
         </div>
     </div>
 
-    {{-- Script ApexCharts --}}
-    @if(!empty($chartData))
+    {{-- Script ApexCharts & Copy Link --}}
     <script>
+        function copyLink(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link Loket Panggilan berhasil disalin! Kirimkan ke Panitia Pemberkasan.');
+            });
+        }
+
+        @if(!empty($chartData))
         document.addEventListener('DOMContentLoaded', function () {
             var options = {
                 series: [{ name: 'Jumlah', data: @json($chartData['series']) }],
@@ -203,6 +276,6 @@
             var chart = new ApexCharts(document.querySelector("#chart-jawaban"), options);
             chart.render();
         });
+        @endif
     </script>
-    @endif
 </x-app-layout>

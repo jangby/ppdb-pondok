@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Setting;
 use App\Models\PaymentType;
+use App\Models\Candidate;
 
 class HomeController extends Controller
 {
@@ -45,4 +46,13 @@ class HomeController extends Controller
 
         return view('welcome', compact('settings', 'syarat', 'rincianBiaya', 'biayaUmum'));
     }
+
+    public function kartuTes($no_daftar)
+{
+    // Cari santri berdasarkan no_daftar
+    $candidate = Candidate::where('no_daftar', $no_daftar)->firstOrFail();
+
+    // Tampilkan view kartu
+    return view('public.kartu_tes', compact('candidate'));
+}
 }

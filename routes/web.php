@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+
 // Import Controller Default & Auth
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
@@ -17,11 +18,13 @@ use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\AdminFinanceController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\PaymentTypeController;
-use App\Http\Controllers\DormitoryController; // [PENTING] Import Controller Asrama
+use App\Http\Controllers\DormitoryController;
+use App\Http\Controllers\InterviewAttendanceController; // Controller Absensi
+use App\Http\Controllers\QueueController;               // Controller Loket
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Web Routes (Publik & Admin)
 |--------------------------------------------------------------------------
 */
 
@@ -29,10 +32,10 @@ use App\Http\Controllers\DormitoryController; // [PENTING] Import Controller Asr
 // 1. HALAMAN PUBLIK (TANPA LOGIN)
 // =========================================================================
 
-// Halaman Depan (Landing Page)
+// Halaman Depan
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// --- TAHAP 1: VERIFIKASI BERKAS (ENTRY POINT) ---
+// --- TAHAP 1: VERIFIKASI BERKAS ---
 Route::get('/pendaftaran/verifikasi', [VerificationController::class, 'showUploadForm'])->name('pendaftaran.create');
 Route::post('/pendaftaran/verifikasi', [VerificationController::class, 'store'])->name('pendaftaran.verify.store');
 Route::get('/pendaftaran/verifikasi/sukses', [VerificationController::class, 'showSuccess'])->name('pendaftaran.verify.success');
@@ -42,8 +45,18 @@ Route::get('/pendaftaran/form/{token}', [RegistrationController::class, 'showFor
 Route::post('/pendaftaran/store', [RegistrationController::class, 'store'])->name('pendaftaran.store');
 Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->name('pendaftaran.sukses');
 
+// --- HALAMAN KARTU TES (PUBLIK) ---
+Route::get('/kartu-tes/{no_daftar}', [HomeController::class, 'kartuTes'])->name('public.kartu_tes');
 
-// ROUTE KHUSUS WAWANCARA (Tanpa Login, Pakai Token)
+// --- LOKET PANGGILAN (MOBILE VIEW - TANPA LOGIN) ---
+Route::get('/loket-panggilan', [QueueController::class, 'publicIndex'])->name('public.queue.index');
+Route::post('/loket-panggilan/next', [QueueController::class, 'callNext'])->name('public.queue.next');
+
+// --- MONITOR ANTRIAN (UNTUK ORANG TUA) ---
+Route::get('/pantau-antrian', [QueueController::class, 'publicMonitor'])->name('public.queue.monitor');
+Route::get('/pantau-antrian/check', [QueueController::class, 'getCurrentStatus'])->name('public.queue.check');
+
+// --- ROUTE WAWANCARA (TOKEN BASED) ---
 Route::prefix('e-interview')->name('interview.')->group(function () {
     // Panitia
     Route::get('/panitia/{token}', [App\Http\Controllers\PanitiaInterviewController::class, 'index'])->name('panitia.index');
@@ -106,12 +119,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
 
-    // --- [BARU] MANAJEMEN ASRAMA ---
-    // Menggunakan prefix group agar nama routenya konsisten 'admin.dormitories.*'
+    // --- MANAJEMEN ASRAMA ---
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('dormitories', DormitoryController::class)->only(['index', 'store', 'destroy']);
-        
-        // Route untuk tombol "Distribusi Otomatis"
         Route::post('dormitories/auto-distribute', [DormitoryController::class, 'autoDistribute'])->name('dormitories.distribute');
     });
 
@@ -142,6 +152,22 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/result/{id}/print', [App\Http\Controllers\InterviewDashboardController::class, 'printResult'])->name('result.print');
     });
+
+    // --- FITUR ABSENSI & WAWANCARA (SCANNER & WA) ---
+    Route::prefix('admin/attendance')->name('admin.attendance.')->group(function () {
+        // Halaman Scanner
+        Route::get('/', [InterviewAttendanceController::class, 'index'])->name('index');
+        Route::post('/process', [InterviewAttendanceController::class, 'processScan'])->name('process');
+        
+        // WA Gateway
+        Route::post('/send-qr/{id}', [InterviewAttendanceController::class, 'sendQrToWa'])->name('send_qr');
+        Route::post('/remind/{id}', [InterviewAttendanceController::class, 'sendReminder'])->name('remind');
+        Route::post('/mass-remind', [InterviewAttendanceController::class, 'massRemind'])->name('mass_remind');
+
+        // Rekapitulasi
+        Route::get('/recap', [InterviewAttendanceController::class, 'recap'])->name('recap');
+    });
+
 });
 
 require __DIR__.'/auth.php';
