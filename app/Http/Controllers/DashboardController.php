@@ -14,13 +14,33 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. STATISTIK KARTU (Realtime)
-        // Menghitung santri berdasarkan kolom 'status' yang baru ditambahkan
+        // ==========================================
+        // 1. STATISTIK KARTU (DIPERBAIKI)
+        // ==========================================
+        
         $totalSantri = Candidate::count();
-        $santriLulus = Candidate::where('status', 'Lulus')->count();
-        $santriBaru = Candidate::where('status', 'Baru')->count();
 
+        // [FIX] Menggunakan logika fleksibel (LIKE) agar menangkap 'Lulus Administrasi', 'Diterima', dll.
+        // Kita cek kolom 'status_seleksi' (sesuai modul interview) ATAU 'status' (jika ada kolom lama)
+        $santriLulus = Candidate::where(function($q) {
+            $q->where('status_seleksi', 'LIKE', '%Lulus%')
+              ->orWhere('status_seleksi', 'LIKE', '%Diterima%')
+              ->orWhere('status_seleksi', 'LIKE', '%Approved%')
+              // Opsional: Cek kolom 'status' juga untuk backward compatibility
+              ->orWhere('status', 'LIKE', '%Lulus%'); 
+        })->count();
+
+        // [FIX] Santri Baru biasanya statusnya 'Baru' atau 'Pending'
+        $santriBaru = Candidate::where(function($q) {
+            $q->where('status_seleksi', 'Pending')
+              ->orWhere('status', 'Baru');
+        })->count();
+
+
+        // ==========================================
         // 2. KEUANGAN (Total Saldo)
+        // ==========================================
+        
         // Pemasukan: Total nominal yang sudah dibayar di tabel tagihan
         $totalPemasukan = CandidateBill::sum('nominal_terbayar');
         
@@ -29,17 +49,18 @@ class DashboardController extends Controller
         
         $saldoSaatIni = $totalPemasukan - $totalPengeluaran;
 
-        // 3. GRAFIK TAHUN INI (Grafik Pemasukan vs Pengeluaran)
+
+        // ==========================================
+        // 3. GRAFIK TAHUN INI
+        // ==========================================
         $currentYear = date('Y');
         $months = range(1, 12);
         
-        // Data Grafik Pemasukan (Query per Bulan)
-        // Jika tabel transactions belum dipakai, kita ambil dari updated_at candidate_bills sebagai fallback
-        // Tapi idealnya dari tabel transactions.
+        // Data Grafik Pemasukan
         $incomeData = DB::table('candidate_bills')
             ->selectRaw('MONTH(updated_at) as month, SUM(nominal_terbayar) as total')
             ->whereYear('updated_at', $currentYear)
-            ->where('nominal_terbayar', '>', 0) // Hanya yang sudah bayar
+            ->where('nominal_terbayar', '>', 0)
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();
@@ -54,12 +75,16 @@ class DashboardController extends Controller
         // Mapping data agar urut Jan-Des (Isi 0 jika kosong)
         $chartDataIncome = [];
         $chartDataExpense = [];
+        
         foreach ($months as $month) {
             $chartDataIncome[] = $incomeData[$month] ?? 0;
             $chartDataExpense[] = $expenseData[$month] ?? 0;
         }
 
+
+        // ==========================================
         // 4. DATA TABEL TERBARU
+        // ==========================================
         $latestCandidates = Candidate::latest()->take(5)->get();
         $latestExpenses = Expense::with('user')->latest()->take(5)->get();
 

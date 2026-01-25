@@ -7,9 +7,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
 
 // Import Controller Fitur Utama
-use App\Http\Controllers\VerificationController;      // [BARU] Untuk User Upload Berkas
+use App\Http\Controllers\VerificationController;      // Untuk User Upload Berkas
 use App\Http\Controllers\RegistrationController;      // Untuk User Isi Biodata
-use App\Http\Controllers\AdminVerificationController; // [BARU] Admin ACC Berkas
+use App\Http\Controllers\AdminVerificationController; // Admin ACC Berkas
 
 // Import Controller Admin Manajemen
 use App\Http\Controllers\AdminCandidateController;
@@ -17,6 +17,7 @@ use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\AdminFinanceController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\PaymentTypeController;
+use App\Http\Controllers\DormitoryController; // [PENTING] Import Controller Asrama
 
 /*
 |--------------------------------------------------------------------------
@@ -32,33 +33,24 @@ use App\Http\Controllers\PaymentTypeController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // --- TAHAP 1: VERIFIKASI BERKAS (ENTRY POINT) ---
-// Halaman untuk download template & upload berkas bertanda tangan
 Route::get('/pendaftaran/verifikasi', [VerificationController::class, 'showUploadForm'])->name('pendaftaran.create');
-// Proses simpan berkas verifikasi
 Route::post('/pendaftaran/verifikasi', [VerificationController::class, 'store'])->name('pendaftaran.verify.store');
-
 Route::get('/pendaftaran/verifikasi/sukses', [VerificationController::class, 'showSuccess'])->name('pendaftaran.verify.success');
 
 // --- TAHAP 2: PENGISIAN FORMULIR (LINK DARI WA) ---
-// Halaman form biodata (Hanya bisa diakses jika punya Token valid dari WA)
 Route::get('/pendaftaran/form/{token}', [RegistrationController::class, 'showForm'])->name('pendaftaran.form');
-// Proses simpan data santri
 Route::post('/pendaftaran/store', [RegistrationController::class, 'store'])->name('pendaftaran.store');
-
-// Halaman Sukses
 Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->name('pendaftaran.sukses');
 
 
 // ROUTE KHUSUS WAWANCARA (Tanpa Login, Pakai Token)
 Route::prefix('e-interview')->name('interview.')->group(function () {
-    
-    // PERBAIKAN: Name routenya diganti jadi 'panitia.index'
+    // Panitia
     Route::get('/panitia/{token}', [App\Http\Controllers\PanitiaInterviewController::class, 'index'])->name('panitia.index');
-    
     Route::get('/panitia/{token}/form/{candidate_id}', [App\Http\Controllers\PanitiaInterviewController::class, 'form'])->name('panitia.form');
     Route::post('/panitia/{token}/store/{candidate_id}', [App\Http\Controllers\PanitiaInterviewController::class, 'store'])->name('panitia.store');
 
-    // [BARU] 2. SANTRI (ASESMEN MANDIRI)
+    // Santri (Asesmen Mandiri)
     Route::get('/santri/login', [App\Http\Controllers\SantriInterviewController::class, 'login'])->name('santri.login');
     Route::post('/santri/check', [App\Http\Controllers\SantriInterviewController::class, 'check'])->name('santri.check');
     Route::get('/santri/form', [App\Http\Controllers\SantriInterviewController::class, 'form'])->name('santri.form');
@@ -82,12 +74,12 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // --- [BARU] MANAJEMEN VERIFIKASI BERKAS ---
+    // --- MANAJEMEN VERIFIKASI BERKAS ---
     Route::get('/admin/verifikasi', [AdminVerificationController::class, 'index'])->name('admin.verifications.index');
     Route::post('/admin/verifikasi/{id}/approve', [AdminVerificationController::class, 'approve'])->name('admin.verifications.approve');
     Route::post('/admin/verifikasi/{id}/reject', [AdminVerificationController::class, 'reject'])->name('admin.verifications.reject');
 
-    // --- PENGATURAN PPDB (BANNER, GALERI, TEMPLATE) ---
+    // --- PENGATURAN PPDB ---
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/pengaturan', [SettingController::class, 'update'])->name('admin.settings.update');
     Route::delete('/admin/settings/gallery', [SettingController::class, 'deleteGallery'])->name('admin.settings.delete_gallery');
@@ -102,20 +94,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/santri', [AdminCandidateController::class, 'index'])->name('admin.candidates.index');
     Route::post('/admin/keuangan/export-setor', [AdminFinanceController::class, 'exportDeposit'])->name('admin.finance.export_deposit');
     
-    // (PENTING: Route Export harus SEBELUM route {id} agar tidak 404)
     Route::get('/admin/santri/export', [AdminCandidateController::class, 'export'])->name('admin.candidates.export');
-    
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
     Route::post('/admin/santri/store', [AdminCandidateController::class, 'store'])->name('admin.candidates.store');
-    
-    // Route dengan Wildcard {id} ditaruh di bawah
+
+    // Route Wildcard Santri
     Route::get('/admin/santri/{id}', [AdminCandidateController::class, 'show'])->name('admin.candidates.show');
     Route::get('/admin/santri/{id}/edit', [AdminCandidateController::class, 'edit'])->name('admin.candidates.edit');
     Route::put('/admin/santri/{id}', [AdminCandidateController::class, 'update'])->name('admin.candidates.update');
-    Route::delete('/admin/santri/{id}', [AdminCandidateController::class, 'destroy'])->name('admin.candidates.destroy'); // Tambahan delete
-    
+    Route::delete('/admin/santri/{id}', [AdminCandidateController::class, 'destroy'])->name('admin.candidates.destroy');
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
+
+    // --- [BARU] MANAJEMEN ASRAMA ---
+    // Menggunakan prefix group agar nama routenya konsisten 'admin.dormitories.*'
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('dormitories', DormitoryController::class)->only(['index', 'store', 'destroy']);
+        
+        // Route untuk tombol "Distribusi Otomatis"
+        Route::post('dormitories/auto-distribute', [DormitoryController::class, 'autoDistribute'])->name('dormitories.distribute');
+    });
 
     // --- TRANSAKSI PEMBAYARAN ---
     Route::post('/admin/santri/{id}/pay', [AdminTransactionController::class, 'store'])->name('admin.transactions.store');
@@ -126,20 +124,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/keuangan', [AdminFinanceController::class, 'store'])->name('admin.finance.store');
     Route::delete('/admin/keuangan/{id}', [AdminFinanceController::class, 'destroy'])->name('admin.finance.destroy');
 
+    // --- SELEKSI & WAWANCARA (ADMIN) ---
     Route::prefix('admin/interview')->name('admin.interview.')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\InterviewDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/result/{id}', [App\Http\Controllers\InterviewDashboardController::class, 'result'])->name('result');
-    Route::get('/export', [App\Http\Controllers\InterviewDashboardController::class, 'exportExcel'])->name('export');
-    Route::get('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'index'])->name('questions.index');
-    Route::post('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'store'])->name('questions.store');
-    Route::delete('/questions/{id}', [App\Http\Controllers\InterviewQuestionController::class, 'destroy'])->name('questions.destroy');
-    // SESI & QR CODE
-    Route::get('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'index'])->name('sessions.index');
-    Route::post('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'store'])->name('sessions.store');
-    Route::patch('/sessions/{id}/toggle', [App\Http\Controllers\InterviewSessionController::class, 'toggle'])->name('sessions.toggle');
-    
-    Route::get('/result/{id}/print', [App\Http\Controllers\InterviewDashboardController::class, 'printResult'])->name('result.print');
-});
+        Route::get('/dashboard', [App\Http\Controllers\InterviewDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/result/{id}', [App\Http\Controllers\InterviewDashboardController::class, 'result'])->name('result');
+        Route::get('/export', [App\Http\Controllers\InterviewDashboardController::class, 'exportExcel'])->name('export');
+        
+        // Questions
+        Route::get('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'index'])->name('questions.index');
+        Route::post('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'store'])->name('questions.store');
+        Route::delete('/questions/{id}', [App\Http\Controllers\InterviewQuestionController::class, 'destroy'])->name('questions.destroy');
+        
+        // Sessions
+        Route::get('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'index'])->name('sessions.index');
+        Route::post('/sessions', [App\Http\Controllers\InterviewSessionController::class, 'store'])->name('sessions.store');
+        Route::patch('/sessions/{id}/toggle', [App\Http\Controllers\InterviewSessionController::class, 'toggle'])->name('sessions.toggle');
+        
+        Route::get('/result/{id}/print', [App\Http\Controllers\InterviewDashboardController::class, 'printResult'])->name('result.print');
+    });
 });
 
 require __DIR__.'/auth.php';

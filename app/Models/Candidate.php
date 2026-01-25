@@ -62,4 +62,9 @@ class Candidate extends Model
 
         return $hasSantri && $hasWali;
     }
+
+    public function dormitory()
+    {
+        return $this->belongsTo(Dormitory::class);
+    }
 }

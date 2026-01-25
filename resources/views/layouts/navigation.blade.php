@@ -57,6 +57,10 @@
                 {{ __('Data Santri') }}
             </x-nav-link-sidebar>
 
+            <x-nav-link-sidebar :href="route('admin.dormitories.index')" :active="request()->routeIs('admin.dormitories.*')" icon="dormitory">
+                {{ __('Manajemen Asrama') }}
+            </x-nav-link-sidebar>
+
             <x-nav-link-sidebar :href="route('admin.finance.index')" :active="request()->routeIs('admin.finance.*')" icon="cash">
                 {{ __('Keuangan') }}
             </x-nav-link-sidebar>

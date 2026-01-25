@@ -26,7 +26,7 @@ class SettingController extends Controller
         $generalKeys = [
             'nama_sekolah', 'alamat_sekolah', 'status_ppdb', 'tgl_buka', 'tgl_tutup', 
             'whatsapp_admin', 'pengumuman', 'nama_gelombang', 'deskripsi_banner',
-            'verification_active' 
+            'verification_active' , 'link_grup_wa_pondok',
         ];
 
         foreach ($generalKeys as $key) {

@@ -12,8 +12,8 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use App\Exports\CandidatesExport; 
 use Maatwebsite\Excel\Facades\Excel; 
-use Illuminate\Support\Facades\Http; // [WAJIB]
-use Illuminate\Support\Facades\Log;  // [WAJIB]
+use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Log;  
 
 class AdminCandidateController extends Controller
 {
@@ -41,6 +41,7 @@ class AdminCandidateController extends Controller
             }
         }
 
+        // Hapus with('dormitory') jika belum perlu ditampilkan di tabel ini
         $candidates = $query->latest()->paginate(10)->withQueryString();
 
         $kpi = [
@@ -71,7 +72,7 @@ class AdminCandidateController extends Controller
     {
         $request->validate([
             'nama_lengkap' => 'required',
-            'jenis_kelamin' => 'required',
+            'jenis_kelamin' => 'required|in:L,P',
             'jenjang' => 'required',
             'nisn' => 'nullable|unique:candidates,nisn', 
             'nik' => 'nullable|unique:candidates,nik',
@@ -80,6 +81,9 @@ class AdminCandidateController extends Controller
         DB::beginTransaction();
 
         try {
+            // [KOREKSI] SAYA HAPUS LOGIKA AUTO ASRAMA DISINI
+            // Karena penetapan asrama baru dilakukan setelah interview
+
             $candidate = Candidate::create([
                 'no_daftar' => 'OFF-' . date('Y') . date('His'),
                 'nisn' => $request->nisn,
@@ -96,7 +100,9 @@ class AdminCandidateController extends Controller
                 'asal_sekolah' => $request->asal_sekolah ?? '-', 
                 'tahun_masuk' => date('Y'),
                 'jalur_pendaftaran' => 'Offline',
-                'status_seleksi' => 'Lulus', 
+                'status_seleksi' => 'Lulus', // Lulus Administrasi/Daftar
+                
+                // dormitory_id dibiarkan NULL dulu
             ]);
 
             CandidateAddress::create([
@@ -140,6 +146,10 @@ class AdminCandidateController extends Controller
             }
 
             DB::commit();
+            
+            // Kirim WA Notifikasi (Lulus Administrasi)
+            $this->checkAndSendWA($candidate, 'Pending', 'Lulus');
+
             return redirect()->route('admin.candidates.show', $candidate->id)->with('success', 'Pendaftaran Offline Berhasil!');
 
         } catch (\Exception $e) {
@@ -150,7 +160,8 @@ class AdminCandidateController extends Controller
 
     public function show($id)
     {
-        $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions'])->findOrFail($id);
+        // Tetap load dormitory jaga-jaga kalau sudah diassign di tahap interview nanti
+        $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions', 'dormitory'])->findOrFail($id);
         return view('admin.candidates.show', compact('candidate'));
     }
     
@@ -159,16 +170,18 @@ class AdminCandidateController extends Controller
     {
         $candidate = Candidate::with('parent')->findOrFail($id);
         
-        $oldStatus = $candidate->status_seleksi; // Status Lama
-        $newStatus = $request->status_seleksi;   // Status Baru dari Input
+        $oldStatus = $candidate->status_seleksi; 
+        $newStatus = $request->status_seleksi;   
 
-        // Update Database
-        $candidate->update(['status_seleksi' => $newStatus]);
+        // [KOREKSI] HAPUS AUTO ASSIGN ASRAMA DI SINI
+        // Karena Admin hanya meluluskan Administrasi. Asrama nanti via Interview.
 
-        // CEK PERUBAHAN STATUS -> KIRIM WA
+        $candidate->status_seleksi = $newStatus;
+        $candidate->save();
+
         $this->checkAndSendWA($candidate, $oldStatus, $newStatus);
 
-        return back()->with('success', 'Status santri diperbarui. (Cek log jika WA tidak masuk)');
+        return back()->with('success', 'Status santri diperbarui.');
     }
 
     public function edit($id)
@@ -192,13 +205,9 @@ class AdminCandidateController extends Controller
         DB::beginTransaction();
 
         try {
-            // Ambil Data Lama (Termasuk Parent untuk No HP)
             $candidate = Candidate::with('parent')->findOrFail($id);
-            
-            // Simpan status lama sebelum di-update
             $oldStatus = $candidate->status_seleksi;
 
-            // Update Data Pribadi
             $candidate->update([
                 'nama_lengkap' => $request->nama_lengkap,
                 'nisn' => $request->nisn,
@@ -212,12 +221,9 @@ class AdminCandidateController extends Controller
                 'riwayat_penyakit' => $request->riwayat_penyakit,
                 'jenjang' => $request->jenjang,
                 'asal_sekolah' => $request->asal_sekolah,
-                // Pastikan input status_seleksi ada di form edit Anda
-                // Jika tidak ada di form edit, baris ini tidak akan mengubah status
                 'status_seleksi' => $request->status_seleksi ?? $candidate->status_seleksi, 
             ]);
 
-            // Ambil status baru setelah update
             $newStatus = $candidate->status_seleksi;
 
             $candidate->address()->update([
@@ -246,8 +252,6 @@ class AdminCandidateController extends Controller
 
             DB::commit();
 
-            // CEK PERUBAHAN STATUS -> KIRIM WA
-            // Kita panggil helper yang sama
             $this->checkAndSendWA($candidate, $oldStatus, $newStatus);
 
             return redirect()->route('admin.candidates.show', $id)->with('success', 'Data santri berhasil diperbarui!');
@@ -261,15 +265,11 @@ class AdminCandidateController extends Controller
     // --- HELPER LOGIKA WA ---
     private function checkAndSendWA($candidate, $oldStatus, $newStatus)
     {
-        // Debugging Log (Cek di storage/logs/laravel.log)
         Log::info("Cek Kirim WA: Old={$oldStatus}, New={$newStatus}");
-
-        // Normalisasi string (biar 'lulus' dan 'Lulus' dianggap sama)
+        
         $old = strtolower($oldStatus);
         $new = strtolower($newStatus);
 
-        // Jika status baru adalah 'lulus'/'diterima' DAN status lama BUKAN 'lulus'/'diterima'
-        // Artinya baru saja diluluskan
         if (in_array($new, ['lulus', 'diterima', 'approved']) && !in_array($old, ['lulus', 'diterima', 'approved'])) {
             $this->sendWhatsAppNotification($candidate);
         }
@@ -279,7 +279,6 @@ class AdminCandidateController extends Controller
     private function sendWhatsAppNotification($candidate)
     {
         try {
-            // A. Ambil Nomor HP (Prioritas Ayah, lalu Ibu)
             $rawNo = $candidate->parent->no_hp_ayah ?? $candidate->parent->no_hp_ibu;
             
             if (empty($rawNo)) {
@@ -287,7 +286,6 @@ class AdminCandidateController extends Controller
                 return;
             }
 
-            // B. Format Nomor (628...)
             $cleanNo = preg_replace('/[^0-9]/', '', $rawNo); 
             if (substr($cleanNo, 0, 1) == '0') {
                 $cleanNo = '62' . substr($cleanNo, 1);
@@ -296,27 +294,37 @@ class AdminCandidateController extends Controller
             }
             $chatId = $cleanNo . '@c.us';
 
-            // C. Ambil Nama Sekolah
             $namaSekolah = Setting::where('key', 'nama_sekolah')->value('value') ?? 'Pondok Pesantren';
             
-            // D. Pesan WA
+            // [KOREKSI] HANYA AMBIL LINK GRUP PONDOK (UMUM)
+            // TIDAK ADA LOGIKA ASRAMA DISINI
+            $linkGrupPondok = Setting::where('key', 'link_grup_wa_pondok')->value('value');
+
+            // Susun Info Tambahan
+            $infoTambahan = "";
+            
+            // Info Grup Pondok (Jika ada)
+            if (!empty($linkGrupPondok)) {
+                $infoTambahan .= "🔗 Grup Info Pondok: {$linkGrupPondok}\n";
+            }
+
             $pesanWA = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
                      . "Yth. Bapak/Ibu Wali Santri,\n"
-                     . "Kami ucapkan *SELAMAT!* Berdasarkan hasil verifikasi/seleksi, calon santri:\n\n"
+                     . "Kami ucapkan *SELAMAT!* Berdasarkan verifikasi data, calon santri:\n\n"
                      . "👤 Nama: *{$candidate->nama_lengkap}*\n"
                      . "📝 No. Daftar: *{$candidate->no_daftar}*\n"
-                     . "🎓 Jenjang: *{$candidate->jenjang}*\n\n"
-                     . "Dinyatakan *LULUS / DITERIMA* sebagai santri baru di *{$namaSekolah}*.\n\n"
+                     . "🎓 Jenjang: *{$candidate->jenjang}*\n"
+                     . "Dinyatakan *LULUS ADMINISTRASI* di *{$namaSekolah}*.\n\n"
+                     . $infoTambahan . "\n"
                      . "------------------------------------------------\n"
-                     . "ℹ️ *INFORMASI SELANJUTNYA*\n"
+                     . "ℹ️ *TAHAP SELANJUTNYA*\n"
                      . "------------------------------------------------\n"
-                     . "Silakan melakukan pendaftaran atau hubungi panitia untuk informasi lebih lanjut.\n\n"
+                     . "Silakan mengikuti tahapan seleksi tes/interview sesuai jadwal yang ditentukan.\n\n"
                      . "Terima kasih.\n"
                      . "Wassalamu'alaikum Warahmatullahi Wabarakatuh.";
 
             Log::info("Mencoba kirim WA ke: " . $chatId);
 
-            // E. Kirim API
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'), 
@@ -342,8 +350,6 @@ class AdminCandidateController extends Controller
         $candidate = Candidate::with(['address', 'parent'])->findOrFail($id);
         $settings = Setting::all()->pluck('value', 'key');
         
-        // Tangkap jenis surat dari URL (?type=administrasi atau ?type=tes)
-        // Defaultnya 'tes' (Lulus Akhir) jika tidak ada parameter
         $jenisSurat = $request->query('type', 'tes'); 
 
         return view('admin.candidates.print_card', compact('candidate', 'settings', 'jenisSurat'));
