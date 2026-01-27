@@ -25,7 +25,6 @@
                             Hubungkan Bluetooth
                         </button>
                     </div>
-                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-600 rounded-full blur-3xl opacity-20"></div>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -60,7 +59,7 @@
                             </span>
                         </div>
 
-                        <div class="border-t border-dashed border-gray-200 pt-6 text-left space-y-3">
+                        <div class="border-t border-dashed border-gray-200 pt-6 text-left space-y-4">
                             <div>
                                 <p class="text-[10px] text-gray-400 uppercase font-bold">Nama Santri</p>
                                 <p id="lblNama" class="font-bold text-gray-800 text-lg truncate">-</p>
@@ -73,6 +72,17 @@
                                 <div class="text-right">
                                     <p class="text-[10px] text-gray-400 uppercase font-bold">Waktu Hadir</p>
                                     <p id="lblWaktu" class="text-gray-600 font-medium">-</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs text-blue-600 font-bold uppercase">Ruang Santri:</span>
+                                    <span id="lblRuangSantri" class="text-xs font-bold text-gray-800">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-xs text-purple-600 font-bold uppercase">Ruang Wali:</span>
+                                    <span id="lblRuangWali" class="text-xs font-bold text-gray-800">-</span>
                                 </div>
                             </div>
                         </div>
@@ -98,35 +108,26 @@
         // --- VARIABLE GLOBAL ---
         let printCharacteristic = null;
         let isProcessing = false;
-        let lastData = null; // Menyimpan data terakhir untuk fitur cetak ulang
+        let lastData = null;
 
         // ==========================================================
-        // 1. LOGIKA KONEKSI BLUETOOTH PRINTER (Web Bluetooth API)
+        // 1. LOGIKA KONEKSI BLUETOOTH PRINTER
         // ==========================================================
         document.getElementById('connectBtn').addEventListener('click', async () => {
             try {
                 addLog('🔍 Mencari perangkat Bluetooth...', 'info');
-                
-                // Request Device
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }] // UUID Umum Thermal Printer
+                    filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
                 });
 
                 addLog(`🔄 Menghubungkan ke ${device.name}...`, 'info');
-                
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                
-                // Characteristic untuk Write Data
                 printCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
 
-                // Update UI Jika Berhasil
                 document.getElementById('printerName').innerHTML = `Terhubung: <span class="text-green-400 font-bold">${device.name}</span>`;
-                document.getElementById('connectBtn').classList.add('hidden'); // Sembunyikan tombol
+                document.getElementById('connectBtn').classList.add('hidden');
                 addLog('✅ Printer Berhasil Terhubung!', 'success');
-                
-                // Test Print Suara (Opsional)
-                // printText("Printer Ready!\n\n");
 
             } catch (error) {
                 console.error(error);
@@ -136,7 +137,7 @@
         });
 
         // ==========================================================
-        // 2. FUNGSI CETAK STRUK (ESC/POS COMMANDS)
+        // 2. FUNGSI CETAK STRUK (DENGAN RUANGAN)
         // ==========================================================
         async function printTicket(data) {
             if (!printCharacteristic) {
@@ -147,14 +148,13 @@
             try {
                 addLog('🖨️ Mencetak struk...', 'info');
 
-                // Konstanta ESC/POS
                 const ESC = '\u001B';
                 const GS = '\u001D';
                 const center = ESC + 'a' + '\u0001';
                 const left = ESC + 'a' + '\u0000';
                 const boldOn = ESC + 'E' + '\u0001';
                 const boldOff = ESC + 'E' + '\u0000';
-                const doubleSize = GS + '!' + '\u0011'; // 2x Height & Width
+                const doubleSize = GS + '!' + '\u0011'; 
                 const normalSize = GS + '!' + '\u0000';
 
                 let text = '';
@@ -167,8 +167,13 @@
                 // Detail
                 text += left + "Waktu   : " + data.waktu + "\n";
                 text += "No Reg  : " + data.no_daftar + "\n";
-                text += "Nama    : " + data.nama.substring(0, 20) + "\n"; // Potong nama panjang
+                text += "Nama    : " + data.nama.substring(0, 20) + "\n"; 
                 text += "Jenjang : " + data.jenjang + "\n";
+                text += "--------------------------------\n";
+                
+                // [BARU] Info Ruangan
+                text += "R. Santri: " + (data.r_santri || '-') + "\n";
+                text += "R. Wali  : " + (data.r_wali || '-') + "\n";
                 text += "--------------------------------\n";
                 
                 // Nomor Antrian (Besar)
@@ -178,9 +183,8 @@
                 // Footer
                 text += "--------------------------------\n";
                 text += "Mohon menunggu panggilan\n";
-                text += "dari panitia.\n\n\n\n"; // Feed lines agar kertas keluar
+                text += "dari panitia.\n\n\n\n";
 
-                // Kirim ke Printer
                 const encoder = new TextEncoder();
                 await printCharacteristic.writeValue(encoder.encode(text));
                 
@@ -191,7 +195,6 @@
             }
         }
 
-        // Fitur Cetak Ulang Manual
         function rePrintLast() {
             if(lastData) {
                 printTicket(lastData);
@@ -201,16 +204,15 @@
         }
 
         // ==========================================================
-        // 3. LOGIKA SCANNER & FETCH API
+        // 3. LOGIKA SCANNER (UPDATED)
         // ==========================================================
         function onScanSuccess(decodedText, decodedResult) {
-            if (isProcessing) return; // Mencegah double scan cepat
+            if (isProcessing) return;
 
             isProcessing = true;
             document.getElementById('loadingIndicator').classList.remove('hidden');
             addLog(`📸 QR Terdeteksi: ${decodedText}`, 'info');
 
-            // Kirim Data ke Controller Laravel
             fetch("{{ route('admin.attendance.process') }}", {
                 method: "POST",
                 headers: {
@@ -221,44 +223,41 @@
             })
             .then(response => response.json())
             .then(data => {
-                // Sembunyikan Loading
                 document.getElementById('loadingIndicator').classList.add('hidden');
 
                 if (data.status === 'error') {
-                    // Jika Santri Tidak Ditemukan
                     showStatus('❌ DATA TIDAK DITEMUKAN', 'red');
                     addLog(data.message, 'error');
                     playAudio('error');
                     alert(data.message);
                 } else {
-                    // Update Tampilan Kartu
+                    // Update Tampilan (Termasuk Ruangan)
                     document.getElementById('lblAntrian').innerText = data.data.antrian;
                     document.getElementById('lblNama').innerText = data.data.nama;
                     document.getElementById('lblNoDaftar').innerText = data.data.no_daftar;
                     document.getElementById('lblWaktu').innerText = data.data.waktu;
                     
-                    // Simpan data untuk tombol re-print
+                    // [BARU] Update Label Ruangan di Layar
+                    document.getElementById('lblRuangSantri').innerText = data.data.r_santri || '-';
+                    document.getElementById('lblRuangWali').innerText = data.data.r_wali || '-';
+                    
                     lastData = data.data;
 
                     if (data.status === 'success') {
-                        // SUKSES BARU
                         showStatus('✅ BERHASIL CHECK-IN', 'green');
-                        addLog(`Santri ${data.data.nama} check-in. Antrian: ${data.data.antrian}`, 'success');
+                        addLog(`Santri ${data.data.nama} check-in.`, 'success');
                         playAudio('success');
                         
                         // Auto Print
                         printTicket(data.data);
 
                     } else if (data.status === 'warning') {
-                        // SUDAH PERNAH SCAN
                         showStatus('⚠️ SUDAH CHECK-IN SEBELUMNYA', 'yellow');
-                        addLog(`Peringatan: Santri ${data.data.nama} scan ulang.`, 'warning');
+                        addLog(`Peringatan: Santri scan ulang.`, 'warning');
                         playAudio('warning');
-                        // Tidak auto print, tapi bisa print ulang manual
                     }
                 }
 
-                // Jeda 3 detik sebelum bisa scan lagi
                 setTimeout(() => { isProcessing = false; }, 3000);
             })
             .catch(err => {
@@ -269,23 +268,13 @@
             });
         }
 
-        function onScanFailure(error) {
-            // handle scan failure, usually better to ignore and keep scanning.
-            // console.warn(`Code scan error = ${error}`);
-        }
-
-        // Inisialisasi Scanner
+        // Setup Scanner
         let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: {width: 250, height: 250} },
-            /* verbose= */ false
+            "reader", { fps: 10, qrbox: {width: 250, height: 250} }, false
         );
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        html5QrcodeScanner.render(onScanSuccess, (error) => {});
 
-
-        // ==========================================================
-        // 4. UTILITY FUNCTIONS (Log, UI, Audio)
-        // ==========================================================
+        // --- UTILS ---
         function addLog(msg, type) {
             const logArea = document.getElementById('logArea');
             let color = 'text-gray-300';
@@ -300,8 +289,6 @@
         function showStatus(text, color) {
             const badge = document.getElementById('statusBadge');
             badge.innerText = text;
-            
-            // Reset classes
             badge.className = 'px-3 py-1 rounded-full text-xs font-bold transition-all duration-300';
             
             if(color === 'green') badge.classList.add('bg-green-100', 'text-green-700');
@@ -311,9 +298,7 @@
         }
 
         function playAudio(type) {
-            // Opsional: Bisa tambahkan file audio beep.mp3 di public folder
-            // const audio = new Audio('/sounds/' + type + '.mp3');
-            // audio.play().catch(e => console.log('Audio play blocked'));
+            // Opsional: audio.play()
         }
     </script>
 </x-app-layout>

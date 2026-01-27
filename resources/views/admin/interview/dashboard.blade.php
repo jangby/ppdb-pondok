@@ -8,7 +8,7 @@
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-            {{-- 1. MENU OPERASIONAL HARI-H (BARU) --}}
+            {{-- 1. MENU OPERASIONAL HARI-H --}}
             <div>
                 <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
                     <span class="bg-red-100 text-red-600 p-1.5 rounded-lg">
@@ -42,7 +42,7 @@
                     </a>
 
                     {{-- Tombol Loket Panggilan --}}
-                    <a href="{{ route('public.queue.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-cyan-500 hover:shadow-md transition flex items-center gap-4">
+                    <a href="{{ route('public.queue.index') }}" target="_blank" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-cyan-500 hover:shadow-md transition flex items-center gap-4">
                         <div class="p-4 bg-cyan-100 text-cyan-600 rounded-xl group-hover:bg-cyan-600 group-hover:text-white transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
                         </div>
@@ -67,7 +67,7 @@
 
             <hr class="border-gray-100">
 
-            {{-- 2. MANAJEMEN DATA (LAMA) --}}
+            {{-- 2. MANAJEMEN DATA & PERSIAPAN --}}
             <div>
                 <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
                     <span class="bg-blue-100 text-blue-600 p-1.5 rounded-lg">
@@ -77,6 +77,19 @@
                 </h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    {{-- [BARU] MANAJEMEN RUANGAN TES --}}
+                    <a href="{{ route('admin.test_rooms.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-yellow-500 hover:shadow-md transition flex items-center gap-4">
+                        <div class="p-4 bg-yellow-100 text-yellow-600 rounded-xl group-hover:bg-yellow-600 group-hover:text-white transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">Ruang Tes</h3>
+                            <p class="text-[10px] text-gray-500">Atur ruangan & kapasitas.</p>
+                        </div>
+                    </a>
+
+                    {{-- Bank Soal --}}
                     <a href="{{ route('admin.interview.questions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-500 hover:shadow-md transition flex items-center gap-4">
                         <div class="p-4 bg-purple-100 text-purple-600 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -87,6 +100,7 @@
                         </div>
                     </a>
 
+                    {{-- Sesi Panitia --}}
                     <a href="{{ route('admin.interview.sessions.index') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 hover:shadow-md transition flex items-center gap-4">
                         <div class="p-4 bg-blue-100 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
@@ -97,6 +111,7 @@
                         </div>
                     </a>
 
+                    {{-- QR Santri --}}
                     <div class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-orange-500 hover:shadow-md transition flex items-center gap-4 cursor-pointer" 
                          onclick="window.open('https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ route('interview.santri.login') }}', '_blank')">
                         <div class="p-4 bg-orange-100 text-orange-600 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition">
@@ -108,6 +123,7 @@
                         </div>
                     </div>
 
+                    {{-- Export Data --}}
                     <a href="{{ route('admin.interview.export') }}" class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition flex items-center gap-4">
                         <div class="p-4 bg-emerald-100 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -120,7 +136,7 @@
                 </div>
             </div>
 
-            {{-- 3. KPI & GRAFIK (LAMA) --}}
+            {{-- 3. KPI & GRAFIK --}}
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {{-- Statistik Progress --}}

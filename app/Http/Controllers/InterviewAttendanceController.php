@@ -30,24 +30,25 @@ class InterviewAttendanceController extends Controller
         }
 
         // 2. GENERATE NOMOR ANTRIAN BARU
-        // Ambil antrian terakhir hari ini
-        $today = Carbon::today();
+        $today = \Carbon\Carbon::today();
         $lastQueue = Candidate::whereDate('waktu_hadir', $today)->max('nomor_antrian');
-        
-        // Berikan nomor selanjutnya
         $newQueue = $lastQueue ? $lastQueue + 1 : 1;
 
-        // 3. UPDATE DATA (PERBAIKAN DISINI)
+        // 3. UPDATE DATA
         $candidate->update([
-            'waktu_hadir'   => now(),       // Update waktu datang terbaru
-            'nomor_antrian' => $newQueue,   // Update nomor antrian baru
-            
-            // --- RESET STATUS PANGGILAN ---
-            'waktu_panggil'  => null, // PENTING: Kosongkan agar bisa dipanggil lagi
-            'dipanggil_oleh' => null  // Opsional: Reset nama pemanggil sebelumnya
+            'waktu_hadir'   => now(),
+            'nomor_antrian' => $newQueue,
+            'waktu_panggil'  => null, // Reset status panggil
+            'dipanggil_oleh' => null
         ]);
 
-        // 4. KIRIM RESPONSE SUKSES
+        // ========================================================
+        // PERBAIKAN DISINI: LOAD RELASI RUANGAN
+        // ========================================================
+        // Kita paksa sistem untuk mengambil data santri_room dan wali_room
+        $candidate->load(['santri_room', 'wali_room']); 
+
+        // 4. KIRIM RESPONSE KE JAVASCRIPT
         return response()->json([
             'status' => 'success',
             'message' => 'Berhasil! Cetak Antrian Baru.',
@@ -57,11 +58,13 @@ class InterviewAttendanceController extends Controller
                 'jenjang'   => $candidate->jenjang,
                 'antrian'   => $newQueue,
                 'waktu'     => now()->format('d/m/Y H:i'),
-                'is_new'    => true
+                
+                // Ambil Nama Ruangan (Gunakan operator null safe ? :)
+                'r_santri'  => $candidate->santri_room ? $candidate->santri_room->nama_ruangan : '-',
+                'r_wali'    => $candidate->wali_room   ? $candidate->wali_room->nama_ruangan   : '-',
             ]
         ]);
     }
-
 
     // =================================================================
     // 2. FITUR KIRIM WA (LINK KARTU TES)
@@ -70,14 +73,23 @@ class InterviewAttendanceController extends Controller
     // Dipanggil dari Tombol Ungu di Tabel Santri
     public function sendQrToWa($id)
     {
-        $candidate = Candidate::with('parent')->findOrFail($id);
+        // 1. Load relasi 'santri_room' dan 'wali_room'
+        $candidate = Candidate::with(['parent', 'santri_room', 'wali_room'])->findOrFail($id);
         
-        // Buat Link ke Halaman Kartu Publik
+        // 2. Ambil Nama Ruangan (Handle jika belum diset/null)
+        $ruangSantri = $candidate->santri_room ? $candidate->santri_room->nama_ruangan : 'Cek di Papan Pengumuman';
+        $ruangWali   = $candidate->wali_room   ? $candidate->wali_room->nama_ruangan   : 'Cek di Papan Pengumuman';
+
+        // 3. Buat Link
         $linkKartu = route('public.kartu_tes', $candidate->no_daftar);
         
+        // 4. Susun Pesan (Menampilkan 2 Lokasi)
         $message = "*UNDANGAN WAWANCARA & TES*\n\n" .
-                   "Putra/i: *{$candidate->nama_lengkap}*\n" .
+                   "Santri/ah: *{$candidate->nama_lengkap}*\n" .
                    "No. Daftar: *{$candidate->no_daftar}*\n\n" .
+                   "📍 *LOKASI TES:*\n" .
+                   "👤 Santri: *{$ruangSantri}*\n" .
+                   "👥 Wali: *{$ruangWali}*\n\n" .
                    "Silakan klik link di bawah ini untuk melihat *Kartu Tes / QR Code* Anda:\n" .
                    "👇👇👇\n" .
                    "$linkKartu\n" .
@@ -87,7 +99,7 @@ class InterviewAttendanceController extends Controller
 
         $this->sendWaLink($candidate, $message);
 
-        return back()->with('success', 'Link Kartu Tes berhasil dikirim ke WA Wali.');
+        return back()->with('success', 'Link Kartu Tes & Info Ruangan berhasil dikirim ke WA Wali.');
     }
 
     // Dipanggil dari Tombol Lonceng (Pengingat)

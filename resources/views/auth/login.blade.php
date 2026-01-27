@@ -8,6 +8,9 @@
     {{-- Tailwind CSS --}}
     <script src="https://cdn.tailwindcss.com"></script>
     
+    {{-- Animate.css --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
     {{-- Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -19,9 +22,9 @@
 
     <div class="min-h-screen flex">
         
+        {{-- KIRI: BACKGROUND --}}
         <div class="hidden md:flex md:w-1/2 bg-green-900 relative justify-center items-center overflow-hidden">
             <div class="absolute inset-0 z-0">
-                {{-- Ganti URL ini dengan foto kegiatan santri/masjid --}}
                 <img src="https://images.unsplash.com/photo-1564959130747-897fb406b9dc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" alt="Pesantren Background" class="w-full h-full object-cover opacity-40">
             </div>
             
@@ -41,6 +44,7 @@
             </div>
         </div>
 
+        {{-- KANAN: FORM LOGIN --}}
         <div class="w-full md:w-1/2 flex justify-center items-center bg-white p-8">
             <div class="w-full max-w-md">
                 
@@ -59,16 +63,6 @@
                     </div>
                 @endif
 
-                @if ($errors->any())
-                    <div class="mb-4 bg-red-50 p-3 rounded-lg border border-red-200">
-                        <ul class="text-sm text-red-600 space-y-1">
-                            @foreach ($errors->all() as $error)
-                                <li>• {{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('login') }}" class="space-y-6">
                     @csrf
 
@@ -80,7 +74,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                                 </svg>
                             </div>
-                            <input id="email" type="email" name="email" :value="old('email')" required autofocus 
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus 
                                 class="pl-10 block w-full rounded-lg border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-3 transition ease-in-out duration-150 border" placeholder="admin@pesantren.com">
                         </div>
                     </div>
@@ -119,12 +113,100 @@
                 </form>
 
                 <div class="mt-8 text-center">
-                    <a href="{{ route('home') }}" class="text-sm text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition">
+                    <a href="/" class="text-sm text-gray-400 hover:text-gray-600 flex items-center justify-center gap-1 transition">
                         &larr; Kembali ke Website Utama
                     </a>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- SCRIPT SWEETALERT --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // Kita gunakan Blade untuk mengecek error, tapi mengirim datanya ke variabel JS dulu
+        // agar sintaks tidak bentrok.
+        @if($errors->any())
+            const hasError = true;
+            // escape string pesan error agar aman
+            const errorMessage = "{!! addslashes($errors->first()) !!}"; 
+        @else
+            const hasError = false;
+            const errorMessage = "";
+        @endif
+
+        if (hasError) {
+            const errorString = errorMessage.toLowerCase();
+
+            // KONDISI 1: TERKUNCI (RATE LIMITER)
+            if (
+                errorString.includes('seconds') || 
+                errorString.includes('detik') || 
+                errorString.includes('try again') ||
+                errorString.includes('coba lagi')
+            ) {
+                // Ambil angka durasi
+                const numbers = errorMessage.match(/\d+/g);
+                let secondsLeft = numbers ? parseInt(numbers[0]) : 60; 
+
+                let timerInterval;
+                
+                Swal.fire({
+                    title: '⏳ TERLALU BANYAK PERCOBAAN',
+                    html: `
+                        <div class="mb-4 text-gray-600 font-medium">
+                            Sistem mengunci akun sementara.<br>
+                            Mohon tunggu hingga waktu habis.
+                        </div>
+                        <div class="text-6xl font-black text-red-600 font-mono tracking-widest my-4" id="timer-display">
+                            ${secondsLeft}
+                        </div>
+                        <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Detik Tersisa</div>
+                    `,
+                    icon: 'warning',
+                    timer: secondsLeft * 1000,
+                    timerProgressBar: true,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    backdrop: `rgba(0,0,0,0.85) left top no-repeat`,
+                    didOpen: () => {
+                        const b = Swal.getHtmlContainer().querySelector('#timer-display');
+                        timerInterval = setInterval(() => {
+                            const timeLeft = Math.ceil(Swal.getTimerLeft() / 1000);
+                            if(b) b.textContent = timeLeft;
+                        }, 100);
+                    },
+                    willClose: () => {
+                        clearInterval(timerInterval);
+                    }
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.timer) {
+                        Swal.fire({
+                            title: 'Gembok Terbuka 🔓',
+                            text: 'Waktu tunggu telah habis. Silakan coba login kembali.',
+                            icon: 'success',
+                            confirmButtonColor: '#16a34a',
+                            confirmButtonText: 'Oke, Saya Siap'
+                        });
+                    }
+                });
+
+            } 
+            // KONDISI 2: SALAH PASSWORD BIASA
+            else {
+                Swal.fire({
+                    title: 'Akses Ditolak!',
+                    text: 'Email atau Password yang Anda masukkan salah.',
+                    icon: 'error',
+                    confirmButtonText: 'Coba Lagi',
+                    confirmButtonColor: '#dc2626',
+                    showClass: { popup: 'animate__animated animate__shakeX' },
+                    hideClass: { popup: 'animate__animated animate__fadeOut' }
+                });
+            }
+        }
+    </script>
 </body>
 </html>

@@ -97,4 +97,26 @@ class AdminTransactionController extends Controller
 
         return $pdf->stream('Struk-' . $transaction->kode_transaksi . '.pdf');
     }
+
+    // Fungsi untuk kirim data JSON ke Printer Bluetooth
+    public function getDataForPrinter($id)
+    {
+        // Ambil data transaksi beserta data kandidatnya
+        $transaction = \App\Models\Transaction::with('candidate')->findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'invoice'   => $transaction->kode_transaksi ?? $transaction->id, 
+                'tanggal'   => $transaction->created_at->format('d/m/Y H:i'),
+                'nama'      => $transaction->candidate->nama_lengkap,
+                'no_daftar' => $transaction->candidate->no_daftar,
+                // Ambil detail pembayaran pertama sebagai 'Jenis', atau gabung jika banyak
+                'jenis'     => $transaction->details->first()->bill->payment_type->nama_pembayaran ?? 'Pembayaran',
+                'nominal'   => number_format($transaction->total_bayar, 0, ',', '.'),
+                'keterangan'=> $transaction->keterangan ?? '-',
+                'petugas'   => auth()->user()->name ?? 'Admin',
+            ]
+        ]);
+    }
 }

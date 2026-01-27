@@ -24,9 +24,44 @@ class AdminVerificationController extends Controller
 
         $data = Verification::findOrFail($id);
         
-        // Update Status
+        // Update Status Verifikasi
         $data->update(['status' => 'approved']);
-        Log::info("[WAHA DEBUG] Status data diubah menjadi 'approved'.");
+        Log::info("[WAHA DEBUG] Status Verifikasi diubah menjadi 'approved'.");
+
+        // --- TAMBAHAN: UPDATE STATUS SANTRI & RUANGAN TES ---
+        if ($data->candidate) {
+            $candidate = $data->candidate;
+            
+            // A. Update Status Seleksi
+            $candidate->update(['status_seleksi' => 'Lulus Administrasi']);
+
+            // B. Auto Assign Ruangan Santri (Jika belum ada)
+            if (!$candidate->santri_room_id) {
+                $targetSantri = \App\Models\TestRoom::where('jenis', 'Santri')
+                            ->withCount('candidates_santri')
+                            ->orderBy('candidates_santri_count', 'asc') // Cari yang paling sepi
+                            ->first();
+                
+                if ($targetSantri) {
+                    $candidate->update(['santri_room_id' => $targetSantri->id]);
+                    Log::info("[AUTO ROOM] Santri masuk ke ruangan: " . $targetSantri->nama_ruangan);
+                }
+            }
+
+            // C. Auto Assign Ruangan Wali (Jika belum ada)
+            if (!$candidate->wali_room_id) {
+                $targetWali = \App\Models\TestRoom::where('jenis', 'Wali')
+                            ->withCount('candidates_wali')
+                            ->orderBy('candidates_wali_count', 'asc') // Cari yang paling sepi
+                            ->first();
+                
+                if ($targetWali) {
+                    $candidate->update(['wali_room_id' => $targetWali->id]);
+                    Log::info("[AUTO ROOM] Wali masuk ke ruangan: " . $targetWali->nama_ruangan);
+                }
+            }
+        }
+        // -----------------------------------------------------
 
         // -------------------------------------------------------------
         // [LOGIKA BARU] PERSIAPAN DATA WA
@@ -73,9 +108,7 @@ class AdminVerificationController extends Controller
         
         // Format Nomor HP
         $chatId = $data->no_wa;
-        // Bersihkan karakter selain angka
         $chatId = preg_replace('/[^0-9]/', '', $chatId);
-        // Ubah 08xxx jadi 628xxx
         if (substr($chatId, 0, 1) == '0') {
             $chatId = '62' . substr($chatId, 1);
         }
@@ -101,10 +134,10 @@ class AdminVerificationController extends Controller
 
             if ($response->successful()) {
                 Log::info("[WAHA DEBUG] SUKSES! Pesan terkirim.");
-                return back()->with('success', 'Berkas disetujui & Link (Form + Grup WA) dikirim!');
+                return back()->with('success', 'Berkas disetujui, Ruangan Tes Ditetapkan & Link WA dikirim!');
             } else {
                 Log::error("[WAHA DEBUG] GAGAL! WAHA menolak request.");
-                return back()->with('error', 'Approved, tapi WA Gagal terkirim.');
+                return back()->with('error', 'Approved & Ruangan Tes OK, tapi WA Gagal terkirim.');
             }
 
         } catch (\Exception $e) {

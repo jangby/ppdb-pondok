@@ -67,4 +67,19 @@ class Candidate extends Model
     {
         return $this->belongsTo(Dormitory::class);
     }
+
+    public function test_room()
+{
+    return $this->belongsTo(TestRoom::class);
+}
+
+public function santri_room()
+    {
+        return $this->belongsTo(TestRoom::class, 'santri_room_id');
+    }
+
+    public function wali_room()
+    {
+        return $this->belongsTo(TestRoom::class, 'wali_room_id');
+    }
 }

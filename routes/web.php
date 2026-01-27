@@ -128,6 +128,8 @@ Route::middleware('auth')->group(function () {
     // --- TRANSAKSI PEMBAYARAN ---
     Route::post('/admin/santri/{id}/pay', [AdminTransactionController::class, 'store'])->name('admin.transactions.store');
     Route::get('/admin/transaksi/{id}/cetak', [AdminTransactionController::class, 'print'])->name('admin.transactions.print');
+    Route::get('/admin/transaksi/{id}/print-data', [App\Http\Controllers\AdminTransactionController::class, 'getDataForPrinter'])
+    ->name('admin.transactions.print_data');
 
     // --- KEUANGAN (PENGELUARAN) ---
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
@@ -167,6 +169,13 @@ Route::middleware('auth')->group(function () {
         // Rekapitulasi
         Route::get('/recap', [InterviewAttendanceController::class, 'recap'])->name('recap');
     });
+
+    // --- MANAJEMEN RUANGAN TES ---
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::resource('test_rooms', \App\Http\Controllers\TestRoomController::class)->only(['index', 'store', 'destroy']);
+    Route::get('test_rooms/{id}/print', [\App\Http\Controllers\TestRoomController::class, 'print'])->name('test_rooms.print');
+    Route::post('test_rooms/distribute', [\App\Http\Controllers\TestRoomController::class, 'autoDistribute'])->name('test_rooms.distribute');
+});
 
 });
 
