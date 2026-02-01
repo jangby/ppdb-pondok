@@ -48,6 +48,10 @@ Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->na
 // --- HALAMAN KARTU TES (PUBLIK) ---
 Route::get('/kartu-tes/{no_daftar}', [HomeController::class, 'kartuTes'])->name('public.kartu_tes');
 
+// Cek Rincian Keuangan (Publik via QR)
+Route::get('/cek-keuangan/{no_daftar}', [App\Http\Controllers\PublicFinanceController::class, 'show'])
+    ->name('public.finance.show');
+
 // --- LOKET PANGGILAN (MOBILE VIEW - TANPA LOGIN) ---
 Route::get('/loket-panggilan', [QueueController::class, 'publicIndex'])->name('public.queue.index');
 Route::post('/loket-panggilan/next', [QueueController::class, 'callNext'])->name('public.queue.next');
@@ -70,6 +74,9 @@ Route::prefix('e-interview')->name('interview.')->group(function () {
     Route::post('/santri/store', [App\Http\Controllers\SantriInterviewController::class, 'store'])->name('santri.store');
     Route::get('/santri/success', [App\Http\Controllers\SantriInterviewController::class, 'success'])->name('santri.success');
 });
+
+Route::post('/e-interview/scan-qr', [App\Http\Controllers\InterviewSessionController::class, 'scanQr'])
+    ->name('panitia.interview.scan');
 
 
 // =========================================================================

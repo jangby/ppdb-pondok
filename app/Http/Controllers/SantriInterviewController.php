@@ -10,56 +10,73 @@ use App\Models\Setting;   // [PENTING] Untuk Info Sekolah
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http; // [PENTING] Untuk WA
 use Illuminate\Support\Facades\Log;
+use App\Models\InterviewSession;
 
 class SantriInterviewController extends Controller
 {
     // Halaman Login Santri (Scan QR)
     public function login()
     {
+        // 1. CEK APAKAH ADA SESI YANG AKTIF?
+        $activeSession = InterviewSession::where('is_active', true)->first();
+
+        // 2. JIKA TIDAK ADA SESI AKTIF -> TAMPILKAN HALAMAN TUNGGU
+        if (!$activeSession) {
+            // PERBAIKAN: Sesuaikan dengan folder resources/views/interview/santri/wait.blade.php
+            return view('interview.santri.wait'); 
+        }
+
+        // 3. JIKA ADA SESI AKTIF -> TAMPILKAN LOGIN
+        // PERBAIKAN: Sesuaikan dengan folder resources/views/interview/santri/login.blade.php
         return view('interview.santri.login');
     }
 
-    // Cek No Pendaftaran
+    // Proses Cek Nomor Pendaftaran
     public function check(Request $request)
     {
-        $request->validate(['no_daftar' => 'required']);
+        $request->validate([
+            'no_daftar' => 'required|string'
+        ]);
 
+        // Cek lagi sesi (untuk keamanan ganda)
+        $activeSession = InterviewSession::where('is_active', true)->first();
+        if (!$activeSession) {
+            return back()->with('error', 'Sesi ujian belum dibuka oleh panitia.');
+        }
+
+        // Cari Santri
         $candidate = Candidate::where('no_daftar', $request->no_daftar)->first();
 
         if (!$candidate) {
-            return back()->with('error', 'Nomor pendaftaran tidak ditemukan.');
+            return back()->with('error', 'Nomor Pendaftaran tidak ditemukan.');
         }
 
-        // Simpan sesi santri
+        // Simpan sesi santri (login)
         session(['santri_id' => $candidate->id]);
+        session(['santri_nama' => $candidate->nama_lengkap]);
 
+        // Redirect ke form
         return redirect()->route('interview.santri.form');
     }
-
-    // Form Soal Santri
+    
+    // Halaman Form Soal
     public function form()
     {
-        if (!session()->has('santri_id')) {
+        if (!session('santri_id')) {
+            return redirect()->route('interview.santri.login');
+        }
+        
+        // Cek Sesi Lagi (Biar kalau ditutup tengah jalan, santri keluar)
+        $activeSession = InterviewSession::where('is_active', true)->first();
+        if (!$activeSession) {
             return redirect()->route('interview.santri.login');
         }
 
-        $candidate = Candidate::findOrFail(session('santri_id'));
-
-        // Cek apakah sudah pernah mengisi?
-        $hasFilled = InterviewAnswer::where('candidate_id', $candidate->id)
-                        ->whereHas('question', fn($q) => $q->where('target', 'Santri'))
-                        ->exists();
-
-        if ($hasFilled) {
-            return redirect()->route('interview.santri.success');
-        }
-
-        $questions = InterviewQuestion::where('target', 'Santri')
-                        ->where('is_active', true)
-                        ->orderBy('order')
-                        ->get();
-
-        return view('interview.santri.form', compact('candidate', 'questions'));
+        // Ambil Data Pertanyaan
+        $questions = \App\Models\InterviewQuestion::where('is_active', true)->get();
+        
+        // PERBAIKAN: Sesuaikan dengan folder resources/views/interview/santri/form.blade.php
+        return view('interview.santri.form', compact('questions'));
     }
 
     // Simpan Jawaban Santri

@@ -130,10 +130,10 @@
             if(idVoice) utterance.voice = idVoice;
 
             // 4. Mainkan (Bunyi Beep dulu kalau mau)
-            // chime.play(); 
-            // setTimeout(() => {
+            chime.play(); 
+            setTimeout(() => {
                 window.speechSynthesis.speak(utterance);
-            // }, 1000);
+            }, 1000);
         }
 
         // Memuat voice list saat halaman dibuka (kadang perlu delay di Chrome)

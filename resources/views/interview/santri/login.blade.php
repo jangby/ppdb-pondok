@@ -116,7 +116,7 @@
         {{-- Footer --}}
         <div class="mt-8 pt-6 border-t border-slate-200/60 w-full">
             <p class="text-[10px] text-slate-400 font-medium">
-                &copy; {{ date('Y') }} Panitia PPDB. <br>Harap jujur dalam mengisi data.
+                &copy; {{ date('Y') }} Panitia PSB. <br>Harap jujur dalam mengisi data.
             </p>
         </div>
     </div>

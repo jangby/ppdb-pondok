@@ -459,24 +459,27 @@
 
         // 2. FUNGSI CETAK STRUK PEMBAYARAN
         async function printReceipt(transactionId) {
-            // Cek koneksi dulu
             if (!printCharacteristic) {
-                alert('⚠️ Harap hubungkan Printer Thermal Bluetooth terlebih dahulu (Klik tombol di pojok kanan atas).');
+                alert('⚠️ Harap hubungkan Printer Thermal Bluetooth terlebih dahulu.');
                 return;
             }
 
-            // Ambil Data Transaksi dari Server
             try {
                 document.body.style.cursor = 'wait';
 
+                // 1. Ambil Data Transaksi
                 const response = await fetch(`/admin/transaksi/${transactionId}/print-data`);
                 const result = await response.json();
                 
                 if(result.status !== 'success') throw new Error("Gagal mengambil data transaksi");
-                
                 const data = result.data;
                 
-                // FORMAT ESC/POS UNTUK STRUK KEUANGAN
+                // 2. Siapkan Link untuk QR Code
+                // URL: https://domainanda.com/cek-keuangan/NO_DAFTAR
+                const qrUrl = window.location.origin + "/cek-keuangan/" + data.no_daftar;
+
+                // 3. Konfigurasi Printer (ESC/POS)
+                const encoder = new TextEncoder();
                 const ESC = '\u001B';
                 const GS = '\u001D';
                 const center = ESC + 'a' + '\u0001';
@@ -497,7 +500,7 @@
                 text += left;
                 text += "No Invoice : #" + data.invoice + "\n";
                 text += "Tanggal    : " + data.tanggal + "\n";
-                text += "Nama       : " + data.nama.substring(0, 20) + "\n"; // Potong jika kepanjangan
+                text += "Nama       : " + data.nama.substring(0, 20) + "\n";
                 text += "No Daftar  : " + data.no_daftar + "\n";
                 text += "--------------------------------\n";
 
@@ -511,11 +514,20 @@
                 text += "--------------------------------\n";
 
                 // --- FOOTER ---
-                text += left + "Penerima: " + data.petugas + "\n";
-                text += center + "\nSimpan struk ini sebagai\nbukti pembayaran yang sah.\n\n\n\n";
+                text += left + "Penerima: " + data.petugas + "\n\n";
+                
+                // --- INSTRUKSI QR ---
+                text += center + "Scan QR untuk melihat\n";
+                text += "SISA TAGIHAN & RINCIAN:\n";
+                
+                // Kirim teks utama dulu
+                await printCharacteristic.writeValue(encoder.encode(text));
 
-                // --- KIRIM KE PRINTER ---
-                const encoder = new TextEncoder();
+                // --- CETAK QR CODE (LINK KEUANGAN) ---
+                await printQRCode(qrUrl);
+
+                // --- FEED AKHIR ---
+                text = "\nSimpan struk ini sebagai\nbukti pembayaran yang sah.\n\n\n\n";
                 await printCharacteristic.writeValue(encoder.encode(text));
 
             } catch (error) {
@@ -524,6 +536,32 @@
             } finally {
                 document.body.style.cursor = 'default';
             }
+        }
+
+        // FUNGSI BANTUAN CETAK QR (NATIVE)
+        async function printQRCode(dataString) {
+            const storeLen = dataString.length + 3;
+            const pL = storeLen % 256;
+            const pH = Math.floor(storeLen / 256);
+
+            let cmdModel = new Uint8Array([29, 40, 107, 4, 0, 49, 65, 50, 0]);
+            let cmdSize = new Uint8Array([29, 40, 107, 3, 0, 49, 67, 6]); // Size 6
+            let cmdErr = new Uint8Array([29, 40, 107, 3, 0, 49, 69, 48]);
+            
+            let cmdStoreHeader = new Uint8Array([29, 40, 107, pL, pH, 49, 80, 48]);
+            let dataBytes = new TextEncoder().encode(dataString);
+            
+            let cmdStoreFull = new Uint8Array(cmdStoreHeader.length + dataBytes.length);
+            cmdStoreFull.set(cmdStoreHeader);
+            cmdStoreFull.set(dataBytes, cmdStoreHeader.length);
+
+            let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+
+            await printCharacteristic.writeValue(cmdModel);
+            await printCharacteristic.writeValue(cmdSize);
+            await printCharacteristic.writeValue(cmdErr);
+            await printCharacteristic.writeValue(cmdStoreFull);
+            await printCharacteristic.writeValue(cmdPrint);
         }
     </script>
 </x-app-layout>

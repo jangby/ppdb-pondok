@@ -111,7 +111,7 @@
         let lastData = null;
 
         // ==========================================================
-        // 1. LOGIKA KONEKSI BLUETOOTH PRINTER
+        // 1. KONEKSI BLUETOOTH PRINTER
         // ==========================================================
         document.getElementById('connectBtn').addEventListener('click', async () => {
             try {
@@ -137,74 +137,179 @@
         });
 
         // ==========================================================
-        // 2. FUNGSI CETAK STRUK (DENGAN RUANGAN)
+        // 2. LOGIKA CETAK 2 STRUK + DELAY
         // ==========================================================
-        async function printTicket(data) {
+        async function printFullSequence(data) {
             if (!printCharacteristic) {
                 addLog('⚠️ Data tersimpan, tapi Printer tidak terhubung.', 'warning');
                 return;
             }
 
             try {
-                addLog('🖨️ Mencetak struk...', 'info');
+                // TAHAP 1: CETAK STRUK ANTRIAN (UNTUK WALI)
+                addLog('🖨️ Mencetak Struk 1 (Antrian)...', 'info');
+                await printQueueTicket(data);
 
-                const ESC = '\u001B';
-                const GS = '\u001D';
-                const center = ESC + 'a' + '\u0001';
-                const left = ESC + 'a' + '\u0000';
-                const boldOn = ESC + 'E' + '\u0001';
-                const boldOff = ESC + 'E' + '\u0000';
-                const doubleSize = GS + '!' + '\u0011'; 
-                const normalSize = GS + '!' + '\u0000';
+                // TAHAP 2: JEDA 3 DETIK (UTK SOBEK KERTAS)
+                addLog('⏳ Menunggu 3 detik (Silakan sobek kertas)...', 'warning');
+                await new Promise(r => setTimeout(r, 3000)); 
 
-                let text = '';
+                // TAHAP 3: CETAK STRUK LOGIN (UNTUK SANTRI)
+                addLog('🖨️ Mencetak Struk 2 (Tiket Santri)...', 'info');
+                await printStudentTicket(data);
                 
-                // Header
-                text += center + boldOn + "BUKTI REGISTRASI ULANG\n" + boldOff;
-                text += "PPDB PONDOK PESANTREN\n";
-                text += "--------------------------------\n";
-                
-                // Detail
-                text += left + "Waktu   : " + data.waktu + "\n";
-                text += "No Reg  : " + data.no_daftar + "\n";
-                text += "Nama    : " + data.nama.substring(0, 20) + "\n"; 
-                text += "Jenjang : " + data.jenjang + "\n";
-                text += "--------------------------------\n";
-                
-                // [BARU] Info Ruangan
-                text += "R. Santri: " + (data.r_santri || '-') + "\n";
-                text += "R. Wali  : " + (data.r_wali || '-') + "\n";
-                text += "--------------------------------\n";
-                
-                // Nomor Antrian (Besar)
-                text += center + "NOMOR ANTRIAN ANDA\n";
-                text += doubleSize + boldOn + data.antrian + "\n" + normalSize + boldOff;
-                
-                // Footer
-                text += "--------------------------------\n";
-                text += "Mohon menunggu panggilan\n";
-                text += "dari panitia.\n\n\n\n";
-
-                const encoder = new TextEncoder();
-                await printCharacteristic.writeValue(encoder.encode(text));
-                
-                addLog('✅ Struk berhasil dicetak.', 'success');
+                addLog('✅ Semua struk berhasil dicetak.', 'success');
 
             } catch (error) {
                 addLog('❌ Error saat nge-print: ' + error, 'error');
             }
         }
 
+        // --- FUNGSI CETAK STRUK 1: ANTRIAN UMUM ---
+        async function printQueueTicket(data) {
+            const encoder = new TextEncoder();
+            
+            // Perintah ESC/POS Dasar
+            const ESC = '\u001B';
+            const GS = '\u001D';
+            const center = ESC + 'a' + '\u0001';
+            const left = ESC + 'a' + '\u0000';
+            const boldOn = ESC + 'E' + '\u0001';
+            const boldOff = ESC + 'E' + '\u0000';
+            const doubleSize = GS + '!' + '\u0011'; 
+            const normalSize = GS + '!' + '\u0000';
+
+            let text = '';
+            
+            // Header
+            text += center + boldOn + "BUKTI REGISTRASI\n" + boldOff;
+            text += "PSB PONDOK PESANTREN\n";
+            text += "--------------------------------\n";
+            
+            // Detail
+            text += left + "Waktu   : " + data.waktu + "\n";
+            text += "No Reg  : " + data.no_daftar + "\n";
+            text += "Nama    : " + data.nama.substring(0, 20) + "\n"; 
+            text += "Jenjang : " + data.jenjang + "\n";
+            text += "--------------------------------\n";
+            
+            // Info Ruangan
+            text += boldOn + "R. Santri: " + (data.r_santri || '-') + "\n";
+            text += "R. Wali  : " + (data.r_wali || '-') + boldOff + "\n";
+            text += "--------------------------------\n";
+            
+            // Nomor Antrian (Besar)
+            text += center + "NOMOR ANTRIAN ANDA\n";
+            text += doubleSize + boldOn + data.antrian + "\n" + normalSize + boldOff;
+            
+            // Footer
+            text += "--------------------------------\n";
+            text += "Simpan struk ini untuk\n";
+            text += "pemanggilan wali santri.\n\n"; // Jarak sebelum QR
+
+            // Kirim Teks Dulu
+            await printCharacteristic.writeValue(encoder.encode(text));
+
+            // CETAK QR CODE (No Daftar)
+            await printQRCode(data.no_daftar);
+
+            // Feed Akhir (Biar kertas keluar agak panjang buat disobek)
+            await printCharacteristic.writeValue(encoder.encode("\n\n\n"));
+        }
+
+        // --- FUNGSI CETAK STRUK 2: TIKET SANTRI ---
+        async function printStudentTicket(data) {
+            const encoder = new TextEncoder();
+            const ESC = '\u001B';
+            const GS = '\u001D';
+            const center = ESC + 'a' + '\u0001';
+            const left = ESC + 'a' + '\u0000';
+            const boldOn = ESC + 'E' + '\u0001';
+            const boldOff = ESC + 'E' + '\u0000';
+
+            // 1. Definisikan Link Halaman Login Ujian/Interview
+            // Pastikan Anda sudah punya route bernama 'interview.santri.login'
+            // Atau ganti manual string-nya, misal: "https://ppdb.sekolah.com/login-ujian"
+            const linkLogin = "{{ route('interview.santri.login') }}"; 
+
+            let text = '';
+
+            // --- HEADER ---
+            text += center + boldOn + "TIKET MASUK TES\n" + boldOff;
+            text += "--------------------------------\n";
+            
+            // --- IDENTITAS (Untuk dibaca siswa saat input manual) ---
+            text += left;
+            text += "Nama   : " + data.nama.substring(0, 20) + "\n";
+            text += "Jenjang: " + (data.jenjang || '-') + "\n";
+            text += "--------------------------------\n";
+            
+            // --- INSTRUKSI ---
+            text += center + "Scan QR di bawah ini untuk\n";
+            text += "membuka Halaman Ujian:\n\n";
+
+            await printCharacteristic.writeValue(encoder.encode(text));
+
+            // --- CETAK QR CODE (ISINYA LINK WEB) ---
+            // Printer akan otomatis generate QR yang berisi link tersebut
+            await printQRCode(linkLogin);
+
+            // --- USERNAME/PASSWORD INFO ---
+            text = "\n";
+            text += left + "Lalu masukkan No. Registrasi:\n";
+            text += center + boldOn + "\n" + data.no_daftar + "\n\n" + boldOff; // Dicetak besar biar mudah dibaca
+            
+            text += "SEMOGA SUKSES!\n\n\n\n"; // Feed akhir
+
+            await printCharacteristic.writeValue(encoder.encode(text));
+        }
+
+        // --- HELPER: GENERATE NATIVE ESC/POS QR CODE ---
+        async function printQRCode(dataString) {
+            // Perintah Native ESC/POS untuk QR Code
+            // Ini bekerja di sebagian besar printer thermal Bluetooth (VSC, Panda, Eppos, Xprinter)
+            
+            const storeLen = dataString.length + 3;
+            const pL = storeLen % 256;
+            const pH = Math.floor(storeLen / 256);
+
+            // 1. Set Model QR (Model 2)
+            let cmdModel = new Uint8Array([29, 40, 107, 4, 0, 49, 65, 50, 0]);
+            await printCharacteristic.writeValue(cmdModel);
+
+            // 2. Set Ukuran Module (Besar QR: 6-8 recommended)
+            let cmdSize = new Uint8Array([29, 40, 107, 3, 0, 49, 67, 8]); 
+            await printCharacteristic.writeValue(cmdSize);
+
+            // 3. Set Error Correction (Level M)
+            let cmdErr = new Uint8Array([29, 40, 107, 3, 0, 49, 69, 48]);
+            await printCharacteristic.writeValue(cmdErr);
+
+            // 4. Store Data
+            let cmdStoreHeader = new Uint8Array([29, 40, 107, pL, pH, 49, 80, 48]);
+            let dataBytes = new TextEncoder().encode(dataString);
+            
+            // Gabungkan Header Store + Data String
+            let cmdStoreFull = new Uint8Array(cmdStoreHeader.length + dataBytes.length);
+            cmdStoreFull.set(cmdStoreHeader);
+            cmdStoreFull.set(dataBytes, cmdStoreHeader.length);
+            await printCharacteristic.writeValue(cmdStoreFull);
+
+            // 5. Print QR Code
+            let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+            await printCharacteristic.writeValue(cmdPrint);
+        }
+
         function rePrintLast() {
             if(lastData) {
-                printTicket(lastData);
+                printFullSequence(lastData);
             } else {
                 alert("Belum ada data yang discan.");
             }
         }
 
         // ==========================================================
-        // 3. LOGIKA SCANNER (UPDATED)
+        // 3. LOGIKA SCANNER
         // ==========================================================
         function onScanSuccess(decodedText, decodedResult) {
             if (isProcessing) return;
@@ -237,7 +342,6 @@
                     document.getElementById('lblNoDaftar').innerText = data.data.no_daftar;
                     document.getElementById('lblWaktu').innerText = data.data.waktu;
                     
-                    // [BARU] Update Label Ruangan di Layar
                     document.getElementById('lblRuangSantri').innerText = data.data.r_santri || '-';
                     document.getElementById('lblRuangWali').innerText = data.data.r_wali || '-';
                     
@@ -248,8 +352,8 @@
                         addLog(`Santri ${data.data.nama} check-in.`, 'success');
                         playAudio('success');
                         
-                        // Auto Print
-                        printTicket(data.data);
+                        // AUTO PRINT 2 TIKET (SEQUENCE)
+                        printFullSequence(data.data);
 
                     } else if (data.status === 'warning') {
                         showStatus('⚠️ SUDAH CHECK-IN SEBELUMNYA', 'yellow');
@@ -281,6 +385,7 @@
             if(type === 'error') color = 'text-red-400 font-bold';
             if(type === 'success') color = 'text-green-400 font-bold';
             if(type === 'warning') color = 'text-yellow-400';
+            if(type === 'info') color = 'text-blue-400';
 
             const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
             logArea.innerHTML = `<div class="mb-1 ${color}">[${time}] ${msg}</div>` + logArea.innerHTML;
