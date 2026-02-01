@@ -354,4 +354,24 @@ class AdminCandidateController extends Controller
 
         return view('admin.candidates.print_card', compact('candidate', 'settings', 'jenisSurat'));
     }
+
+    public function destroy($id)
+    {
+        try {
+            $candidate = Candidate::findOrFail($id);
+            
+            // Hapus data (otomatis trigger 'booted' di Model untuk hapus relasi)
+            $candidate->delete();
+
+            // [PERBAIKAN DISINI]
+            // Jangan gunakan back(), karena halaman detailnya sudah hilang.
+            // Gunakan redirect ke route index (Halaman Tabel Data Santri)
+            return redirect()->route('admin.candidates.index')
+                ->with('success', 'Data santri berhasil dihapus permanen.');
+
+        } catch (\Exception $e) {
+            // Jika error, baru kita kembalikan ke halaman sebelumnya
+            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
 }

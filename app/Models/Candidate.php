@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Candidate extends Model
 {
@@ -81,5 +82,52 @@ public function santri_room()
     public function wali_room()
     {
         return $this->belongsTo(TestRoom::class, 'wali_room_id');
+    }
+
+    /**
+     * The "booted" method of the model.
+     * Logika Hapus Otomatis (Cascading Delete)
+     */
+    protected static function booted()
+    {
+        static::deleting(function ($candidate) {
+            // [URUTAN SANGAT PENTING] 
+            
+            // 1. Hapus Transaksi & Detailnya TERLEBIH DAHULU
+            // (Karena TransactionDetail punya FK ke CandidateBill, jadi detail harus hilang dulu sebelum bill dihapus)
+            foreach ($candidate->transactions()->get() as $transaction) {
+                $transaction->details()->delete(); // Hapus detail transaksi (memutus link ke tagihan)
+                $transaction->delete();            // Hapus header transaksi
+            }
+
+            // 2. Baru Hapus Tagihan (Bills)
+            // (Aman dihapus sekarang karena tidak ada transaction_details yang mengikatnya lagi)
+            $candidate->bills()->delete();
+
+            // 3. Hapus Data Relasi Lainnya
+            $candidate->address()->delete();
+            $candidate->parent()->delete();
+            $candidate->interview_answers()->delete();
+            
+            // 4. Hapus File Fisik (Jika Ada)
+            if (!empty($candidate->file_perjanjian)) {
+                \Illuminate\Support\Facades\Storage::delete($candidate->file_perjanjian);
+            }
+            
+            if (!empty($candidate->pas_foto)) {
+                \Illuminate\Support\Facades\Storage::delete($candidate->pas_foto);
+            }
+
+            // 5. Hapus Akun Login (User) jika terhubung
+            if ($candidate->user) {
+                $candidate->user->delete();
+            }
+        });
+    }
+
+    // Tambahkan ini agar tidak error "Undefined relationship"
+    public function verification()
+    {
+        return $this->hasOne(Verification::class);
     }
 }

@@ -10,19 +10,24 @@ class CandidateBill extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
-    // Milik siapa tagihan ini?
     public function candidate()
     {
         return $this->belongsTo(Candidate::class);
     }
 
-    // Tagihan jenis apa ini? (Gedung/Seragam)
     public function payment_type()
     {
         return $this->belongsTo(PaymentType::class);
     }
     
-    // Helper untuk menghitung sisa tagihan secara kodingan
+    // --- TAMBAHKAN INI ---
+    // Relasi ke Detail Transaksi (Agar bisa dihapus otomatis)
+    public function transaction_details()
+    {
+        return $this->hasMany(TransactionDetail::class);
+    }
+    // ---------------------
+
     public function getSisaTagihanAttribute()
     {
         return $this->nominal_tagihan - $this->nominal_terbayar;
