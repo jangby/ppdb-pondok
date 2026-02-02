@@ -6,6 +6,8 @@
     $namaSekolah = Setting::getValue('nama_sekolah', 'Pondok Pesantren');
     $alamatSekolah = Setting::getValue('alamat_sekolah', 'Alamat Sekolah Belum Diisi');
     $logo = Setting::getValue('logo_sekolah'); 
+
+    $mapsEmbed = Setting::getValue('link_gmaps');
     
     // Banner & Status
     $bannerPath = Setting::getValue('banner_image'); 
@@ -324,6 +326,46 @@
                         <img src="{{ asset('storage/'.$img) }}" loading="lazy" class="w-full h-full object-cover">
                     </div>
                 @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
+    {{-- LOKASI MAPS --}}
+    @if($mapsEmbed)
+    <section class="py-10 md:py-16 bg-white border-t border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                
+                {{-- Text Info --}}
+                <div class="order-2 md:order-1">
+                    <span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-md uppercase tracking-wider">Lokasi</span>
+                    <h2 class="text-xl md:text-3xl font-bold text-slate-900 mt-2 mb-4">Kunjungi Pondok Kami</h2>
+                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
+                        Silakan datang bersilaturahmi ke alamat berikut. Kami menantikan kehadiran Anda.
+                    </p>
+                    
+                    <div class="flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <div class="mt-1 text-emerald-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-sm">Alamat Lengkap</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ $alamatSekolah }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Map Embed (Responsive Wrapper) --}}
+                <div class="order-1 md:order-2">
+                    <div class="relative w-full h-[300px] bg-slate-200 rounded-2xl overflow-hidden shadow-lg border border-slate-200">
+                        {{-- Wrapper agar iframe responsive --}}
+                        <div class="absolute inset-0 [&>iframe]:w-full [&>iframe]:h-full">
+                            {!! $mapsEmbed !!}
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>

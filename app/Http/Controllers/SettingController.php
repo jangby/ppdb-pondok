@@ -24,7 +24,7 @@ class SettingController extends Controller
     {
         // 1. Simpan Data Teks Biasa
         $generalKeys = [
-            'nama_sekolah', 'alamat_sekolah', 'status_ppdb', 'tgl_buka', 'tgl_tutup', 
+            'nama_sekolah', 'alamat_sekolah', 'link_gmaps', 'status_ppdb', 'tgl_buka', 'tgl_tutup', 
             'whatsapp_admin', 'pengumuman', 'nama_gelombang', 'deskripsi_banner',
             'verification_active' , 'link_grup_wa_pondok',
         ];

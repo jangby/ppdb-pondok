@@ -98,6 +98,14 @@
                                         <textarea name="alamat_sekolah" rows="3" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Jalan, Desa, Kecamatan, Kabupaten...">{{ $settings['alamat_sekolah'] ?? '' }}</textarea>
                                     </div>
 
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Google Maps Embed (Iframe)</label>
+                                        <textarea name="link_gmaps" rows="3" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3 font-mono text-xs text-slate-600" placeholder='<iframe src="https://www.google.com/maps/embed?..."></iframe>'>{{ $settings['link_gmaps'] ?? '' }}</textarea>
+                                        <p class="text-[10px] text-gray-500 mt-1">
+                                            Cara ambil: Buka Google Maps -> Cari Lokasi -> Klik 'Bagikan' -> Pilih 'Sematkan Peta' (Embed a map) -> Salin HTML.
+                                        </p>
+                                    </div>
+
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Nama Gelombang</label>
                                         <input type="text" name="nama_gelombang" value="{{ $settings['nama_gelombang'] ?? 'Gelombang 1' }}" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3">
