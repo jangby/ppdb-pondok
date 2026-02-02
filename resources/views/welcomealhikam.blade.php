@@ -60,6 +60,13 @@
         /* Hide Scrollbar */
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Custom Gradients */
+        .text-gradient-green {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-600 antialiased selection:bg-emerald-100 selection:text-emerald-900">
@@ -179,7 +186,7 @@
         </div>
     </section>
 
-    {{-- 3. ALUR PENDAFTARAN --}}
+    {{-- 3. ALUR PENDAFTARAN (Vertical Steps Kecil) --}}
     <section id="info" class="py-10 md:py-16 bg-white border-t border-slate-100">
         <div class="max-w-2xl mx-auto px-4 sm:px-6">
             <div class="text-center mb-8">
@@ -227,73 +234,42 @@
         </div>
     </section>
 
-    {{-- 4. DAFTAR JENJANG PENDIDIKAN (Tanpa Rincian Harga) --}}
-    @php 
-        $rincianBiaya = $rincianBiaya ?? [];
-        $jenjangTersedia = array_keys($rincianBiaya); 
-    @endphp
-    @if(count($jenjangTersedia) > 0)
+    {{-- 4. BIAYA (Horizontal Cards Kecil) --}}
+    @php $rincianBiaya = $rincianBiaya ?? []; @endphp
     <section class="py-10 md:py-16 bg-slate-50 border-y border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
-            <div class="text-center mb-8">
-                <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase tracking-wider">Program</span>
-                <h2 class="text-xl md:text-3xl font-bold text-slate-900 mt-2">Jenjang Pendidikan</h2>
-                <p class="text-xs text-slate-500 mt-2">Pilihan jenjang pendidikan yang tersedia saat ini.</p>
+            <div class="flex justify-between items-end mb-6">
+                <h2 class="text-lg md:text-2xl font-bold text-slate-900">Biaya Pendidikan</h2>
+                <span class="text-[10px] text-slate-400">Geser untuk melihat &rarr;</span>
             </div>
 
-            <div class="flex flex-wrap justify-center gap-4">
-                @foreach($jenjangTersedia as $jenjang)
-                <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm w-[160px] md:w-[200px] text-center relative overflow-hidden group hover:border-emerald-300 transition">
-                    {{-- Hiasan --}}
-                    <div class="absolute top-0 right-0 w-12 h-12 bg-emerald-50 rounded-bl-full -mr-3 -mt-3 group-hover:bg-emerald-100 transition"></div>
+            <div class="flex overflow-x-auto gap-3 pb-6 hide-scroll snap-x snap-mandatory">
+                @foreach($rincianBiaya as $jenjang => $data)
+                <div class="snap-center shrink-0 w-[240px] md:w-[280px] bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-emerald-50 rounded-bl-full -mr-4 -mt-4"></div>
                     
-                    <div class="w-12 h-12 mx-auto bg-slate-100 rounded-full flex items-center justify-center text-xl mb-3 group-hover:bg-emerald-500 group-hover:text-white transition">
-                        🎓
+                    <div class="relative z-10">
+                        <span class="px-2 py-1 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-3 inline-block">{{ $jenjang }}</span>
+                        <p class="text-[10px] text-slate-400">Total Estimasi</p>
+                        <p class="text-xl md:text-2xl font-extrabold text-emerald-600 mb-4">Rp {{ number_format($data['total'], 0, ',', '.') }}</p>
+                        
+                        <div class="space-y-2 border-t border-slate-100 pt-3">
+                            @foreach($data['items'] as $item)
+                            <div class="flex justify-between text-[10px]">
+                                <span class="text-slate-500 truncate max-w-[60%]">{{ $item->nama_pembayaran }}</span>
+                                <span class="font-bold text-slate-700">{{ number_format($item->nominal, 0, ',', '.') }}</span>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <h3 class="text-lg md:text-xl font-extrabold text-slate-800">{{ $jenjang }}</h3>
-                    <p class="text-[10px] text-slate-400 mt-1">Program Unggulan</p>
                 </div>
                 @endforeach
             </div>
         </div>
     </section>
-    @endif
 
-    {{-- 5. AREA DOWNLOAD BROSUR (Banner Image) --}}
-    @if($bannerUrl)
-    <section class="py-10 md:py-16 bg-white border-b border-slate-100">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-            <div class="mb-6">
-                <h2 class="text-lg md:text-2xl font-bold text-slate-900">Brosur Informasi</h2>
-                <p class="text-xs text-slate-500 mt-1">Unduh brosur resmi untuk informasi lebih lengkap.</p>
-            </div>
-
-            <div class="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-slate-50 group">
-                {{-- Preview Gambar Banner --}}
-                <img src="{{ $bannerUrl }}" alt="Brosur PPDB" class="w-full h-auto object-cover max-h-[400px]">
-                
-                {{-- Overlay Download Button --}}
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                    <a href="{{ $bannerUrl }}" download="Brosur-PPDB-{{ date('Y') }}.jpg" class="px-6 py-3 bg-white text-slate-900 rounded-full font-bold text-sm shadow-xl hover:bg-emerald-50 transition transform hover:scale-105 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        Download Brosur
-                    </a>
-                </div>
-            </div>
-            
-            {{-- Tombol Download Mobile (Visible always on small screens) --}}
-            <div class="mt-4 md:hidden">
-                <a href="{{ $bannerUrl }}" download="Brosur-PPDB.jpg" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold shadow-lg">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Download Brosur
-                </a>
-            </div>
-        </div>
-    </section>
-    @endif
-
-    {{-- 6. FASILITAS & PERSYARATAN --}}
-    <section class="py-10 md:py-16 bg-slate-50">
+    {{-- 5. FASILITAS & PERSYARATAN (Grid 2 Kolom) --}}
+    <section class="py-10 md:py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
@@ -303,13 +279,10 @@
                     <div class="flex flex-wrap gap-2">
                         @php $facilities = json_decode($settings['fasilitas_sekolah'] ?? '[]', true); @endphp
                         @foreach(array_slice($facilities, 0, 8) as $fac)
-                            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600 shadow-sm">
+                            <span class="px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600">
                                 {{ $fac }}
                             </span>
                         @endforeach
-                        @if(count($facilities) == 0)
-                            <span class="text-xs text-slate-400 italic">Belum ada data fasilitas.</span>
-                        @endif
                     </div>
                 </div>
 
@@ -318,7 +291,7 @@
                     <h3 class="text-sm md:text-lg font-bold text-slate-900 mb-4">Persyaratan Berkas</h3>
                     <ul class="space-y-2">
                         @foreach($syarat as $item)
-                            <li class="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-[11px] md:text-xs text-slate-600 shadow-sm">
+                            <li class="flex items-center justify-between p-2 rounded-lg border border-slate-100 text-[11px] md:text-xs text-slate-600">
                                 <span>{{ $item['nama'] }}</span>
                                 <span class="font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{{ $item['jumlah'] }}x</span>
                             </li>
@@ -330,15 +303,15 @@
         </div>
     </section>
 
-    {{-- 7. GALERI --}}
+    {{-- 6. GALERI (Compact Grid) --}}
     @php $galleries = json_decode($settings['galeri_sekolah'] ?? '[]', true); @endphp
     @if(count($galleries) > 0)
-    <section class="py-10 bg-white border-t border-slate-200">
+    <section class="py-10 bg-slate-50 border-t border-slate-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             <h2 class="text-sm md:text-lg font-bold text-slate-900 mb-4">Galeri Kegiatan</h2>
             <div class="grid grid-cols-3 md:grid-cols-5 gap-2">
                 @foreach($galleries as $img)
-                    <div class="aspect-square rounded-lg overflow-hidden bg-slate-200 hover:opacity-90 transition cursor-pointer">
+                    <div class="aspect-square rounded-lg overflow-hidden bg-slate-200">
                         <img src="{{ asset('storage/'.$img) }}" loading="lazy" class="w-full h-full object-cover">
                     </div>
                 @endforeach
@@ -347,7 +320,7 @@
     </section>
     @endif
 
-    {{-- FOOTER --}}
+    {{-- FOOTER (Clean & Simple) --}}
     <footer class="bg-white py-8 border-t border-slate-100 text-center">
         <div class="max-w-md mx-auto px-4">
             <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold text-lg mx-auto mb-4 overflow-hidden p-1">
