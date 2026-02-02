@@ -8,7 +8,7 @@
                 <h2 class="font-bold text-2xl text-gray-800 leading-tight">
                     {{ __('Konfigurasi Sistem PPDB') }}
                 </h2>
-                <p class="text-xs text-gray-500">Kelola identitas sekolah, logo, alur, dan tampilan website.</p>
+                <p class="text-xs text-gray-500">Kelola identitas sekolah, logo, alur, fasilitas, dan tampilan website.</p>
             </div>
         </div>
     </x-slot>
@@ -37,15 +37,23 @@
                     {{-- SIDEBAR NAVIGATION --}}
                     <div class="lg:w-64 flex-shrink-0">
                         <nav class="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 sticky top-4">
+                            {{-- Tab 1: Umum --}}
                             <button type="button" @click="activeTab = 'umum'" :class="activeTab === 'umum' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Umum & Alur
                             </button>
+                            {{-- Tab 2: Jenjang --}}
                             <button type="button" @click="activeTab = 'jenjang'" :class="activeTab === 'jenjang' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Jenjang Pendidikan
                             </button>
+                            {{-- Tab 3: Media --}}
                             <button type="button" @click="activeTab = 'media'" :class="activeTab === 'media' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Tampilan & Galeri
                             </button>
+                            {{-- Tab 4: Fasilitas (BARU) --}}
+                            <button type="button" @click="activeTab = 'fasilitas'" :class="activeTab === 'fasilitas' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Fasilitas Sekolah
+                            </button>
+                            {{-- Tab 5: Syarat --}}
                             <button type="button" @click="activeTab = 'syarat'" :class="activeTab === 'syarat' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Persyaratan
                             </button>
@@ -62,7 +70,6 @@
                                 <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Identitas Sekolah</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     
-                                    {{-- [BARU] Input Logo Sekolah --}}
                                     <div class="col-span-2 flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
                                         <div class="shrink-0">
                                             <div class="w-20 h-20 bg-white rounded-lg border border-slate-300 flex items-center justify-center overflow-hidden shadow-sm">
@@ -102,20 +109,18 @@
                                         </div>
                                     </div>
 
-                                    {{-- [BARU] LINK GRUP WA PONDOK --}}
-<div class="col-span-1">
-    <label class="block text-sm font-bold text-gray-700 mb-2">Link Grup WA Pondok (Informasi Umum)</label>
-    <div class="relative">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-green-600">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-        </div>
-        <input type="url" name="link_grup_wa_pondok" 
-               value="{{ $settings['link_grup_wa_pondok'] ?? '' }}"
-               class="w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-               placeholder="https://chat.whatsapp.com/...">
-    </div>
-    <p class="text-xs text-gray-500 mt-1">Link ini akan dikirim otomatis saat santri Lulus Administrasi.</p>
-</div>
+                                    <div class="col-span-1">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Link Grup WA Pondok</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-green-600">
+                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                            </div>
+                                            <input type="url" name="link_grup_wa_pondok" 
+                                                   value="{{ $settings['link_grup_wa_pondok'] ?? '' }}"
+                                                   class="w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                                   placeholder="https://chat.whatsapp.com/...">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -233,7 +238,31 @@
                             </div>
                         </div>
 
-                        {{-- TAB 4: SYARAT --}}
+                        {{-- TAB 4: FASILITAS (DITAMBAHKAN) --}}
+                        <div x-show="activeTab === 'fasilitas'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                                <h3 class="font-bold text-gray-800 text-lg">Fasilitas Sekolah</h3>
+                                <button type="button" @click="facilities.push('')" class="text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Fasilitas
+                                </button>
+                            </div>
+                            <div class="space-y-3 max-w-2xl">
+                                <template x-for="(item, index) in facilities" :key="index">
+                                    <div class="group flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition">
+                                        <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400 text-xs" x-text="index + 1"></div>
+                                        <input type="text" name="fasilitas_nama[]" x-model="facilities[index]" class="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 font-medium placeholder-gray-400" placeholder="Nama Fasilitas (Contoh: Asrama Putra)">
+                                        <button type="button" @click="facilities.splice(index, 1)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <div x-show="facilities.length === 0" class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">
+                                    Belum ada fasilitas ditambahkan.
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- TAB 5: SYARAT --}}
                         <div x-show="activeTab === 'syarat'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div class="max-w-3xl">
                                 <h3 class="font-bold text-gray-800 text-lg mb-2">Daftar Dokumen Persyaratan</h3>

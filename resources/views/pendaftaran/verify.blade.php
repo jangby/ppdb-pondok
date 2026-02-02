@@ -67,7 +67,10 @@
                     <div class="relative z-10 text-center">
                         <p class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-1">Langkah 1</p>
                         <h3 class="font-bold text-slate-800 text-sm mb-3">Belum punya surat perjanjian?</h3>
-                        <a href="{{ asset('storage/'.$template) }}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition transform active:scale-95">
+                        
+                        {{-- TOMBOL DOWNLOAD (DIPERBAIKI) --}}
+                        {{-- Atribut 'download' memaksa browser mengunduh file --}}
+                        <a href="{{ asset('storage/'.$template) }}" download="Surat-Perjanjian-PPDB.pdf" class="inline-flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition transform active:scale-95">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             Download Template PDF
                         </a>
