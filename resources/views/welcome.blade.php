@@ -272,16 +272,30 @@
     <section class="py-10 md:py-16 bg-slate-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {{-- Fasilitas --}}
                 <div>
                     <h3 class="text-sm md:text-lg font-bold text-slate-900 mb-4">Fasilitas</h3>
                     <div class="flex flex-wrap gap-2">
-                        @php $facilities = json_decode(Setting::getValue('fasilitas_sekolah'), true) ?? []; @endphp
-                        @foreach(array_slice($facilities, 0, 8) as $fac)
-                            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600 shadow-sm">{{ $fac }}</span>
+                        @php 
+                            // Ambil data fasilitas (Tanpa Batasan)
+                            $facilities = json_decode(Setting::getValue('fasilitas_sekolah'), true) ?? []; 
+                        @endphp
+
+                        {{-- Loop langsung ke semua data (Hapus array_slice) --}}
+                        @foreach($facilities as $fac)
+                            <span class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[10px] md:text-xs font-semibold text-slate-600 shadow-sm hover:border-emerald-400 hover:text-emerald-600 transition cursor-default">
+                                {{ $fac }}
+                            </span>
                         @endforeach
-                        @if(empty($facilities))<span class="text-xs text-slate-400 italic">Belum ada data fasilitas.</span>@endif
+
+                        @if(empty($facilities))
+                            <span class="text-xs text-slate-400 italic">Belum ada data fasilitas.</span>
+                        @endif
                     </div>
                 </div>
+
+                {{-- Persyaratan --}}
                 <div>
                     <h3 class="text-sm md:text-lg font-bold text-slate-900 mb-4">Persyaratan Berkas</h3>
                     <ul class="space-y-2">
@@ -293,6 +307,7 @@
                         @endforeach
                     </ul>
                 </div>
+
             </div>
         </div>
     </section>
