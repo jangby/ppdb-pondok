@@ -185,9 +185,10 @@
             document.getElementById('edit_nominal').value = nominal;
             document.getElementById('edit_jenjang').value = jenjang;
             
-            // Set action URL form
+            // [PERBAIKAN DISINI]
+            // Gunakan URL yang sesuai dengan route di web.php ('/admin/jenis-pembayaran')
             let form = document.getElementById('editForm');
-            form.action = "{{ url('/admin/payment-types') }}/" + id;
+            form.action = "{{ url('/admin/jenis-pembayaran') }}/" + id;
         }
 
         function closeEditModal() {
