@@ -15,8 +15,8 @@ class WahaWebhookController extends Controller
         // 1. Ambil Data
         $data = $request->all();
         
-        // [DEBUG] Catat setiap request masuk ke storage/logs/laravel.log
-        // Log::info('WAHA Webhook Hit:', $data); 
+        // [DEBUG] Log data yang masuk untuk memastikan Webhook nyambung
+        Log::info('WAHA Webhook Hit:', $data); 
 
         // 2. Filter Event: Hanya terima pesan teks
         if (!isset($data['event']) || $data['event'] !== 'message') {
@@ -43,15 +43,22 @@ class WahaWebhookController extends Controller
         Log::info("[AUTO-REPLY] Cek Nomor: $waNumber atau $localNumber");
 
         // 5. Cek Database (Cek kedua format)
-        $isRegistered = Verification::where(function($q) use ($waNumber, $localNumber) {
+        // Menggunakan first() agar kita bisa Log ID-nya jika ketemu
+        $verification = Verification::where(function($q) use ($waNumber, $localNumber) {
             $q->where('no_wa', $waNumber)
               ->orWhere('no_wa', $localNumber);
-        })->exists();
+        })->first();
 
-        if ($isRegistered) {
-            Log::info("[AUTO-REPLY] Nomor DITEMUKAN! Mengirim balasan...");
-            $this->sendAutoReply($waNumber);
-            return response()->json(['status' => 'replied']);
+        if ($verification) {
+            Log::info("[AUTO-REPLY] Nomor DITEMUKAN (ID Verification: {$verification->id}). Mengirim balasan...");
+            
+            // Kirim balasan
+            $result = $this->sendAutoReply($waNumber);
+            
+            return response()->json([
+                'status' => 'replied',
+                'debug_result' => $result
+            ]);
         } else {
             Log::info("[AUTO-REPLY] Nomor TIDAK DIKENAL. Tidak membalas.");
         }
@@ -61,10 +68,11 @@ class WahaWebhookController extends Controller
 
     private function sendAutoReply($targetNumber)
     {
-        // Ambil Nomor Admin
+        // Ambil Nomor Admin dari Database Setting
+        // Pastikan Anda sudah menjalankan seeder Setting atau isi tabel settings
         $adminWa = Setting::getValue('whatsapp_admin', '-');
         
-        // Format Nomor Admin (Hapus 0 depan, tambah 62)
+        // Format Nomor Admin (Hapus 0 depan, tambah 62 untuk link wa.me)
         $displayAdmin = $adminWa;
         if (substr($displayAdmin, 0, 1) == '0') {
             $displayAdmin = '62' . substr($displayAdmin, 1);
@@ -76,14 +84,17 @@ class WahaWebhookController extends Controller
                . "👉 *wa.me/{$displayAdmin}*\n\n"
                . "Terima kasih.";
 
-        $this->sendWA($targetNumber, $pesan);
+        return $this->sendWA($targetNumber, $pesan);
     }
 
     private function sendWA($number, $message)
     {
+        // Konfigurasi WAHA
         $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3000');
-        $endpoint = $baseUrl . '/api/sendText';
         $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'); 
+        $sessionName = env('WAHA_SESSION_NAME', 'default'); // Sesuaikan dengan nama session di dashboard WAHA
+
+        $endpoint = $baseUrl . '/api/sendText';
 
         // Pastikan format nomor tujuan benar (akhiri dengan @c.us untuk WAHA)
         $chatId = preg_replace('/[^0-9]/', '', $number);
@@ -100,9 +111,18 @@ class WahaWebhookController extends Controller
                 'text' => $message
             ]);
             
-            Log::info("[AUTO-REPLY] Hasil Kirim WA: " . $response->status());
+            // Logging hasil response
+            if ($response->successful()) {
+                Log::info("[AUTO-REPLY] Sukses Kirim WA ke $number");
+            } else {
+                Log::error("[AUTO-REPLY] Gagal Kirim WA ke $number. Status: " . $response->status() . " Body: " . $response->body());
+            }
+
+            return $response->json();
+
         } catch (\Exception $e) {
-            Log::error("[AUTO-REPLY] Gagal Kirim WA: " . $e->getMessage());
+            Log::error("[AUTO-REPLY] Exception Error: " . $e->getMessage());
+            return ['error' => $e->getMessage()];
         }
     }
 }
