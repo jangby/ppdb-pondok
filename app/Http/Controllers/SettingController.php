@@ -15,7 +15,19 @@ class SettingController extends Controller
         $requirements = json_decode($settings['syarat_pendaftaran'] ?? '[]', true) ?? [];
         $facilities = json_decode($settings['fasilitas_sekolah'] ?? '[]', true) ?? [];
         $galleries = json_decode($settings['galeri_sekolah'] ?? '[]', true) ?? [];
-        $jenjangs = json_decode($settings['list_jenjang'] ?? '["SMP","SMK"]', true) ?? [];
+        
+        // [MODIFIKASI] Ambil Jenjang & Biaya
+        $rawJenjang = json_decode($settings['list_jenjang'] ?? '["SMP","SMK"]', true) ?? [];
+        $rawBiaya = json_decode($settings['biaya_pendaftaran'] ?? '[]', true) ?? [];
+        
+        // Gabungkan menjadi array of object untuk view
+        $jenjangs = [];
+        foreach ($rawJenjang as $j) {
+            $jenjangs[] = [
+                'name' => $j,
+                'cost' => $rawBiaya[$j] ?? 0 // Default 0 jika belum diset
+            ];
+        }
 
         return view('admin.settings.index', compact('settings', 'requirements', 'facilities', 'galleries', 'jenjangs'));
     }
@@ -23,10 +35,11 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         // 1. Simpan Data Teks Biasa
+        // [MODIFIKASI] Tambahkan 'info_rekening' ke dalam list
         $generalKeys = [
             'nama_sekolah', 'alamat_sekolah', 'link_gmaps', 'status_ppdb', 'tgl_buka', 'tgl_tutup', 
             'whatsapp_admin', 'pengumuman', 'nama_gelombang', 'deskripsi_banner',
-            'verification_active' , 'link_grup_wa_pondok',
+            'verification_active' , 'link_grup_wa_pondok', 'info_rekening'
         ];
 
         foreach ($generalKeys as $key) {
@@ -35,10 +48,25 @@ class SettingController extends Controller
             }
         }
 
-        // 2. Simpan Daftar Jenjang
+        // 2. Simpan Daftar Jenjang DAN Biaya [MODIFIKASI]
         $jenjangNames = $request->input('jenjang_nama', []);
-        $jenjangData = array_filter($jenjangNames, fn($val) => !empty($val)); 
-        Setting::updateOrCreate(['key' => 'list_jenjang'], ['value' => json_encode(array_values($jenjangData))]);
+        $jenjangCosts = $request->input('jenjang_biaya', []);
+        
+        $finalJenjangList = [];
+        $finalCostList = [];
+
+        foreach ($jenjangNames as $index => $name) {
+            if (!empty($name)) {
+                $finalJenjangList[] = $name;
+                // Simpan biaya dengan key nama jenjangnya
+                $finalCostList[$name] = str_replace('.', '', $jenjangCosts[$index] ?? '0'); // Hapus titik jika format ribuan
+            }
+        }
+
+        // Simpan List Jenjang (Array Biasa)
+        Setting::updateOrCreate(['key' => 'list_jenjang'], ['value' => json_encode($finalJenjangList)]);
+        // Simpan Biaya (Key-Value JSON: {"SMP": 100000, "SMK": 150000})
+        Setting::updateOrCreate(['key' => 'biaya_pendaftaran'], ['value' => json_encode($finalCostList)]);
 
         // 3. Upload Banner
         if ($request->hasFile('banner_image')) {
@@ -46,9 +74,8 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => 'banner_image'], ['value' => $path]);
         }
 
-        // 4. [BARU] Upload Logo Sekolah
+        // 4. Upload Logo Sekolah
         if ($request->hasFile('logo_sekolah')) {
-            // Ukuran logo lebih kecil (max 500px)
             $path = $this->compressAndUpload($request->file('logo_sekolah'), 'logo', 500);
             Setting::updateOrCreate(['key' => 'logo_sekolah'], ['value' => $path]);
         }

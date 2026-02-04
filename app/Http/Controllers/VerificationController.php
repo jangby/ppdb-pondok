@@ -9,7 +9,9 @@ use Illuminate\Support\Str;
 
 class VerificationController extends Controller
 {
-    // Halaman Upload Berkas (Tahap 1)
+    /**
+     * TAHAP 1: FORM UPLOAD BERKAS PERJANJIAN
+     */
     public function showUploadForm()
     {
         // 1. Cek Apakah Pendaftaran Buka
@@ -17,24 +19,24 @@ class VerificationController extends Controller
             return redirect()->route('home')->with('error', 'Pendaftaran Tutup');
         }
 
-        // 2. [BARU] Cek Apakah Verifikasi Wajib?
+        // 2. Cek Apakah Verifikasi Wajib?
         $wajibVerifikasi = Setting::getValue('verification_active', '1'); // Default 1 (Wajib)
 
         if ($wajibVerifikasi == '0') {
-            // -- LOGIKA BYPASS (LEWATI VERIFIKASI) --
+            // -- LOGIKA BYPASS (LEWATI VERIFIKASI & BAYAR) --
+            // Jika mode cepat aktif, sistem menganggap user sudah setuju & sudah bayar (atau gratis)
             
-            // Buat Token Otomatis
             $autoToken = Str::random(60);
 
-            // Buat Data Verifikasi Dummy (Agar tidak error saat relasi)
             Verification::create([
-                'no_wa'           => '000000000000',      // Nomor dummy
-                'file_perjanjian' => 'skipped_by_system', // Penanda dilewati
-                'token'           => $autoToken,
-                'status'          => 'approved'          // Langsung Status Lolos/Disetujui
+                'no_wa'             => '000000000000',      // Nomor dummy
+                'file_perjanjian'   => 'skipped_by_system', // Penanda dilewati
+                'token'             => $autoToken,
+                'status'            => 'approved',          // Auto Lolos Berkas
+                'status_pembayaran' => 'paid'               // Auto Lunas (Bypass)
             ]);
 
-            // Langsung lempar ke halaman Form Biodata dengan Token tadi
+            // Langsung lempar ke halaman Form Biodata
             return redirect()->route('pendaftaran.form', ['token' => $autoToken]);
         }
         
@@ -43,7 +45,9 @@ class VerificationController extends Controller
         return view('pendaftaran.verify', compact('template'));
     }
 
-    // Proses Simpan Berkas User (Jika Wajib)
+    /**
+     * PROSES SIMPAN BERKAS (TAHAP 1)
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -62,10 +66,11 @@ class VerificationController extends Controller
 
         // Simpan ke Database
         Verification::create([
-            'no_wa' => $wa,
-            'file_perjanjian' => $path,
-            'token' => Str::random(60), // Token Unik Panjang
-            'status' => 'pending'
+            'no_wa'             => $wa,
+            'file_perjanjian'   => $path,
+            'token'             => Str::random(60), // Token Unik Panjang
+            'status'            => 'pending',       // Menunggu Cek Admin
+            'status_pembayaran' => 'unpaid'         // Belum Bayar
         ]);
 
         return redirect()->route('pendaftaran.verify.success');
@@ -74,5 +79,74 @@ class VerificationController extends Controller
     public function showSuccess()
     {
         return view('pendaftaran.verify_success');
+    }
+
+    /**
+     * TAHAP 1.5: HALAMAN PEMBAYARAN (BARU)
+     * Diakses melalui Link WA setelah berkas disetujui Admin.
+     */
+    public function showPaymentForm($token)
+    {
+        // Cari data berdasarkan token
+        $data = Verification::where('token', $token)->firstOrFail();
+
+        // 1. Validasi: Berkas Perjanjian harus sudah APPROVED
+        if ($data->status != 'approved') {
+            return redirect()->route('home')->with('error', 'Berkas perjanjian Anda belum disetujui atau sedang diperiksa admin.');
+        }
+
+        // 2. Validasi: Jika sudah LUNAS (Paid), langsung ke Form Biodata
+        if ($data->status_pembayaran == 'paid') {
+            return redirect()->route('pendaftaran.form', ['token' => $token]);
+        }
+
+        // 3. Ambil Info Rekening & Biaya dari Setting
+        $rekening = Setting::getValue('info_rekening');
+        
+        // Ambil data biaya (JSON) dan format untuk View
+        $biayaRaw = json_decode(Setting::getValue('biaya_pendaftaran', '[]'), true);
+        $biayaList = [];
+        
+        if (is_array($biayaRaw)) {
+            foreach ($biayaRaw as $jenjang => $nominal) {
+                $biayaList[] = [
+                    'jenjang'   => $jenjang,
+                    'nominal'   => $nominal,
+                    'formatted' => 'Rp ' . number_format($nominal, 0, ',', '.')
+                ];
+            }
+        }
+
+        return view('pendaftaran.payment', compact('data', 'rekening', 'biayaList'));
+    }
+
+    /**
+     * PROSES UPLOAD BUKTI BAYAR
+     */
+    public function storePayment(Request $request, $token)
+    {
+        $data = Verification::where('token', $token)->firstOrFail();
+
+        $request->validate([
+            'jenjang'        => 'required',
+            'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+        ]);
+
+        // Simpan File Bukti Transfer
+        $path = $request->file('bukti_transfer')->store('bukti_transfer', 'public');
+
+        // Update Data Verifikasi
+        $data->update([
+            'jenjang'           => $request->jenjang,
+            'bukti_transfer'    => $path,
+            'status_pembayaran' => 'pending' // Ubah jadi pending agar masuk antrian cek admin
+        ]);
+
+        return redirect()->route('pendaftaran.payment.success');
+    }
+
+    public function showPaymentSuccess()
+    {
+        return view('pendaftaran.payment_success');
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Verification;
-use App\Models\Setting; // [WAJIB] Tambahkan Model Setting
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,148 +12,196 @@ class AdminVerificationController extends Controller
 {
     public function index()
     {
-        $verifications = Verification::where('status', 'pending')->latest()->get();
+        // Tampilkan data yang butuh aksi admin:
+        // 1. Status Berkas 'pending' (Belum dicek)
+        // 2. ATAU Status Pembayaran 'pending' (Sudah upload bukti, menunggu cek)
+        $verifications = Verification::where(function($q) {
+            $q->where('status', 'pending')
+              ->orWhere('status_pembayaran', 'pending');
+        })->latest()->get();
+
         return view('admin.verifications.index', compact('verifications'));
     }
 
     public function approve($id)
     {
-        // 1. LOG AWAL
-        Log::info("----------------------------------------------------");
-        Log::info("[WAHA DEBUG] Memulai proses approval untuk ID: " . $id);
-
         $data = Verification::findOrFail($id);
         
-        // Update Status Verifikasi
-        $data->update(['status' => 'approved']);
-        Log::info("[WAHA DEBUG] Status Verifikasi diubah menjadi 'approved'.");
-
-        // --- TAMBAHAN: UPDATE STATUS SANTRI & RUANGAN TES ---
-        if ($data->candidate) {
-            $candidate = $data->candidate;
+        // ==========================================================
+        // SKENARIO A: MENYETUJUI BERKAS PERJANJIAN (Tahap 1)
+        // ==========================================================
+        if ($data->status == 'pending') {
             
-            // A. Update Status Seleksi
-            $candidate->update(['status_seleksi' => 'Lulus Administrasi']);
+            // 1. Update Status Berkas
+            $data->update(['status' => 'approved']);
 
-            // B. Auto Assign Ruangan Santri (Jika belum ada)
-            if (!$candidate->santri_room_id) {
-                $targetSantri = \App\Models\TestRoom::where('jenis', 'Santri')
-                            ->withCount('candidates_santri')
-                            ->orderBy('candidates_santri_count', 'asc') // Cari yang paling sepi
-                            ->first();
-                
-                if ($targetSantri) {
-                    $candidate->update(['santri_room_id' => $targetSantri->id]);
-                    Log::info("[AUTO ROOM] Santri masuk ke ruangan: " . $targetSantri->nama_ruangan);
+            // 2. Kirim WA: Instruksi Pembayaran (LENGKAP DENGAN NOMINAL & REKENING)
+            $this->sendPaymentNotification($data);
+
+            return back()->with('success', 'Berkas Perjanjian DISETUJUI. Pesan tagihan lengkap telah dikirim ke WA Wali.');
+        }
+
+        // ==========================================================
+        // SKENARIO B: MENYETUJUI BUKTI PEMBAYARAN (Tahap 2)
+        // ==========================================================
+        if ($data->status == 'approved' && $data->status_pembayaran == 'pending') {
+            
+            // 1. Update Status Pembayaran
+            $data->update(['status_pembayaran' => 'paid']);
+
+            // 2. [AUTO] Update Status Santri & Assign Ruangan Tes
+            if ($data->candidate) {
+                $candidate = $data->candidate;
+                $candidate->update(['status_seleksi' => 'Lulus Administrasi']);
+
+                // Auto Assign Ruangan Santri
+                if (!$candidate->santri_room_id) {
+                    $targetSantri = \App\Models\TestRoom::where('jenis', 'Santri')
+                                ->withCount('candidates_santri')
+                                ->orderBy('candidates_santri_count', 'asc')
+                                ->first();
+                    if ($targetSantri) $candidate->update(['santri_room_id' => $targetSantri->id]);
+                }
+
+                // Auto Assign Ruangan Wali
+                if (!$candidate->wali_room_id) {
+                    $targetWali = \App\Models\TestRoom::where('jenis', 'Wali')
+                                ->withCount('candidates_wali')
+                                ->orderBy('candidates_wali_count', 'asc')
+                                ->first();
+                    if ($targetWali) $candidate->update(['wali_room_id' => $targetWali->id]);
                 }
             }
 
-            // C. Auto Assign Ruangan Wali (Jika belum ada)
-            if (!$candidate->wali_room_id) {
-                $targetWali = \App\Models\TestRoom::where('jenis', 'Wali')
-                            ->withCount('candidates_wali')
-                            ->orderBy('candidates_wali_count', 'asc') // Cari yang paling sepi
-                            ->first();
-                
-                if ($targetWali) {
-                    $candidate->update(['wali_room_id' => $targetWali->id]);
-                    Log::info("[AUTO ROOM] Wali masuk ke ruangan: " . $targetWali->nama_ruangan);
-                }
-            }
-        }
-        // -----------------------------------------------------
+            // 3. Kirim WA: Link Pengisian Biodata
+            $this->sendBioLinkNotification($data);
 
-        // -------------------------------------------------------------
-        // [LOGIKA BARU] PERSIAPAN DATA WA
-        // -------------------------------------------------------------
-
-        // A. Link Isi Biodata (Formulir)
-        $linkForm = route('pendaftaran.form', ['token' => $data->token]);
-
-        // B. Link Grup WA Pondok (Dari Pengaturan)
-        $linkGrup = Setting::where('key', 'link_grup_wa_pondok')->value('value');
-        
-        // C. Nama Sekolah
-        $namaSekolah = Setting::where('key', 'nama_sekolah')->value('value') ?? 'Pondok Pesantren';
-
-        // -------------------------------------------------------------
-        // [UPDATE] SUSUN PESAN WA
-        // -------------------------------------------------------------
-        
-        $pesan = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
-               . "Halo! Kami informasikan bahwa berkas verifikasi Anda telah *DITERIMA / DISETUJUI* ✅\n\n"
-               . "Langkah selanjutnya adalah mengisi Formulir Biodata Santri melalui link berikut:\n"
-               . "👉 {$linkForm}\n\n"
-               . "_(Link tersebut bersifat RAHASIA, mohon tidak dibagikan ke orang lain)_\n\n";
-
-        // Jika Admin sudah mengisi Link Grup di Pengaturan, tampilkan disini
-        if (!empty($linkGrup)) {
-            $pesan .= "--------------------------------\n"
-                    . "📢 *INFORMASI PONDOK*\n"
-                    . "--------------------------------\n"
-                    . "Agar tidak ketinggalan informasi terbaru seputar PPDB dan Pondok, silakan bergabung ke Grup WhatsApp Resmi kami:\n"
-                    . "🔗 {$linkGrup}\n\n";
+            return back()->with('success', 'Pembayaran DITERIMA (Lunas). Link pengisian biodata telah dikirim ke WA Wali.');
         }
 
-        $pesan .= "Terima kasih.\n"
-                . "Panitia PPDB {$namaSekolah}";
-
-
-        // -------------------------------------------------------------
-        // KONFIGURASI PENGIRIMAN (WAHA)
-        // -------------------------------------------------------------
-        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3000');
-        $endpoint = $baseUrl . '/api/sendText';
-        $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e');
-        
-        // Format Nomor HP
-        $chatId = $data->no_wa;
-        $chatId = preg_replace('/[^0-9]/', '', $chatId);
-        if (substr($chatId, 0, 1) == '0') {
-            $chatId = '62' . substr($chatId, 1);
-        }
-        $chatId .= '@c.us';
-
-        // LOG DATA REQUEST
-        Log::info("[WAHA DEBUG] Menyiapkan Request ke WAHA:");
-        Log::info("Chat ID: " . $chatId);
-        
-        try {
-            // KIRIM REQUEST
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'X-Api-Key'    => $apiKey,
-            ])->post($endpoint, [
-                'session' => 'default',
-                'chatId'  => $chatId,
-                'text'    => $pesan
-            ]);
-
-            // LOG RESPONSE DARI WAHA
-            Log::info("[WAHA DEBUG] Response Body: " . $response->body());
-
-            if ($response->successful()) {
-                Log::info("[WAHA DEBUG] SUKSES! Pesan terkirim.");
-                return back()->with('success', 'Berkas disetujui, Ruangan Tes Ditetapkan & Link WA dikirim!');
-            } else {
-                Log::error("[WAHA DEBUG] GAGAL! WAHA menolak request.");
-                return back()->with('error', 'Approved & Ruangan Tes OK, tapi WA Gagal terkirim.');
-            }
-
-        } catch (\Exception $e) {
-            Log::error("[WAHA DEBUG] EXCEPTION: " . $e->getMessage());
-            return back()->with('error', 'Approved, tapi Gagal connect ke WAHA.');
-        }
+        return back()->with('error', 'Status data tidak valid untuk disetujui.');
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
         $data = Verification::findOrFail($id);
-        $data->update(['status' => 'rejected']);
-        
-        // Jika ingin kirim WA notifikasi ditolak, bisa tambahkan logic serupa disini
-        Log::info("[WAHA DEBUG] Berkas ID {$id} DITOLAK.");
+        $alasan = $request->input('alasan', 'Dokumen tidak sesuai.');
 
-        return back()->with('success', 'Berkas ditolak.');
+        // JIKA MENOLAK BERKAS PERJANJIAN
+        if ($data->status == 'pending') {
+            $data->update(['status' => 'rejected']);
+            // Opsional: Kirim WA Info Ditolak
+            return back()->with('success', 'Berkas Perjanjian DITOLAK.');
+        }
+
+        // JIKA MENOLAK BUKTI PEMBAYARAN
+        if ($data->status_pembayaran == 'pending') {
+            $data->update([
+                'status_pembayaran' => 'rejected',
+                'catatan_pembayaran' => $alasan
+            ]);
+            
+            // Kirim WA Notifikasi Ditolak agar upload ulang
+            $this->sendPaymentRejectedNotification($data, $alasan);
+
+            return back()->with('success', 'Bukti Pembayaran DITOLAK. Notifikasi dikirim ke WA.');
+        }
+
+        return back();
+    }
+
+    // =========================================================================
+    // PRIVATE HELPER: WA NOTIFICATIONS (WAHA)
+    // =========================================================================
+
+    private function sendPaymentNotification($data)
+    {
+        $linkBayar = route('pendaftaran.payment', ['token' => $data->token]);
+        $namaSekolah = Setting::getValue('nama_sekolah', 'Pondok Pesantren');
+        
+        // [BARU] Ambil Info Rekening
+        $rekening = Setting::getValue('info_rekening', 'Hubungi Admin');
+        
+        // [BARU] Ambil Daftar Biaya & Format Teksnya
+        $biayaRaw = json_decode(Setting::getValue('biaya_pendaftaran', '[]'), true);
+        $listBiaya = "";
+        
+        if (!empty($biayaRaw)) {
+            foreach ($biayaRaw as $jenjang => $nominal) {
+                // Contoh: - SMP: Rp 100.000
+                $formatted = number_format($nominal, 0, ',', '.');
+                $listBiaya .= "• {$jenjang}: Rp {$formatted}\n";
+            }
+        } else {
+            $listBiaya = "Hubungi Admin untuk info biaya.";
+        }
+
+        // [MODIFIKASI] Susun Pesan WA dengan Info Biaya & Rekening
+        $pesan = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
+               . "Berkas Perjanjian Anda telah *DISETUJUI* oleh Admin {$namaSekolah}. 笨\n\n"
+               . "Langkah selanjutnya, mohon lakukan *PEMBAYARAN PENDAFTARAN*.\n\n"
+               . "*Rincian Biaya:*\n"
+               . "{$listBiaya}\n"
+               . "*Rekening Tujuan:*\n"
+               . "{$rekening}\n\n"
+               . "Setelah transfer, silakan *UPLOAD BUKTI TRANSFER* melalui link berikut:\n"
+               . "{$linkBayar}\n\n"
+               . "Mohon segera diselesaikan agar bisa lanjut ke pengisian biodata. Terima kasih.";
+
+        $this->sendWA($data->no_wa, $pesan);
+    }
+
+    private function sendBioLinkNotification($data)
+    {
+        $linkForm = route('pendaftaran.form', ['token' => $data->token]);
+        $linkGrup = Setting::getValue('link_grup_wa_pondok');
+        $namaSekolah = Setting::getValue('nama_sekolah', 'Pondok Pesantren');
+        
+        $pesan = "ALHAMDULILLAH!\n"
+               . "Pembayaran pendaftaran Anda telah *DITERIMA & TERVERIFIKASI*.\n\n"
+               . "Silakan lengkapi *FORMULIR BIODATA SANTRI* melalui link rahasia berikut:\n"
+               . "{$linkForm}\n\n"
+               . "_(Mohon data diisi dengan teliti dan lengkap)_\n\n";
+
+        $pesan .= "Terima kasih - Panitia PPDB {$namaSekolah}";
+
+        $this->sendWA($data->no_wa, $pesan);
+    }
+
+    private function sendPaymentRejectedNotification($data, $alasan)
+    {
+        $linkBayar = route('pendaftaran.payment', ['token' => $data->token]);
+        $namaSekolah = Setting::getValue('nama_sekolah', 'Pondok Pesantren');
+
+        $pesan = "Mohon Maaf\n"
+               . "Bukti Pembayaran Anda *DITOLAK* oleh Admin {$namaSekolah}.\n\n"
+               . "Alasan: _{$alasan}_\n\n"
+               . "Silakan upload ulang bukti pembayaran yang benar melalui link berikut:\n"
+               . "{$linkBayar}";
+
+        $this->sendWA($data->no_wa, $pesan);
+    }
+
+    private function sendWA($number, $message)
+    {
+        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3000');
+        $endpoint = $baseUrl . '/api/sendText';
+        $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'); 
+
+        // Format Nomor
+        $chatId = preg_replace('/[^0-9]/', '', $number);
+        if (substr($chatId, 0, 1) == '0') $chatId = '62' . substr($chatId, 1);
+        $chatId .= '@c.us';
+
+        try {
+            Http::withHeaders(['Content-Type' => 'application/json', 'X-Api-Key' => $apiKey])
+                ->post($endpoint, [
+                    'session' => 'default',
+                    'chatId' => $chatId,
+                    'text' => $message
+                ]);
+        } catch (\Exception $e) {
+            Log::error("WA Gagal: " . $e->getMessage());
+        }
     }
 }

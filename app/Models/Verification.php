@@ -15,6 +15,10 @@ class Verification extends Model
         'file_perjanjian',
         'token',
         'status',
+        'jenjang',         // [BARU] Jenjang Pilihan
+        'bukti_transfer',  // [BARU] Path File
+        'status_pembayaran', // [BARU] Status Uang
+        'catatan_pembayaran'
     ];
     
     // Atau jika ingin lebih simpel (mengizinkan semua kecuali id):

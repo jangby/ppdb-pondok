@@ -40,6 +40,11 @@ Route::get('/pendaftaran/verifikasi', [VerificationController::class, 'showUploa
 Route::post('/pendaftaran/verifikasi', [VerificationController::class, 'store'])->name('pendaftaran.verify.store');
 Route::get('/pendaftaran/verifikasi/sukses', [VerificationController::class, 'showSuccess'])->name('pendaftaran.verify.success');
 
+// [BARU] TAHAP 1.5: UPLOAD BUKTI BAYAR
+Route::get('/pendaftaran/bayar/{token}', [VerificationController::class, 'showPaymentForm'])->name('pendaftaran.payment');
+Route::post('/pendaftaran/bayar/{token}', [VerificationController::class, 'storePayment'])->name('pendaftaran.payment.store');
+Route::get('/pendaftaran/bayar/sukses/ok', [VerificationController::class, 'showPaymentSuccess'])->name('pendaftaran.payment.success');
+
 // --- TAHAP 2: PENGISIAN FORMULIR (LINK DARI WA) ---
 Route::get('/pendaftaran/form/{token}', [RegistrationController::class, 'showForm'])->name('pendaftaran.form');
 Route::post('/pendaftaran/store', [RegistrationController::class, 'store'])->name('pendaftaran.store');

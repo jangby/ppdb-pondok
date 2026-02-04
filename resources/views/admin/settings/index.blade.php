@@ -1,5 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
+        {{-- Header Code Tetap Sama --}}
         <div class="flex items-center gap-3">
             <div class="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow-lg text-white">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -37,23 +38,23 @@
                     {{-- SIDEBAR NAVIGATION --}}
                     <div class="lg:w-64 flex-shrink-0">
                         <nav class="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0 sticky top-4">
-                            {{-- Tab 1: Umum --}}
                             <button type="button" @click="activeTab = 'umum'" :class="activeTab === 'umum' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Umum & Alur
                             </button>
-                            {{-- Tab 2: Jenjang --}}
+                            {{-- [MODIFIKASI] Tab Jenjang & Biaya --}}
                             <button type="button" @click="activeTab = 'jenjang'" :class="activeTab === 'jenjang' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg> Jenjang Pendidikan
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Jenjang & Biaya
                             </button>
-                            {{-- Tab 3: Media --}}
+                             {{-- [MODIFIKASI] Tab Pembayaran (NEW) --}}
+                             <button type="button" @click="activeTab = 'pembayaran'" :class="activeTab === 'pembayaran' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg> Rekening Bank
+                            </button>
                             <button type="button" @click="activeTab = 'media'" :class="activeTab === 'media' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Tampilan & Galeri
                             </button>
-                            {{-- Tab 4: Fasilitas (NEW) --}}
                             <button type="button" @click="activeTab = 'fasilitas'" :class="activeTab === 'fasilitas' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> Fasilitas Sekolah
                             </button>
-                            {{-- Tab 5: Syarat --}}
                             <button type="button" @click="activeTab = 'syarat'" :class="activeTab === 'syarat' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Persyaratan
                             </button>
@@ -63,13 +64,12 @@
                     {{-- CONTENT AREA --}}
                     <div class="flex-1 space-y-6">
 
-                        {{-- TAB 1: UMUM --}}
+                        {{-- TAB 1: UMUM (TETAP) --}}
                         <div x-show="activeTab === 'umum'" x-transition class="space-y-6">
-                            
+                            {{-- ... (KONTEN UMUM TETAP SAMA SEPERTI FILE ASLI) ... --}}
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Identitas Sekolah</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    
                                     {{-- Logo Input --}}
                                     <div class="col-span-2 flex items-center gap-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
                                         <div class="shrink-0">
@@ -87,25 +87,18 @@
                                             <p class="text-[10px] text-gray-500 mt-1">Format: PNG/JPG (Transparan direkomendasikan). Max: 1MB.</p>
                                         </div>
                                     </div>
-
                                     <div class="col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Nama Sekolah / Pesantren</label>
                                         <input type="text" name="nama_sekolah" value="{{ $settings['nama_sekolah'] ?? '' }}" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Contoh: Pondok Pesantren Al-Hidayah">
                                     </div>
-                                    
                                     <div class="col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Alamat Lengkap Pondok</label>
                                         <textarea name="alamat_sekolah" rows="3" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Jalan, Desa, Kecamatan, Kabupaten...">{{ $settings['alamat_sekolah'] ?? '' }}</textarea>
                                     </div>
-
                                     <div class="col-span-2">
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Google Maps Embed (Iframe)</label>
                                         <textarea name="link_gmaps" rows="3" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3 font-mono text-xs text-slate-600" placeholder='<iframe src="https://www.google.com/maps/embed?..."></iframe>'>{{ $settings['link_gmaps'] ?? '' }}</textarea>
-                                        <p class="text-[10px] text-gray-500 mt-1">
-                                            Cara ambil: Buka Google Maps -> Cari Lokasi -> Klik 'Bagikan' -> Pilih 'Sematkan Peta' (Embed a map) -> Salin HTML.
-                                        </p>
                                     </div>
-
                                     <div>
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Nama Gelombang</label>
                                         <input type="text" name="nama_gelombang" value="{{ $settings['nama_gelombang'] ?? 'Gelombang 1' }}" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3">
@@ -117,23 +110,12 @@
                                             <input type="number" name="whatsapp_admin" value="{{ $settings['whatsapp_admin'] ?? '' }}" class="w-full pl-7 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3">
                                         </div>
                                     </div>
-
-                                    {{-- Link Grup WA --}}
                                     <div class="col-span-1">
                                         <label class="block text-sm font-bold text-gray-700 mb-2">Link Grup WA Pondok</label>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-green-600">
-                                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                            </div>
-                                            <input type="url" name="link_grup_wa_pondok" 
-                                                   value="{{ $settings['link_grup_wa_pondok'] ?? '' }}"
-                                                   class="w-full pl-10 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                                                   placeholder="https://chat.whatsapp.com/...">
-                                        </div>
+                                        <input type="url" name="link_grup_wa_pondok" value="{{ $settings['link_grup_wa_pondok'] ?? '' }}" class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="https://chat.whatsapp.com/...">
                                     </div>
                                 </div>
                             </div>
-
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Status & Alur Pendaftaran</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -144,14 +126,12 @@
                                                 <input type="radio" name="status_ppdb" value="buka" class="peer sr-only" {{ ($settings['status_ppdb'] ?? '') == 'buka' ? 'checked' : '' }}>
                                                 <div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-700 transition text-center hover:bg-white">
                                                     <div class="font-bold text-lg">DIBUKA</div>
-                                                    <div class="text-xs text-gray-500 peer-checked:text-emerald-600">Terima Pendaftaran</div>
                                                 </div>
                                             </label>
                                             <label class="cursor-pointer flex-1">
                                                 <input type="radio" name="status_ppdb" value="tutup" class="peer sr-only" {{ ($settings['status_ppdb'] ?? '') == 'tutup' ? 'checked' : '' }}>
                                                 <div class="p-4 rounded-xl border-2 border-gray-200 bg-gray-50 peer-checked:border-red-500 peer-checked:bg-red-50 peer-checked:text-red-700 transition text-center hover:bg-white">
                                                     <div class="font-bold text-lg">DITUTUP</div>
-                                                    <div class="text-xs text-gray-500 peer-checked:text-red-600">Tutup Sementara</div>
                                                 </div>
                                             </label>
                                         </div>
@@ -166,15 +146,13 @@
                                             <label class="cursor-pointer relative block">
                                                 <input type="radio" name="verification_active" value="1" class="peer sr-only" {{ ($settings['verification_active'] ?? '1') == '1' ? 'checked' : '' }}>
                                                 <div class="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 flex items-center gap-3 transition">
-                                                    <div class="w-5 h-5 rounded-full border border-gray-300 bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-white"></div></div>
-                                                    <div><span class="block font-bold text-gray-800 text-sm">Wajib Upload Berkas</span><span class="block text-xs text-gray-500">Upload & verifikasi admin dulu.</span></div>
+                                                    <div><span class="block font-bold text-gray-800 text-sm">Wajib Upload Berkas</span></div>
                                                 </div>
                                             </label>
                                             <label class="cursor-pointer relative block">
                                                 <input type="radio" name="verification_active" value="0" class="peer sr-only" {{ ($settings['verification_active'] ?? '1') == '0' ? 'checked' : '' }}>
                                                 <div class="p-3 rounded-xl border-2 border-gray-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 flex items-center gap-3 transition">
-                                                    <div class="w-5 h-5 rounded-full border border-gray-300 bg-white peer-checked:bg-blue-500 peer-checked:border-blue-500 flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-white"></div></div>
-                                                    <div><span class="block font-bold text-gray-800 text-sm">Mode Cepat (Langsung)</span><span class="block text-xs text-gray-500">Tanpa verifikasi berkas awal.</span></div>
+                                                    <div><span class="block font-bold text-gray-800 text-sm">Mode Cepat (Langsung)</span></div>
                                                 </div>
                                             </label>
                                         </div>
@@ -183,19 +161,37 @@
                             </div>
                         </div>
 
-                        {{-- TAB 2: JENJANG --}}
+                        {{-- TAB 2: JENJANG & BIAYA [MODIFIKASI] --}}
                         <div x-show="activeTab === 'jenjang'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div class="flex justify-between items-center mb-6 border-b pb-4">
-                                <h3 class="font-bold text-gray-800 text-lg">Manajemen Jenjang Pendidikan</h3>
-                                <button type="button" @click="jenjangs.push('')" class="text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition flex items-center gap-2">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg">Jenjang & Biaya Pendaftaran</h3>
+                                    <p class="text-xs text-gray-500">Tentukan nama jenjang dan biaya pendaftaran awal.</p>
+                                </div>
+                                <button type="button" @click="jenjangs.push({name: '', cost: 0})" class="text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Jenjang
                                 </button>
                             </div>
-                            <div class="space-y-3 max-w-2xl">
+                            <div class="space-y-3 max-w-4xl">
                                 <template x-for="(item, index) in jenjangs" :key="index">
                                     <div class="group flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition">
                                         <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-gray-400 text-xs" x-text="index + 1"></div>
-                                        <input type="text" name="jenjang_nama[]" x-model="jenjangs[index]" class="flex-1 bg-transparent border-none focus:ring-0 text-gray-800 font-medium placeholder-gray-400" placeholder="Nama Jenjang (Contoh: SMP IT)">
+                                        
+                                        {{-- Input Nama Jenjang --}}
+                                        <div class="flex-1">
+                                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1">Nama Jenjang</label>
+                                            <input type="text" name="jenjang_nama[]" x-model="item.name" class="w-full bg-transparent border-none focus:ring-0 text-gray-800 font-medium placeholder-gray-400" placeholder="Contoh: SMP IT">
+                                        </div>
+                                        
+                                        {{-- Input Biaya --}}
+                                        <div class="w-48 border-l border-gray-200 pl-3">
+                                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider ml-1">Biaya Pendaftaran</label>
+                                            <div class="flex items-center">
+                                                <span class="text-gray-500 text-sm font-bold mr-1">Rp</span>
+                                                <input type="number" name="jenjang_biaya[]" x-model="item.cost" class="w-full bg-transparent border-none focus:ring-0 text-gray-800 font-bold text-right placeholder-gray-400" placeholder="0">
+                                            </div>
+                                        </div>
+
                                         <button type="button" @click="jenjangs.splice(index, 1)" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition opacity-0 group-hover:opacity-100">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
@@ -204,10 +200,24 @@
                             </div>
                         </div>
 
-                        {{-- TAB 3: MEDIA (DENGAN DRAG & DROP) --}}
+                        {{-- TAB 3: PEMBAYARAN (BARU) --}}
+                        <div x-show="activeTab === 'pembayaran'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Informasi Rekening & Pembayaran</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">Info Rekening Pembayaran</label>
+                                    <p class="text-xs text-gray-500 mb-2">Informasi ini akan dikirimkan melalui WhatsApp kepada calon santri setelah berkas perjanjian disetujui.</p>
+                                    <textarea name="info_rekening" rows="6" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Contoh:
+Bank BRI: 1234-5678-9000
+A.n Yayasan Pondok Pesantren
+Kode Bank: 002">{{ $settings['info_rekening'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- TAB LAIN (MEDIA, FASILITAS, SYARAT) TETAP SAMA --}}
                         <div x-show="activeTab === 'media'" class="space-y-6">
-                            
-                            {{-- Banner & Identitas Depan --}}
+                           {{-- ... Copy Paste Konten Media yg lama ... --}}
                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                 <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Banner & Halaman Depan</h3>
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -225,7 +235,6 @@
                                 </div>
                             </div>
 
-                            {{-- Template Surat --}}
                             <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
                                 <div class="p-4 bg-amber-100 text-amber-600 rounded-full"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
                                 <div class="flex-1">
@@ -236,9 +245,9 @@
                                     </div>
                                 </div>
                             </div>
-
-                            {{-- GALERI KEGIATAN (DRAG & DROP) --}}
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100" 
+                            
+                            {{-- Gallery Code... (Gunakan kode lama untuk gallery section) --}}
+                             <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100" 
                                  x-data="{ 
                                      isDropping: false, 
                                      fileCount: 0,
@@ -254,13 +263,10 @@
                                          this.fileCount = e.target.files.length;
                                      }
                                  }">
-                                
                                 <div class="flex justify-between items-center mb-6">
                                     <h3 class="font-bold text-gray-800 text-lg">Galeri Kegiatan</h3>
                                     <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">{{ count($galleries) }} Foto Tersimpan</span>
                                 </div>
-
-                                {{-- Dropzone --}}
                                 <div class="mb-8">
                                     <label 
                                         @dragover.prevent="isDropping = true"
@@ -268,7 +274,6 @@
                                         @drop.prevent="handleDrop($event)"
                                         :class="isDropping ? 'border-blue-500 bg-blue-50 ring-4 ring-blue-100' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'"
                                         class="relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-200 group">
-                                        
                                         <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center">
                                             <div class="mb-3 p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition duration-300">
                                                 <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
@@ -277,26 +282,14 @@
                                                 <span class="font-bold text-blue-600">Klik untuk pilih</span> atau geser file kesini (Drag & Drop)
                                             </p>
                                             <p class="text-xs text-gray-400">Bisa upload banyak foto sekaligus (JPG, PNG)</p>
-
                                             <div x-show="fileCount > 0" x-transition class="mt-4 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                                 <span x-text="fileCount + ' File Siap Upload'"></span>
                                             </div>
                                         </div>
-                                        
-                                        <input 
-                                            type="file" 
-                                            name="gallery_files[]" 
-                                            multiple 
-                                            accept="image/*" 
-                                            class="hidden" 
-                                            x-ref="fileInput"
-                                            @change="handleSelect($event)"
-                                        >
+                                        <input type="file" name="gallery_files[]" multiple accept="image/*" class="hidden" x-ref="fileInput" @change="handleSelect($event)">
                                     </label>
                                 </div>
-
-                                {{-- Preview Foto Lama --}}
                                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                     @foreach($galleries as $index => $img)
                                         <div class="relative group aspect-square rounded-xl overflow-hidden shadow-sm bg-gray-100 border border-gray-200">
@@ -312,9 +305,8 @@
                             </div>
                         </div>
 
-                        {{-- TAB 4: FASILITAS (DITAMBAHKAN KEMBALI) --}}
                         <div x-show="activeTab === 'fasilitas'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                             <div class="flex justify-between items-center mb-6 border-b pb-4">
                                 <h3 class="font-bold text-gray-800 text-lg">Fasilitas Sekolah</h3>
                                 <button type="button" @click="facilities.push('')" class="text-sm font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Tambah Fasilitas
@@ -336,9 +328,8 @@
                             </div>
                         </div>
 
-                        {{-- TAB 5: SYARAT --}}
                         <div x-show="activeTab === 'syarat'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <div class="max-w-3xl">
+                           <div class="max-w-3xl">
                                 <h3 class="font-bold text-gray-800 text-lg mb-2">Daftar Dokumen Persyaratan</h3>
                                 <div class="space-y-3">
                                     <template x-for="(item, index) in requirements" :key="index">
@@ -365,7 +356,6 @@
                 </div>
             </form>
 
-            {{-- Hidden Forms for Deleting Gallery Images --}}
             @foreach($galleries as $index => $img)
                 <form id="delete-gallery-{{ $index }}" action="{{ route('admin.settings.delete_gallery') }}" method="POST" class="hidden">@csrf @method('DELETE')<input type="hidden" name="index" value="{{ $index }}"></form>
             @endforeach
@@ -378,7 +368,7 @@
                 activeTab: 'umum',
                 requirements: @json($requirements),
                 facilities: @json($facilities),
-                jenjangs: @json($jenjangs),
+                jenjangs: @json($jenjangs), // [MODIFIKASI] Sekarang formatnya [{name:'SMP', cost:100000}, ...]
             }
         }
     </script>
