@@ -21,6 +21,7 @@ use App\Http\Controllers\PaymentTypeController;
 use App\Http\Controllers\DormitoryController;
 use App\Http\Controllers\InterviewAttendanceController; // Controller Absensi
 use App\Http\Controllers\QueueController;               // Controller Loket
+use App\Models\WebhookLog;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('test_rooms/distribute', [\App\Http\Controllers\TestRoomController::class, 'autoDistribute'])->name('test_rooms.distribute');
 });
 
+});
+
+Route::get('/cek-webhook', function () {
+    // Ambil 50 log terakhir
+    $logs = WebhookLog::latest()->take(50)->get();
+    return view('debug_webhook', compact('logs'));
 });
 
 require __DIR__.'/auth.php';

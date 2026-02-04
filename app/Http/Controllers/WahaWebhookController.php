@@ -7,64 +7,65 @@ use App\Models\Verification;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\WebhookLog;
 
 class WahaWebhookController extends Controller
 {
     public function handle(Request $request)
-    {
-        // 1. Ambil Data
-        $data = $request->all();
-        
-        // [DEBUG] Log data yang masuk untuk memastikan Webhook nyambung
-        Log::info('WAHA Webhook Hit:', $data); 
+{
+    // 1. [DEBUG DATABASE] TANGKAP SEMUA DATA KE DB
+    // Ini akan menyimpan apapun yang dikirim WAHA, berhasil atau gagal diproses
+    $logEntry = WebhookLog::create([
+        'payload' => $request->all(),
+        'status'  => 'received'
+    ]);
 
-        // 2. Filter Event: Hanya terima pesan teks
-        if (!isset($data['event']) || $data['event'] !== 'message') {
-            return response()->json(['status' => 'ignored_event']);
-        }
+    // Ambil Data
+    $data = $request->all();
+    
+    // Log standar (bisa dihapus nanti kalau database sudah jalan)
+    Log::info('WAHA Webhook Hit:', $data); 
 
-        $payload = $data['payload'] ?? [];
-
-        // 3. Filter Pengirim: Jangan balas pesan dari diri sendiri (bot)
-        if (!empty($payload['fromMe'])) {
-            return response()->json(['status' => 'ignored_self']);
-        }
-
-        // 4. Ambil Nomor Pengirim
-        $rawFrom = $payload['from'] ?? ''; // Format WA: 628123456@c.us
-        $waNumber = explode('@', $rawFrom)[0]; // Ambil angkanya saja: 628123456
-        
-        // Buat versi "08..." juga untuk jaga-jaga jika di DB tersimpan pakai 0
-        $localNumber = $waNumber;
-        if (substr($waNumber, 0, 2) == '62') {
-            $localNumber = '0' . substr($waNumber, 2); // Ubah 62812 jadi 0812
-        }
-
-        Log::info("[AUTO-REPLY] Cek Nomor: $waNumber atau $localNumber");
-
-        // 5. Cek Database (Cek kedua format)
-        // Menggunakan first() agar kita bisa Log ID-nya jika ketemu
-        $verification = Verification::where(function($q) use ($waNumber, $localNumber) {
-            $q->where('no_wa', $waNumber)
-              ->orWhere('no_wa', $localNumber);
-        })->first();
-
-        if ($verification) {
-            Log::info("[AUTO-REPLY] Nomor DITEMUKAN (ID Verification: {$verification->id}). Mengirim balasan...");
-            
-            // Kirim balasan
-            $result = $this->sendAutoReply($waNumber);
-            
-            return response()->json([
-                'status' => 'replied',
-                'debug_result' => $result
-            ]);
-        } else {
-            Log::info("[AUTO-REPLY] Nomor TIDAK DIKENAL. Tidak membalas.");
-        }
-
-        return response()->json(['status' => 'unknown_number']);
+    // 2. Filter Event: Hanya terima pesan teks
+    if (!isset($data['event']) || $data['event'] !== 'message') {
+        $logEntry->update(['status' => 'ignored_event']); // Update status di DB
+        return response()->json(['status' => 'ignored_event']);
     }
+
+    $payload = $data['payload'] ?? [];
+
+    // 3. Filter Pengirim: Jangan balas pesan dari diri sendiri (bot)
+    if (!empty($payload['fromMe'])) {
+        $logEntry->update(['status' => 'ignored_self']); // Update status di DB
+        return response()->json(['status' => 'ignored_self']);
+    }
+
+    // 4. Ambil Nomor Pengirim
+    $rawFrom = $payload['from'] ?? ''; 
+    $waNumber = explode('@', $rawFrom)[0]; 
+    
+    $localNumber = $waNumber;
+    if (substr($waNumber, 0, 2) == '62') {
+        $localNumber = '0' . substr($waNumber, 2); 
+    }
+
+    // 5. Cek Database
+    $verification = Verification::where(function($q) use ($waNumber, $localNumber) {
+        $q->where('no_wa', $waNumber)
+          ->orWhere('no_wa', $localNumber);
+    })->first();
+
+    if ($verification) {
+        // Kirim balasan
+        $this->sendAutoReply($waNumber);
+        
+        $logEntry->update(['status' => 'replied_success']); // Update status SUKSES
+        return response()->json(['status' => 'replied']);
+    } 
+
+    $logEntry->update(['status' => 'unknown_number']); // Update status GAGAL
+    return response()->json(['status' => 'unknown_number']);
+}
 
     private function sendAutoReply($targetNumber)
     {
