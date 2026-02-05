@@ -234,4 +234,60 @@ class RegistrationController extends Controller
     {
         return view('pendaftaran.sukses', compact('no_daftar'));
     }
+
+    // Tampilkan Form Edit Publik
+    public function editPublic($no_daftar)
+    {
+        $candidate = Candidate::with(['address', 'parent'])->where('no_daftar', $no_daftar)->firstOrFail();
+
+        // Cek apakah status sudah Lulus atau Siswa Aktif
+        if (in_array($candidate->status, ['Lulus', 'Siswa Aktif'])) {
+            return redirect()->route('public.finance.show', $no_daftar)
+                ->with('error', 'Maaf, data tidak dapat diedit karena Anda sudah dinyatakan Lulus/Aktif.');
+        }
+
+        $validJenjang = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+        return view('pendaftaran.edit_public', compact('candidate', 'validJenjang'));
+    }
+
+    // Proses Update Data
+    public function updatePublic(Request $request, $no_daftar)
+    {
+        $candidate = Candidate::where('no_daftar', $no_daftar)->firstOrFail();
+
+        // Validasi input (Sesuaikan dengan field yang ada di form)
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'tempat_lahir' => 'required',
+            'tanggal_lahir' => 'required|date',
+            'alamat' => 'required',
+            'no_hp_ayah' => 'required|numeric',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 1. Update Data Utama
+            $candidate->update($request->only([
+                'nama_lengkap', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 
+                'anak_ke', 'jumlah_saudara', 'riwayat_penyakit', 'asal_sekolah'
+            ]));
+
+            // 2. Update Alamat
+            $candidate->address->update($request->only([
+                'alamat', 'rt', 'rw', 'desa', 'kecamatan', 'kabupaten', 'provinsi', 'kode_pos'
+            ]));
+
+            // 3. Update Orang Tua
+            $candidate->parent->update($request->only([
+                'nama_ayah', 'nik_ayah', 'pekerjaan_ayah', 'no_hp_ayah',
+                'nama_ibu', 'nik_ibu', 'pekerjaan_ibu', 'no_hp_ibu'
+            ]));
+
+            DB::commit();
+            return redirect()->route('public.finance.show', $no_daftar)->with('success', 'Data Anda berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());
+        }
+    }
 }

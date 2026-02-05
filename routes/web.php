@@ -58,6 +58,16 @@ Route::get('/kartu-tes/{no_daftar}', [HomeController::class, 'kartuTes'])->name(
 Route::get('/cek-keuangan/{no_daftar}', [App\Http\Controllers\PublicFinanceController::class, 'show'])
     ->name('public.finance.show');
 
+// [BARU] Route Unduh Struk Publik
+Route::get('/cek-keuangan/{no_daftar}/struk/{transaction_id}', [App\Http\Controllers\PublicFinanceController::class, 'downloadReceipt'])
+    ->name('public.finance.receipt');
+
+// [BARU] Route Edit Data Mandiri
+Route::get('/pendaftaran/edit/{no_daftar}', [App\Http\Controllers\RegistrationController::class, 'editPublic'])
+    ->name('pendaftaran.edit_public');
+Route::put('/pendaftaran/update/{no_daftar}', [App\Http\Controllers\RegistrationController::class, 'updatePublic'])
+    ->name('pendaftaran.update_public');
+
 // --- LOKET PANGGILAN (MOBILE VIEW - TANPA LOGIN) ---
 Route::get('/loket-panggilan', [QueueController::class, 'publicIndex'])->name('public.queue.index');
 Route::post('/loket-panggilan/next', [QueueController::class, 'callNext'])->name('public.queue.next');
