@@ -100,23 +100,30 @@ class AdminTransactionController extends Controller
 
     // Fungsi untuk kirim data JSON ke Printer Bluetooth
     public function getDataForPrinter($id)
-    {
-        // Ambil data transaksi beserta data kandidatnya
-        $transaction = \App\Models\Transaction::with('candidate')->findOrFail($id);
+{
+    // Ambil data transaksi beserta rincian tagihan santri
+    $transaction = \App\Models\Transaction::with(['candidate.bills', 'details.bill.payment_type'])->findOrFail($id);
+    $candidate = $transaction->candidate;
 
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'invoice'   => $transaction->kode_transaksi ?? $transaction->id, 
-                'tanggal'   => $transaction->created_at->format('d/m/Y H:i'),
-                'nama'      => $transaction->candidate->nama_lengkap,
-                'no_daftar' => $transaction->candidate->no_daftar,
-                // Ambil detail pembayaran pertama sebagai 'Jenis', atau gabung jika banyak
-                'jenis'     => $transaction->details->first()->bill->payment_type->nama_pembayaran ?? 'Pembayaran',
-                'nominal'   => number_format($transaction->total_bayar, 0, ',', '.'),
-                'keterangan'=> $transaction->keterangan ?? '-',
-                'petugas'   => auth()->user()->name ?? 'Admin',
-            ]
-        ]);
-    }
+    // Hitung total keuangan santri
+    $totalTagihan = $candidate->bills->sum('nominal_tagihan');
+    $totalTerbayar = $candidate->bills->sum('nominal_terbayar');
+    $sisaTagihan = $totalTagihan - $totalTerbayar;
+
+    return response()->json([
+        'status' => 'success',
+        'data' => [
+            'invoice'        => $transaction->kode_transaksi, 
+            'tanggal'        => $transaction->created_at->format('d/m/Y H:i'),
+            'nama'           => $candidate->nama_lengkap,
+            'no_daftar'      => $candidate->no_daftar,
+            'jenis'          => $transaction->details->pluck('bill.payment_type.nama_pembayaran')->implode(', '),
+            'bayar_sekarang' => number_format($transaction->total_bayar, 0, ',', '.'),
+            'total_tagihan'  => number_format($totalTagihan, 0, ',', '.'),
+            'sisa_tagihan'   => number_format($sisaTagihan, 0, ',', '.'),
+            'keterangan'     => $transaction->keterangan ?? '-',
+            'petugas'        => auth()->user()->name ?? 'Admin',
+        ]
+    ]);
+}
 }

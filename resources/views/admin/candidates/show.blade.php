@@ -453,138 +453,128 @@
 
     {{-- SCRIPT BLUETOOTH PRINTER --}}
     <script>
-        let printCharacteristic = null;
+    let printCharacteristic = null;
 
-        // 1. KONEKSI BLUETOOTH
-        document.getElementById('connectBtn').addEventListener('click', async () => {
-            try {
-                const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
-                });
+    // 1. KONEKSI BLUETOOTH (Tetap sama)
+    document.getElementById('connectBtn').addEventListener('click', async () => {
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
+            });
+            const server = await device.gatt.connect();
+            const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+            printCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+            
+            const btn = document.getElementById('connectBtn');
+            btn.classList.replace('bg-slate-800', 'bg-green-600');
+            document.getElementById('printerStatus').innerText = "Printer Terhubung: " + device.name;
+            alert('Printer Berhasil Terhubung!');
+        } catch (error) {
+            alert('Gagal Connect: ' + error);
+        }
+    });
 
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                printCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+    // --- FUNGSI BARU: MENGIRIM DATA DALAM POTONGAN KECIL (CHUNKS) ---
+    async function writeChunks(characteristic, data) {
+        const CHUNK_SIZE = 100; // Ukuran aman untuk printer thermal Bluetooth
+        for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+            const chunk = data.slice(i, i + CHUNK_SIZE);
+            await characteristic.writeValue(chunk);
+            // Beri jeda sangat singkat agar printer tidak overload
+            await new Promise(resolve => setTimeout(resolve, 20)); 
+        }
+    }
 
-                // Ubah Tampilan Tombol jadi Hijau
-                const btn = document.getElementById('connectBtn');
-                btn.classList.remove('bg-slate-800', 'hover:bg-slate-700');
-                btn.classList.add('bg-green-600', 'hover:bg-green-500');
-                document.getElementById('printerStatus').innerText = "Printer Terhubung: " + device.name;
-                
-                alert('Printer Berhasil Terhubung!');
-
-            } catch (error) {
-                console.error(error);
-                alert('Gagal Connect: ' + error);
-            }
-        });
-
-        // 2. FUNGSI CETAK STRUK PEMBAYARAN
-        async function printReceipt(transactionId) {
-            if (!printCharacteristic) {
-                alert('⚠️ Harap hubungkan Printer Thermal Bluetooth terlebih dahulu.');
-                return;
-            }
-
-            try {
-                document.body.style.cursor = 'wait';
-
-                // 1. Ambil Data Transaksi
-                const response = await fetch(`/admin/transaksi/${transactionId}/print-data`);
-                const result = await response.json();
-                
-                if(result.status !== 'success') throw new Error("Gagal mengambil data transaksi");
-                const data = result.data;
-                
-                // 2. Siapkan Link untuk QR Code
-                // URL: https://domainanda.com/cek-keuangan/NO_DAFTAR
-                const qrUrl = window.location.origin + "/cek-pendaftaran/" + data.no_daftar;
-
-                // 3. Konfigurasi Printer (ESC/POS)
-                const encoder = new TextEncoder();
-                const ESC = '\u001B';
-                const GS = '\u001D';
-                const center = ESC + 'a' + '\u0001';
-                const left = ESC + 'a' + '\u0000';
-                const boldOn = ESC + 'E' + '\u0001';
-                const boldOff = ESC + 'E' + '\u0000';
-                const doubleSize = GS + '!' + '\u0011'; 
-                const normalSize = GS + '!' + '\u0000';
-
-                let text = '';
-
-                // --- HEADER ---
-                text += center + boldOn + "BUKTI PEMBAYARAN\n" + boldOff;
-                text += "PSB PONPES ASSA'ADAH\n";
-                text += "--------------------------------\n";
-
-                // --- DETAIL ---
-                text += left;
-                text += "No Invoice : #" + data.invoice + "\n";
-                text += "Tanggal    : " + data.tanggal + "\n";
-                text += "Nama       : " + data.nama.substring(0, 20) + "\n";
-                text += "No Daftar  : " + data.no_daftar + "\n";
-                text += "--------------------------------\n";
-
-                // --- ITEM ---
-                text += boldOn + data.jenis + boldOff + "\n";
-                text += "Ket: " + data.keterangan + "\n";
-                
-                // --- TOTAL ---
-                text += center + "\n";
-                text += doubleSize + "Rp " + data.nominal + normalSize + "\n";
-                text += "--------------------------------\n";
-
-                // --- FOOTER ---
-                text += left + "Penerima: " + data.petugas + "\n\n";
-                
-                // --- INSTRUKSI QR ---
-                text += center + "Scan QR untuk melihat\n";
-                text += "SISA TAGIHAN & STATUS:\n";
-                
-                // Kirim teks utama dulu
-                await printCharacteristic.writeValue(encoder.encode(text));
-
-                // --- CETAK QR CODE (LINK KEUANGAN) ---
-                await printQRCode(qrUrl);
-
-                // --- FEED AKHIR ---
-                text = "\nSimpan struk ini sebagai\nbukti pembayaran yang sah.\n\n\n\n";
-                await printCharacteristic.writeValue(encoder.encode(text));
-
-            } catch (error) {
-                console.error(error);
-                alert('Gagal Mencetak: ' + error);
-            } finally {
-                document.body.style.cursor = 'default';
-            }
+    // 2. FUNGSI CETAK STRUK PEMBAYARAN
+    async function printReceipt(transactionId) {
+        if (!printCharacteristic) {
+            alert('⚠️ Harap hubungkan Printer Thermal Bluetooth terlebih dahulu.');
+            return;
         }
 
-        // FUNGSI BANTUAN CETAK QR (NATIVE)
-        async function printQRCode(dataString) {
-            const storeLen = dataString.length + 3;
-            const pL = storeLen % 256;
-            const pH = Math.floor(storeLen / 256);
+        try {
+            document.body.style.cursor = 'wait';
 
-            let cmdModel = new Uint8Array([29, 40, 107, 4, 0, 49, 65, 50, 0]);
-            let cmdSize = new Uint8Array([29, 40, 107, 3, 0, 49, 67, 6]); // Size 6
-            let cmdErr = new Uint8Array([29, 40, 107, 3, 0, 49, 69, 48]);
+            // Ambil Data dari Server
+            const response = await fetch(`/admin/transaksi/${transactionId}/print-data`);
+            const result = await response.json();
+            if(result.status !== 'success') throw new Error("Gagal mengambil data");
+            const data = result.data;
             
-            let cmdStoreHeader = new Uint8Array([29, 40, 107, pL, pH, 49, 80, 48]);
-            let dataBytes = new TextEncoder().encode(dataString);
+            const qrUrl = window.location.origin + "/cek-pendaftaran/" + data.no_daftar;
+            const encoder = new TextEncoder();
             
-            let cmdStoreFull = new Uint8Array(cmdStoreHeader.length + dataBytes.length);
-            cmdStoreFull.set(cmdStoreHeader);
-            cmdStoreFull.set(dataBytes, cmdStoreHeader.length);
+            // Perintah ESC/POS
+            const ESC = '\u001B';
+            const GS = '\u001D';
+            const center = ESC + 'a' + '\u0001';
+            const left = ESC + 'a' + '\u0000';
+            const boldOn = ESC + 'E' + '\u0001';
+            const boldOff = ESC + 'E' + '\u0000';
+            const doubleSize = GS + '!' + '\u0011'; 
+            const normalSize = GS + '!' + '\u0000';
 
-            let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+            let text = "";
+            text += center + boldOn + "BUKTI PEMBAYARAN\n" + boldOff;
+            text += "PSB PONPES ASSA'ADAH\n";
+            text += "--------------------------------\n";
+            text += left;
+            text += "No Invoice : #" + data.invoice + "\n";
+            text += "Tanggal    : " + data.tanggal + "\n";
+            text += "Nama       : " + data.nama.substring(0, 20) + "\n";
+            text += "No Daftar  : " + data.no_daftar + "\n";
+            text += "--------------------------------\n";
+            text += boldOn + "Pembayaran:" + boldOff + "\n";
+            text += data.jenis + "\n";
+            text += "--------------------------------\n";
+            text += "Total Tagihan  : Rp " + data.total_tagihan + "\n";
+            text += boldOn + "Bayar Sekarang : Rp " + data.bayar_sekarang + boldOff + "\n";
+            text += "Sisa Tagihan   : Rp " + data.sisa_tagihan + "\n";
+            text += "--------------------------------\n";
+            text += center + "\nTOTAL BAYAR SAAT INI:\n";
+            text += doubleSize + "Rp " + data.bayar_sekarang + normalSize + "\n";
+            text += "--------------------------------\n";
+            text += left + "Petugas: " + data.petugas + "\n\n";
+            text += center + "Scan QR untuk melihat\nRIWAYAT & STATUS LENGKAP:\n";
 
-            await printCharacteristic.writeValue(cmdModel);
-            await printCharacteristic.writeValue(cmdSize);
-            await printCharacteristic.writeValue(cmdErr);
-            await printCharacteristic.writeValue(cmdStoreFull);
-            await printCharacteristic.writeValue(cmdPrint);
+            // GUNAKAN writeChunks untuk teks utama
+            await writeChunks(printCharacteristic, encoder.encode(text));
+
+            // CETAK QR CODE
+            await printQRCode(qrUrl);
+
+            // FEED AKHIR
+            let footer = "\nSimpan struk ini sebagai\nbukti pembayaran yang sah.\n\n\n\n";
+            await writeChunks(printCharacteristic, encoder.encode(footer));
+
+        } catch (error) {
+            alert('Gagal Mencetak: ' + error);
+        } finally {
+            document.body.style.cursor = 'default';
         }
-    </script>
+    }
+
+    // FUNGSI BANTUAN CETAK QR (Tetap sama, tapi gunakan writeValue karena data QR pendek)
+    async function printQRCode(dataString) {
+        const storeLen = dataString.length + 3;
+        const pL = storeLen % 256;
+        const pH = Math.floor(storeLen / 256);
+
+        let cmdModel = new Uint8Array([29, 40, 107, 4, 0, 49, 65, 50, 0]);
+        let cmdSize = new Uint8Array([29, 40, 107, 3, 0, 49, 67, 6]); 
+        let cmdErr = new Uint8Array([29, 40, 107, 3, 0, 49, 69, 48]);
+        let cmdStoreHeader = new Uint8Array([29, 40, 107, pL, pH, 49, 80, 48]);
+        let dataBytes = new TextEncoder().encode(dataString);
+        let cmdStoreFull = new Uint8Array(cmdStoreHeader.length + dataBytes.length);
+        cmdStoreFull.set(cmdStoreHeader);
+        cmdStoreFull.set(dataBytes, cmdStoreHeader.length);
+        let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+
+        await printCharacteristic.writeValue(cmdModel);
+        await printCharacteristic.writeValue(cmdSize);
+        await printCharacteristic.writeValue(cmdErr);
+        await printCharacteristic.writeValue(cmdStoreFull);
+        await printCharacteristic.writeValue(cmdPrint);
+    }
+</script>
 </x-app-layout>
