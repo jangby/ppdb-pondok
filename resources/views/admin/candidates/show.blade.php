@@ -499,7 +499,7 @@
                 
                 // 2. Siapkan Link untuk QR Code
                 // URL: https://domainanda.com/cek-keuangan/NO_DAFTAR
-                const qrUrl = window.location.origin + "/cek-keuangan/" + data.no_daftar;
+                const qrUrl = window.location.origin + "/cek-pendaftaran/" + data.no_daftar;
 
                 // 3. Konfigurasi Printer (ESC/POS)
                 const encoder = new TextEncoder();
@@ -516,7 +516,7 @@
 
                 // --- HEADER ---
                 text += center + boldOn + "BUKTI PEMBAYARAN\n" + boldOff;
-                text += "PPDB PONDOK PESANTREN\n";
+                text += "PSB PONPES ASSA'ADAH\n";
                 text += "--------------------------------\n";
 
                 // --- DETAIL ---
@@ -541,7 +541,7 @@
                 
                 // --- INSTRUKSI QR ---
                 text += center + "Scan QR untuk melihat\n";
-                text += "SISA TAGIHAN & RINCIAN:\n";
+                text += "SISA TAGIHAN & STATUS:\n";
                 
                 // Kirim teks utama dulu
                 await printCharacteristic.writeValue(encoder.encode(text));
