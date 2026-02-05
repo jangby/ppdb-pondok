@@ -13,7 +13,7 @@
     {{-- HEADER --}}
     <div class="bg-indigo-700 pt-8 pb-24 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden">
         <div class="relative z-10 text-center">
-            <h1 class="text-white font-bold text-lg opacity-90">PORTAL SANTRI PPDB</h1>
+            <h1 class="text-white font-bold text-lg opacity-90">PORTAL SANTRI PSB</h1>
             <p class="text-indigo-200 text-xs">Pondok Pesantren Assa'adah</p>
             
             <div class="mt-6">
@@ -102,7 +102,7 @@
                 </div>
                 
                 {{-- Tombol Unduh Struk (Direct Download PDF Thermal) --}}
-                <a href="{{ route('public.finance.receipt', [$candidate->no_daftar, $trx->id]) }}" 
+                <a href="{{ route('public.pendaftaran.receipt', [$candidate->no_daftar, $trx->id]) }}" 
                    class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition shadow-sm border border-indigo-100 flex items-center gap-2 text-[10px] font-bold">
                     STRUK
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,7 +120,7 @@
 
     {{-- FOOTER --}}
     <div class="mt-12 mb-6 text-center">
-        <p class="text-[10px] text-gray-400">Dicetak secara otomatis melalui Sistem PPDB Terintegrasi</p>
+        <p class="text-[10px] text-gray-400">Dicetak secara otomatis melalui Sistem PSB Terintegrasi</p>
         <div class="mt-4">
             <a href="/" class="text-[11px] bg-white px-4 py-2 rounded-full text-indigo-600 border border-indigo-100 font-bold shadow-sm hover:bg-indigo-50 transition inline-flex items-center gap-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>

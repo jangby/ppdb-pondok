@@ -54,19 +54,21 @@ Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->na
 // --- HALAMAN KARTU TES (PUBLIK) ---
 Route::get('/kartu-tes/{no_daftar}', [HomeController::class, 'kartuTes'])->name('public.kartu_tes');
 
-// Halaman awal untuk memasukkan nomor pendaftaran
-Route::get('/cek-keuangan', [App\Http\Controllers\PublicFinanceController::class, 'index'])->name('public.finance.index');
+// Halaman awal input nomor pendaftaran
+Route::get('/cek-pendaftaran', [App\Http\Controllers\PublicFinanceController::class, 'index'])
+    ->name('public.pendaftaran.index');
 
 // Proses pengecekan nomor pendaftaran
-Route::post('/cek-keuangan', [App\Http\Controllers\PublicFinanceController::class, 'check'])->name('public.finance.check');
+Route::post('/cek-pendaftaran', [App\Http\Controllers\PublicFinanceController::class, 'check'])
+    ->name('public.pendaftaran.check');
 
-// Cek Rincian Keuangan (Publik via QR)
-Route::get('/cek-keuangan/{no_daftar}', [App\Http\Controllers\PublicFinanceController::class, 'show'])
-    ->name('public.finance.show');
+// Halaman rincian status & keuangan
+Route::get('/cek-pendaftaran/{no_daftar}', [App\Http\Controllers\PublicFinanceController::class, 'show'])
+    ->name('public.pendaftaran.show');
 
-// [BARU] Route Unduh Struk Publik
-Route::get('/cek-keuangan/{no_daftar}/struk/{transaction_id}', [App\Http\Controllers\PublicFinanceController::class, 'downloadReceipt'])
-    ->name('public.finance.receipt');
+// Unduh struk
+Route::get('/cek-pendaftaran/{no_daftar}/struk/{transaction_id}', [App\Http\Controllers\PublicFinanceController::class, 'downloadReceipt'])
+    ->name('public.pendaftaran.receipt');
 
 // [BARU] Route Edit Data Mandiri
 Route::get('/pendaftaran/edit/{no_daftar}', [App\Http\Controllers\RegistrationController::class, 'editPublic'])

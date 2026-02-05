@@ -33,9 +33,9 @@ class PublicFinanceController extends Controller
         }
 
         // Jika ada, arahkan ke halaman rincian yang sudah dibuat sebelumnya
-        return redirect()->route('public.finance.show', $request->no_daftar);
+        return redirect()->route('public.pendaftaran.show', $request->no_daftar);
     }
-    
+
     public function show($no_daftar)
     {
         $candidate = Candidate::with(['bills.payment_type', 'transactions.admin'])
@@ -64,7 +64,7 @@ class PublicFinanceController extends Controller
         $settings = Setting::all()->pluck('value', 'key');
         
         // Data untuk QR Code
-        $qrcodeUrl = route('public.finance.show', $no_daftar);
+        $qrcodeUrl = route('public.pendaftaran.show', $no_daftar);
 
         // Ukuran kertas Thermal 80mm
         $customPaper = [0, 0, 226.77, 1000];

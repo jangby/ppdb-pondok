@@ -30,7 +30,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('public.finance.check') }}" method="POST" class="space-y-6">
+            <form action="{{ route('public.pendaftaran.check') }}" method="POST" class="space-y-6">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Nomor Pendaftaran</label>

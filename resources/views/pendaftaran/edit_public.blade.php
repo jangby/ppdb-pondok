@@ -231,7 +231,7 @@
 
             <div class="pt-6 flex flex-col sm:flex-row gap-4">
                 <button type="submit" class="flex-1 py-4 px-4 text-lg font-bold rounded-2xl text-white bg-slate-900 hover:bg-emerald-600 shadow-xl transition-all">Simpan Perubahan</button>
-                <a href="{{ route('public.finance.show', $candidate->no_daftar) }}" class="flex-1 py-4 px-4 text-lg font-bold rounded-2xl text-slate-500 bg-slate-100 hover:bg-slate-200 text-center transition-all">Batal</a>
+                <a href="{{ route('public.pendaftaran.show', $candidate->no_daftar) }}" class="flex-1 py-4 px-4 text-lg font-bold rounded-2xl text-slate-500 bg-slate-100 hover:bg-slate-200 text-center transition-all">Batal</a>
             </div>
 
         </form>
