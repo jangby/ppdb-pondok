@@ -124,6 +124,5 @@
             window.speechSynthesis.speak(utterance);
         }
     </script>
-    
 </body>
 </html>

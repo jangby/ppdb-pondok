@@ -10,6 +10,32 @@ use App\Models\Setting;
 
 class PublicFinanceController extends Controller
 {
+    // Menampilkan halaman form input nomor pendaftaran
+    public function index()
+    {
+        return view('public.finance.check');
+    }
+
+    // Memproses input dan mengalihkan ke halaman rincian
+    public function check(Request $request)
+    {
+        $request->validate([
+            'no_daftar' => 'required|string',
+        ], [
+            'no_daftar.required' => 'Nomor pendaftaran wajib diisi.'
+        ]);
+
+        // Cek apakah nomor pendaftaran ada
+        $exists = Candidate::where('no_daftar', $request->no_daftar)->exists();
+
+        if (!$exists) {
+            return back()->with('error', 'Nomor pendaftaran tidak ditemukan. Silakan periksa kembali.');
+        }
+
+        // Jika ada, arahkan ke halaman rincian yang sudah dibuat sebelumnya
+        return redirect()->route('public.finance.show', $request->no_daftar);
+    }
+    
     public function show($no_daftar)
     {
         $candidate = Candidate::with(['bills.payment_type', 'transactions.admin'])

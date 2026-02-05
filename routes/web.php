@@ -54,6 +54,12 @@ Route::get('/sukses/{no_daftar}', [RegistrationController::class, 'sukses'])->na
 // --- HALAMAN KARTU TES (PUBLIK) ---
 Route::get('/kartu-tes/{no_daftar}', [HomeController::class, 'kartuTes'])->name('public.kartu_tes');
 
+// Halaman awal untuk memasukkan nomor pendaftaran
+Route::get('/cek-keuangan', [App\Http\Controllers\PublicFinanceController::class, 'index'])->name('public.finance.index');
+
+// Proses pengecekan nomor pendaftaran
+Route::post('/cek-keuangan', [App\Http\Controllers\PublicFinanceController::class, 'check'])->name('public.finance.check');
+
 // Cek Rincian Keuangan (Publik via QR)
 Route::get('/cek-keuangan/{no_daftar}', [App\Http\Controllers\PublicFinanceController::class, 'show'])
     ->name('public.finance.show');

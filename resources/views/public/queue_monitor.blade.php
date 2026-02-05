@@ -114,6 +114,5 @@
         }
         checkStatus();
     </script>
-    
 </body>
 </html>
