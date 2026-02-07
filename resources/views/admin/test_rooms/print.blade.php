@@ -28,22 +28,38 @@
         </div>
 
         <div class="text-center border-b-4 border-double border-gray-800 pb-6 mb-6">
-            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">PANITIA PPDB PONDOK PESANTREN</h3>
+            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">PANITIA PSB PONDOK PESANTREN</h3>
             <h1 class="text-3xl font-black text-gray-900 uppercase tracking-wide leading-none mb-2">DAFTAR PESERTA TES WAWANCARA</h1>
             <p class="text-gray-600 font-medium">Tahun Ajaran {{ date('Y') }}/{{ date('Y')+1 }}</p>
         </div>
 
         <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6 grid grid-cols-3 gap-4">
+            {{-- 1. Nama Ruangan --}}
             <div class="border-r border-gray-200">
                 <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Nama Ruangan</span>
                 <span class="block text-xl font-black text-gray-800">{{ $room->nama_ruangan }}</span>
             </div>
+
+            {{-- 2. Peruntukan Peserta (BAGIAN YANG DISESUAIKAN) --}}
             <div class="border-r border-gray-200 text-center">
                 <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Peruntukan Peserta</span>
-                <span class="inline-block px-3 py-1 rounded-full text-sm font-bold {{ $room->jenis == 'Santri' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                    {{ strtoupper($room->jenis == 'Santri' ? 'Calon Santri' : 'Wali Santri') }}
-                </span>
+                
+                @if($room->jenis == 'Santri Putra')
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
+                        SANTRI PUTRA
+                    </span>
+                @elseif($room->jenis == 'Santri Putri')
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-pink-100 text-pink-800">
+                        SANTRI PUTRI
+                    </span>
+                @else
+                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
+                        WALI SANTRI
+                    </span>
+                @endif
             </div>
+
+            {{-- 3. Lokasi --}}
             <div class="text-right">
                 <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Lokasi</span>
                 <span class="block text-gray-800 font-medium">{{ $room->lokasi ?? '-' }}</span>
@@ -63,7 +79,8 @@
                 @forelse($participants as $index => $c)
                 <tr class="odd:bg-white even:bg-gray-50">
                     <td class="border border-gray-300 p-3 text-center font-bold text-gray-600">{{ $index + 1 }}</td>
-                    <td class="border border-gray-300 p-3 font-mono font-bold text-blue-900">{{ $c->no_daftar }}</td>
+                    {{-- Pastikan nama kolom 'no_daftar' sesuai database, jika error ganti jadi 'no_pendaftaran' --}}
+                    <td class="border border-gray-300 p-3 font-mono font-bold text-blue-900">{{ $c->no_daftar ?? $c->no_pendaftaran ?? '-' }}</td>
                     <td class="border border-gray-300 p-3 uppercase font-bold text-gray-800 text-[13px]">
                         {{ $c->nama_lengkap }}
                     </td>
