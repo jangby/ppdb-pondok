@@ -10,17 +10,43 @@ use Illuminate\Support\Facades\Log;
 
 class AdminVerificationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Tampilkan data yang butuh aksi admin:
-        // 1. Status Berkas 'pending' (Belum dicek)
-        // 2. ATAU Status Pembayaran 'pending' (Sudah upload bukti, menunggu cek)
-        $verifications = Verification::where(function($q) {
-            $q->where('status', 'pending')
-              ->orWhere('status_pembayaran', 'pending');
-        })->latest()->get();
+        // 1. Ambil Filter
+        $filter = $request->query('status', 'pending');
 
-        return view('admin.verifications.index', compact('verifications'));
+        // 2. Query Utama untuk Tabel (Sesuai Filter)
+        $query = Verification::latest();
+
+        if ($filter == 'pending') {
+            $query->where(function($q) {
+                $q->where('status', 'pending')
+                  ->orWhere('status_pembayaran', 'pending');
+            });
+        } elseif ($filter == 'approved') {
+            $query->where('status', 'approved')
+                  ->where('status_pembayaran', 'paid');
+        } elseif ($filter == 'rejected') {
+            $query->where(function($q) {
+                $q->where('status', 'rejected')
+                  ->orWhere('status_pembayaran', 'rejected');
+            });
+        }
+        
+        $verifications = $query->paginate(10);
+
+        // 3. HITUNG KPI / STATISTIK (Global, tidak terpengaruh filter)
+        $stats = [
+            'berkas_pending' => Verification::where('status', 'pending')->count(),
+            'bayar_pending'  => Verification::where('status_pembayaran', 'pending')->count(),
+            'selesai'        => Verification::where('status', 'approved')->where('status_pembayaran', 'paid')->count(),
+            'ditolak'        => Verification::where('status', 'rejected')->orWhere('status_pembayaran', 'rejected')->count(),
+        ];
+        
+        // Total antrian yang harus dikerjakan admin sekarang
+        $stats['total_antrian'] = $stats['berkas_pending'] + $stats['bayar_pending'];
+
+        return view('admin.verifications.index', compact('verifications', 'filter', 'stats'));
     }
 
     public function approve($id)

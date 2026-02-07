@@ -13,7 +13,7 @@
             </div>
             <span class="font-bold text-lg tracking-wide transition-opacity duration-300"
                   :class="sidebarExpanded ? 'opacity-100' : 'opacity-0 hidden'">
-                PPDB App
+                PSB App
             </span>
         </a>
         <button @click="sidebarOpen = false" class="absolute right-4 text-gray-400 hover:text-white lg:hidden">

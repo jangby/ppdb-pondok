@@ -150,6 +150,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
 
+    // [TAMBAHKAN INI] Route Kirim Notifikasi Tagihan
+    Route::post('/admin/santri/{id}/notify-bill', [AdminCandidateController::class, 'sendBillNotification'])
+        ->name('admin.candidates.notify_bill');
+
     // --- MANAJEMEN ASRAMA ---
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('dormitories', DormitoryController::class)->only(['index', 'store', 'destroy']);
@@ -166,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
     Route::post('/admin/keuangan', [AdminFinanceController::class, 'store'])->name('admin.finance.store');
     Route::delete('/admin/keuangan/{id}', [AdminFinanceController::class, 'destroy'])->name('admin.finance.destroy');
+    Route::get('/admin/keuangan/cetak-laporan', [AdminFinanceController::class, 'printReport'])->name('admin.finance.print');
 
     // --- SELEKSI & WAWANCARA (ADMIN) ---
     Route::prefix('admin/interview')->name('admin.interview.')->group(function () {

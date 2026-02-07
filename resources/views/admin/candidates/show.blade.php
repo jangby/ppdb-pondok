@@ -261,15 +261,30 @@
                     
                     {{-- 1. KASIR PEMBAYARAN (Modern Dark Theme Header) --}}
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                        <div class="bg-gray-900 px-6 py-5 flex justify-between items-center">
-                            <h3 class="font-bold text-white flex items-center gap-2 text-lg">
-                                <span class="p-1 bg-gray-700 rounded text-green-400">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </span>
-                                Kasir Pembayaran
-                            </h3>
-                            <span class="text-[10px] font-bold text-gray-300 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">MODE INPUT MANUAL</span>
-                        </div>
+    <div class="bg-gray-900 px-6 py-5 flex justify-between items-center">
+        <h3 class="font-bold text-white flex items-center gap-2 text-lg">
+            <span class="p-1 bg-gray-700 rounded text-green-400">
+                {{-- Icon Uang --}}
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </span>
+            Kasir Pembayaran
+        </h3>
+        
+        <div class="flex items-center gap-2">
+            {{-- [TOMBOL BARU] KIRIM NOTIFIKASI --}}
+            @if($sisaTagihan > 0)
+            <form action="{{ route('admin.candidates.notify_bill', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim pengingat tagihan ke WA Orang Tua?');">
+                @csrf
+                <button type="submit" class="text-[10px] font-bold text-white bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-full border border-green-500 flex items-center gap-1 transition shadow-lg shadow-green-900/50">
+                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                    Kirim Tagihan WA
+                </button>
+            </form>
+            @endif
+            
+            <span class="text-[10px] font-bold text-gray-300 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">MODE INPUT MANUAL</span>
+        </div>
+    </div>
                         
                         <div class="p-6">
                             <form action="{{ route('admin.transactions.store', $candidate->id) }}" method="POST">

@@ -374,4 +374,103 @@ class AdminCandidateController extends Controller
             return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
         }
     }
+
+    public function sendBillNotification($id)
+    {
+        // 1. Ambil Data Santri
+        $candidate = Candidate::with(['bills', 'parent'])->findOrFail($id);
+
+        // 2. Hitung Sisa Tagihan
+        $totalTagihan = $candidate->bills->sum('nominal_tagihan');
+        $totalTerbayar = $candidate->bills->sum('nominal_terbayar');
+        $sisaTagihan = $totalTagihan - $totalTerbayar;
+
+        if ($sisaTagihan <= 0) {
+            return back()->with('error', 'Tagihan santri ini sudah lunas.');
+        }
+
+        // 3. LOGIKA PENENTUAN NOMOR WA (Sesuai Request)
+        // Cek tabel verification berdasarkan file_perjanjian yang sama
+        $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
+        
+        $targetNo = null;
+        $sumberNomor = '';
+
+        if ($verification && !empty($verification->no_wa)) {
+            $targetNo = $verification->no_wa;
+            $sumberNomor = 'Data Verifikasi Awal';
+        } elseif (!empty($candidate->parent->no_hp_ibu)) {
+            $targetNo = $candidate->parent->no_hp_ibu;
+            $sumberNomor = 'Data Ibu';
+        } elseif (!empty($candidate->parent->no_hp_ayah)) {
+            $targetNo = $candidate->parent->no_hp_ayah;
+            $sumberNomor = 'Data Ayah';
+        }
+
+        // 4. VALIDASI & PEMBERSIHAN NOMOR (PENTING AGAR TIDAK ERROR 500)
+        // Hapus semua karakter selain angka
+        $cleanNo = preg_replace('/[^0-9]/', '', $targetNo);
+
+        // Cek jika nomor terlalu pendek (kurang dari 10 digit itu tidak wajar)
+        if (empty($cleanNo) || strlen($cleanNo) < 10) {
+            return back()->with('error', "Gagal: Nomor WA tidak valid atau kosong. (Sumber: $sumberNomor)");
+        }
+
+        // Format ke 62 (Standar Internasional)
+        if (substr($cleanNo, 0, 1) == '0') {
+            $cleanNo = '62' . substr($cleanNo, 1);
+        } elseif (substr($cleanNo, 0, 2) != '62') {
+            $cleanNo = '62' . $cleanNo;
+        }
+        
+        $chatId = $cleanNo . '@c.us';
+
+        // 5. Ambil Pengaturan
+        $namaSekolah = Setting::where('key', 'nama_sekolah')->value('value') ?? 'Pondok Pesantren';
+        $waAdmin     = Setting::where('key', 'whatsapp_admin')->value('value') ?? '-';
+        $noRekening  = Setting::where('key', 'info_rekening')->value('value') ?? '(Hubungi Admin)';
+        
+        // Nama Wali (Untuk sapaan)
+        $namaWali = $candidate->parent->nama_ayah ?? 'Wali Santri';
+
+        // 6. Susun Pesan (Gunakan Emoji Standar Saja)
+        $pesan = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
+               . "Yth. Bapak/Ibu *{$namaWali}*,\n"
+               . "Berikut informasikan tagihan pembayaran santri:\n\n"
+               . "👤 Nama: *{$candidate->nama_lengkap}*\n"
+               . "📝 No. Daftar: {$candidate->no_daftar}\n"
+               . "💰 Sisa Tagihan: *Rp " . number_format($sisaTagihan, 0, ',', '.') . "*\n\n"
+               . "Mohon pelunasan ditransfer ke:\n"
+               . "🏦 *{$noRekening}*\n\n"
+               . "Konfirmasi bukti bayar ke Admin:\n"
+               . "📞 wa.me/{$waAdmin}\n\n"
+               . "Terima kasih.\n"
+               . "_{$namaSekolah}_";
+
+        // 7. Kirim & Debugging
+        try {
+            // Log dulu sebelum kirim untuk cek di storage/logs/laravel.log
+            Log::info("Mencoba kirim Tagihan WA ke: $chatId ($sumberNomor)");
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'),
+            ])->timeout(10)->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3000') . '/api/sendText', [
+                'session' => 'default',
+                'chatId'  => $chatId,
+                'text'    => $pesan
+            ]);
+
+            if ($response->successful()) {
+                return back()->with('success', "Sukses mengirim tagihan ke nomor $sumberNomor ($cleanNo).");
+            } else {
+                // Log error detail dari WAHA
+                Log::error("WAHA Error {$response->status()}: " . $response->body());
+                return back()->with('error', "Gagal kirim WA (Status {$response->status()}). Cek Log untuk detail.");
+            }
+        } catch (\Exception $e) {
+            Log::error("Koneksi WA Gagal: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan sistem saat mengirim WA.');
+        }
+    }
 }

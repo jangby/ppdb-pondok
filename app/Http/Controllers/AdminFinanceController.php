@@ -3,14 +3,20 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+// Model
 use App\Models\Expense; 
 use App\Models\Candidate;
 use App\Models\CandidateBill;
 use App\Models\PaymentType;
+use App\Models\Transaction; // Penting untuk Laporan PDF
+
+// Library
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DepositExport;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth; // Import Auth
+use Illuminate\Support\Facades\Auth; 
+use Barryvdh\DomPDF\Facade\Pdf; // Penting untuk Laporan PDF
+use Carbon\Carbon;
 
 class AdminFinanceController extends Controller
 {
@@ -19,38 +25,39 @@ class AdminFinanceController extends Controller
      */
     public function index()
     {
-        // Ambil data pengeluaran
-        $expenses = Expense::latest()->get(); 
+        // Saya gunakan paginate(10) agar cocok dengan view yang ada tombol halamannya (links)
+        // Jika Anda ingin semua data tampil tanpa halaman, ganti ->paginate(10) menjadi ->get()
+        $expenses = Expense::with('user')->latest()->paginate(10); 
         
-        // Ambil data PaymentType untuk Dropdown Sumber Dana
         $paymentTypes = PaymentType::all(); 
 
         return view('admin.finance.index', compact('expenses', 'paymentTypes'));
     }
 
+    /**
+     * Menyimpan Pengeluaran Manual
+     */
     public function store(Request $request)
     {
         $request->validate([
             'keterangan' => 'required|string',
             'nominal'    => 'required|numeric',
             'tanggal'    => 'required|date',
-            'source_id'  => 'nullable|exists:payment_types,id', // Validasi input baru
+            'source_id'  => 'nullable|exists:payment_types,id',
         ]);
 
-        // LOGIKA BARU: Gabungkan Nama Item ke Judul
         $judulFix = $request->keterangan;
         
         if ($request->source_id) {
             $sumber = PaymentType::find($request->source_id);
             if ($sumber) {
-                // Hasilnya: "Beli ATK (Sumber: SPP)"
                 $judulFix = $judulFix . " (Sumber: " . $sumber->nama_pembayaran . ")";
             }
         }
 
         Expense::create([
             'user_id'           => auth()->id(),
-            'judul_pengeluaran' => $judulFix, // Simpan judul yang sudah digabung
+            'judul_pengeluaran' => $judulFix,
             'total_keluar'      => $request->nominal,
             'tanggal'           => $request->tanggal,
         ]);
@@ -70,7 +77,10 @@ class AdminFinanceController extends Controller
     }
 
     /**
-     * LOGIKA UTAMA: Export Excel & Cut-Off Setoran
+     * ==========================================
+     * FITUR 1: DOWNLOAD EXCEL (CUT-OFF SETORAN)
+     * ==========================================
+     * Ini adalah kode asli Anda, saya pastikan tetap ada.
      */
     public function exportDeposit(Request $request)
     {
@@ -84,10 +94,9 @@ class AdminFinanceController extends Controller
         $selectedItemIds = $request->items;
         $totalSetor = 0;
         
-        // 2. SIAPKAN DATA UNTUK EXCEL
+        // 2. Siapkan Data
         $candidatesToExport = collect();
 
-        // Cari santri yang punya saldo mengendap
         $candidates = Candidate::whereHas('bills', function($q) use ($selectedItemIds) {
             $q->whereIn('payment_type_id', $selectedItemIds)
               ->whereRaw('(nominal_terbayar - nominal_disetor) > 0');
@@ -131,7 +140,7 @@ class AdminFinanceController extends Controller
             return back()->with('error', 'Tidak ada dana mengendap (belum disetor) untuk item yang dipilih.');
         }
 
-        // 3. DATABASE TRANSACTION
+        // 3. Database Transaction
         DB::transaction(function () use ($selectedItemIds, $totalSetor) {
             
             // A. Update nominal_disetor (Reset Saldo)
@@ -147,15 +156,81 @@ class AdminFinanceController extends Controller
             $itemNames = PaymentType::whereIn('id', $selectedItemIds)->pluck('nama_pembayaran')->implode(', ');
             
             Expense::create([
-                'user_id'           => Auth::id(), // <--- PERBAIKAN: Masukkan ID Admin
+                'user_id'           => Auth::id(),
                 'judul_pengeluaran' => "Setoran Keuangan (Auto): $itemNames", 
                 'total_keluar'      => $totalSetor,
                 'tanggal'           => now(),
             ]);
         });
 
-        // 4. DOWNLOAD EXCEL
+        // 4. Download Excel
         $timestamp = date('d-m-Y_H-i');
         return Excel::download(new DepositExport($candidatesToExport), "Rekap_Setoran_{$timestamp}.xlsx");
+    }
+
+    /**
+     * ==========================================
+     * FITUR 2: CETAK LAPORAN PDF (BARU)
+     * ==========================================
+     * Kode ini sudah diperbaiki (tidak ada error metode_pembayaran/transaction)
+     */
+    public function printReport(Request $request)
+    {
+        // 1. Ambil Filter Tanggal (Opsional, default bulan ini)
+        $startDate = $request->start_date ?? date('Y-m-01');
+        $endDate   = $request->end_date ?? date('Y-m-d');
+
+        // 2. Query Data Gabungan (Transaksi Masuk & Pengeluaran)
+        
+        // A. Pemasukan (Dari tabel transactions)
+        // PERBAIKAN: Menggunakan 'tanggal_bayar' dan hardcode 'Tunai' karena kolom metode_pembayaran tidak ada
+        $transaksi = Transaction::select(
+                'id',
+                'tanggal_bayar as tanggal', 
+                DB::raw("'Pemasukan' as jenis"),
+                DB::raw("CONCAT('Terima dari ', (SELECT nama_lengkap FROM candidates WHERE candidates.id = transactions.candidate_id)) as keterangan"),
+                'total_bayar as nominal',
+                DB::raw("'Tunai' as via") 
+            )
+            ->whereDate('tanggal_bayar', '>=', $startDate)
+            ->whereDate('tanggal_bayar', '<=', $endDate);
+
+        // B. Pengeluaran (Dari tabel expenses)
+        $pengeluaran = Expense::select(
+                'id',
+                'tanggal',
+                DB::raw("'Pengeluaran' as jenis"),
+                'judul_pengeluaran as keterangan',
+                'total_keluar as nominal',
+                DB::raw("'Cash' as via")
+            )
+            ->whereDate('tanggal', '>=', $startDate)
+            ->whereDate('tanggal', '<=', $endDate);
+
+        // C. Gabungkan keduanya
+        $riwayat = $transaksi->union($pengeluaran)
+                    ->orderBy('tanggal', 'asc') // Urutkan dari terlama
+                    ->get();
+
+        // 3. Hitung Total Saldo di Periode Ini
+        $totalMasuk = $riwayat->where('jenis', 'Pemasukan')->sum('nominal');
+        $totalKeluar = $riwayat->where('jenis', 'Pengeluaran')->sum('nominal');
+        $saldoAkhir = $totalMasuk - $totalKeluar;
+
+        // 4. Ambil Setting Sekolah untuk Kop Surat
+        $sekolah = [
+            'nama'   => \App\Models\Setting::where('key', 'nama_sekolah')->value('value') ?? 'Pondok Pesantren',
+            'alamat' => \App\Models\Setting::where('key', 'alamat_sekolah')->value('value') ?? 'Alamat Belum Diisi',
+        ];
+
+        // 5. Generate PDF
+        $pdf = Pdf::loadView('admin.finance.print_report', compact(
+            'riwayat', 'startDate', 'endDate', 'totalMasuk', 'totalKeluar', 'saldoAkhir', 'sekolah'
+        ));
+
+        // Set ukuran kertas A4 Portrait
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('Laporan-Keuangan-' . date('Ymd-His') . '.pdf');
     }
 }

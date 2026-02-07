@@ -214,19 +214,19 @@
                 @endif
 
                 <h1 class="institution">{{ $settings['nama_sekolah'] ?? 'PONDOK PESANTREN AL-HIDAYAH' }}</h1>
-                <p class="subtitle">PANITIA PENERIMAAN SANTRI BARU (PPDB)</p>
+                <p class="subtitle">PANITIA PENERIMAAN SANTRI BARU (PSB)</p>
                 <p class="subtitle">TAHUN AJARAN {{ date('Y') }}/{{ date('Y')+1 }}</p>
                 <p class="address">{{ $settings['alamat_sekolah'] ?? 'Alamat belum diatur di menu pengaturan.' }}</p>
             </header>
 
             <div class="title-section">
                 <div class="doc-title">SURAT KETERANGAN LULUS SELEKSI</div>
-                <div class="doc-number">Nomor: {{ $candidate->no_daftar }}/PPDB/{{ date('Y') }}</div>
+                <div class="doc-number">Nomor: {{ $candidate->no_daftar }}/PSB/{{ date('Y') }}</div>
             </div>
 
             <div class="content">
                 <p class="intro-text">
-                    Berdasarkan hasil seleksi administrasi dan tes yang telah dilakukan, Panitia Penerimaan Santri Baru (PPDB) 
+                    Berdasarkan hasil seleksi administrasi dan tes yang telah dilakukan, Panitia Penerimaan Santri Baru (PSB) 
                     <strong>{{ $settings['nama_sekolah'] ?? 'Pondok Pesantren' }}</strong> dengan ini menerangkan bahwa:
                 </p>
 
@@ -278,7 +278,7 @@
             <div class="footer">
                 <div class="signature-box">
                     <div class="place-date">Ditetapkan di: Garut, {{ date('d F Y') }}</div>
-                    <div class="role">Panitia PPDB,</div>
+                    <div class="role">Panitia PSB,</div>
                     
                     <div class="name">__________________________</div>
                     <div class="nip">NIP/NIY. ...........................</div>

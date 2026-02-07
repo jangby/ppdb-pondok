@@ -64,7 +64,7 @@
                                         // PERBAIKAN: Cari berdasarkan STRING Judul karena tidak ada kolom payment_type_id
                                         $searchString = '(Sumber: ' . $item->nama_pembayaran . ')';
                                         $totalTerpakaiManual = \App\Models\Expense::where('judul_pengeluaran', 'LIKE', '%' . $searchString . '%')
-                                                                ->sum('total_keluar');
+                                                                            ->sum('total_keluar');
 
                                         // 4. Rumus Saldo Fisik (Cash on Hand)
                                         // Saldo = Masuk - (Disetor + Terpakai)
@@ -200,11 +200,24 @@
 
                 {{-- 3. TABEL RIWAYAT --}}
                 <div class="lg:col-span-2 bg-white shadow-lg rounded-2xl overflow-hidden border border-gray-100">
-                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2">
                             <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
                             Riwayat Pengeluaran / Setoran
                         </h3>
+
+                        {{-- [NEW] TOMBOL DOWNLOAD LAPORAN --}}
+                        <form action="{{ route('admin.finance.print') }}" method="GET" target="_blank" class="flex items-center gap-2">
+                            <div class="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-1.5 shadow-sm">
+                                <input type="date" name="start_date" value="{{ date('Y-m-01') }}" class="text-xs border-none p-0 focus:ring-0 text-gray-600 w-28 cursor-pointer">
+                                <span class="text-xs text-gray-400 font-bold">-</span>
+                                <input type="date" name="end_date" value="{{ date('Y-m-d') }}" class="text-xs border-none p-0 focus:ring-0 text-gray-600 w-28 cursor-pointer">
+                            </div>
+                            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-800 text-white text-xs font-bold rounded-lg hover:bg-gray-700 transition shadow hover:shadow-md">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Cetak Laporan
+                            </button>
+                        </form>
                     </div>
                     
                     <div class="overflow-x-auto">
