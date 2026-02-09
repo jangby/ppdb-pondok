@@ -146,6 +146,8 @@ class AdminCandidateController extends Controller
             }
 
             DB::commit();
+
+            $candidate->load('parent');
             
             // Kirim WA Notifikasi (Lulus Administrasi)
             $this->checkAndSendWA($candidate, 'Pending', 'Lulus');

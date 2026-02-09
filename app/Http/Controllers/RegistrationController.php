@@ -45,7 +45,7 @@ class RegistrationController extends Controller
             'token' => 'required',
             'nama_lengkap' => 'required|string|max:255',
             // Tambahkan 'unique:candidates,nisn' agar NISN tidak boleh kembar di tabel candidates
-            'nisn' => 'required|numeric|digits_between:10,12|unique:candidates,nisn', 
+            'nisn' => 'nullable|numeric|digits_between:10,12|unique:candidates,nisn', 
             // Tambahkan 'unique:candidates,nik' agar NIK tidak boleh kembar
             'nik' => 'required|numeric|digits:16|unique:candidates,nik', 
             'jenjang' => ['required', Rule::in($validJenjang)],
@@ -255,9 +255,23 @@ class RegistrationController extends Controller
     {
         $candidate = Candidate::where('no_daftar', $no_daftar)->firstOrFail();
 
-        // Validasi input (Sesuaikan dengan field yang ada di form)
+        // Validasi input
         $request->validate([
             'nama_lengkap' => 'required|string|max:255',
+            
+            // PERBAIKAN DI SINI:
+            // Cek Unik, tapi abaikan (ignore) data milik santri ini sendiri
+            'nisn' => [
+                'nullable', 
+                'numeric', 
+                Rule::unique('candidates', 'nisn')->ignore($candidate->id)
+            ],
+            'nik' => [
+                'nullable', 
+                'numeric', 
+                Rule::unique('candidates', 'nik')->ignore($candidate->id)
+            ],
+            
             'tempat_lahir' => 'required',
             'tanggal_lahir' => 'required|date',
             'alamat' => 'required',
@@ -268,8 +282,16 @@ class RegistrationController extends Controller
         try {
             // 1. Update Data Utama
             $candidate->update($request->only([
-                'nama_lengkap', 'jenis_kelamin', 'tempat_lahir', 'tanggal_lahir', 
-                'anak_ke', 'jumlah_saudara', 'riwayat_penyakit', 'asal_sekolah'
+                'nama_lengkap', 
+                'nisn',  // Pastikan ini ada
+                'nik',   // Pastikan ini ada
+                'jenis_kelamin', 
+                'tempat_lahir', 
+                'tanggal_lahir', 
+                'anak_ke', 
+                'jumlah_saudara', 
+                'riwayat_penyakit', 
+                'asal_sekolah'
             ]));
 
             // 2. Update Alamat
@@ -285,6 +307,7 @@ class RegistrationController extends Controller
 
             DB::commit();
             return redirect()->route('public.finance.show', $no_daftar)->with('success', 'Data Anda berhasil diperbarui.');
+            
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Gagal memperbarui data: ' . $e->getMessage());

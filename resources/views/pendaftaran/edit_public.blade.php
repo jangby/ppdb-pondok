@@ -131,15 +131,21 @@
                         <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $candidate->tanggal_lahir) }}" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" required>
                     </div>
 
-                    {{-- NISN & NIK (Readonly) --}}
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NISN (Terkunci)</label>
-                        <input type="number" name="nisn" value="{{ old('nisn', $candidate->nisn) }}" class="w-full px-4 py-3.5 bg-slate-100 border border-slate-200 rounded-xl outline-none text-slate-500 font-bold" readonly>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NIK (Terkunci)</label>
-                        <input type="number" name="nik" value="{{ old('nik', $candidate->nik) }}" class="w-full px-4 py-3.5 bg-slate-100 border border-slate-200 rounded-xl outline-none text-slate-500 font-bold" readonly>
-                    </div>
+                    {{-- GANTI BAGIAN NISN --}}
+<div>
+    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">NISN</label>
+    <input type="number" name="nisn" value="{{ old('nisn', $candidate->nisn) }}" 
+           class="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-bold transition-all" 
+           placeholder="Masukkan NISN">
+</div>
+
+{{-- GANTI BAGIAN NIK --}}
+<div>
+    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 ml-1">NIK</label>
+    <input type="number" name="nik" value="{{ old('nik', $candidate->nik) }}" 
+           class="w-full px-4 py-3.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-700 font-bold transition-all" 
+           placeholder="Masukkan NIK">
+</div>
                     
                     {{-- Asal Sekolah --}}
                     <div class="md:col-span-2">

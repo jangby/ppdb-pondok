@@ -13,6 +13,40 @@
     <div class="py-10">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             
+            {{-- [PERBAIKAN 1] Menampilkan Pesan Sukses/Error dari Session --}}
+            @if (session('success'))
+                <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded shadow-sm">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm leading-5 font-medium text-green-800">Berhasil!</p>
+                            <p class="text-sm text-green-700">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded shadow-sm">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm leading-5 font-medium text-red-800">Gagal!</p>
+                            <p class="text-sm text-red-700">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Menampilkan Error Validasi Form --}}
             @if($errors->any())
                 <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded shadow-sm">
                     <div class="flex">
@@ -34,6 +68,7 @@
             <form action="{{ route('admin.candidates.store') }}" method="POST">
                 @csrf
                 
+                {{-- BAGIAN A: DATA PRIBADI --}}
                 <div class="bg-white shadow-md rounded-xl overflow-hidden mb-6 border border-gray-100">
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                         <div class="bg-blue-100 p-2 rounded-full text-blue-600">
@@ -51,9 +86,17 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jenjang *</label>
                             <select name="jenjang" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                 <option value="">- Pilih Jenjang -</option>
-                                <option value="SMP" {{ old('jenjang') == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                <option value="SMK" {{ old('jenjang') == 'SMK' ? 'selected' : '' }}>SMK</option>
+                                {{-- Loop jenjang dari controller jika ada, atau hardcode --}}
+                                @foreach($jenjangs ?? ['SMP', 'SMK'] as $j)
+                                    <option value="{{ $j }}" {{ old('jenjang') == $j ? 'selected' : '' }}>{{ $j }}</option>
+                                @endforeach
                             </select>
+                        </div>
+
+                        {{-- [PERBAIKAN 2] Menambahkan Input Asal Sekolah --}}
+                        <div class="lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Asal Sekolah *</label>
+                            <input type="text" name="asal_sekolah" value="{{ old('asal_sekolah') }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required placeholder="Contoh: SDN 1 Jakarta">
                         </div>
 
                         <div>
@@ -101,6 +144,7 @@
                     </div>
                 </div>
 
+                {{-- BAGIAN B: ALAMAT DOMISILI --}}
                 <div class="bg-white shadow-md rounded-xl overflow-hidden mb-6 border border-gray-100">
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                         <div class="bg-green-100 p-2 rounded-full text-green-600">
@@ -149,6 +193,7 @@
                     </div>
                 </div>
 
+                {{-- BAGIAN C: DATA ORANG TUA --}}
                 <div class="bg-white shadow-md rounded-xl overflow-hidden mb-8 border border-gray-100">
                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
                         <div class="bg-purple-100 p-2 rounded-full text-purple-600">
@@ -159,6 +204,7 @@
                     
                     <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 divide-y md:divide-y-0 md:divide-x divide-gray-200">
                         
+                        {{-- Ayah Kandung --}}
                         <div class="space-y-4 pr-0 md:pr-4">
                             <h4 class="font-bold text-gray-600 uppercase text-sm border-b pb-2 mb-4">Ayah Kandung</h4>
                             
@@ -202,6 +248,7 @@
                             </div>
                         </div>
 
+                        {{-- Ibu Kandung --}}
                         <div class="space-y-4 pt-4 md:pt-0 md:pl-4">
                             <h4 class="font-bold text-gray-600 uppercase text-sm border-b pb-2 mb-4">Ibu Kandung</h4>
                             

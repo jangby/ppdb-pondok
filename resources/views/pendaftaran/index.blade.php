@@ -149,11 +149,19 @@
 
                     {{-- NISN & NIK dengan Error Message --}}
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NISN</label>
-                        <input type="number" name="nisn" value="{{ old('nisn') }}" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nisn') border-red-500 bg-red-50 @enderror" placeholder="NISN" required>
-                        {{-- ERROR MESSAGE --}}
-                        @error('nisn') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
-                    </div>
+    {{-- 1. Label ditambah keterangan Opsional --}}
+    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">
+        NISN <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
+    </label>
+    
+    {{-- 2. Hapus attribute 'required' dan ubah placeholder --}}
+    <input type="number" name="nisn" value="{{ old('nisn') }}" 
+           class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nisn') border-red-500 bg-red-50 @enderror" 
+           placeholder="Kosongkan jika belum ada">
+    
+    {{-- ERROR MESSAGE --}}
+    @error('nisn') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
+</div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NIK</label>
                         <input type="number" name="nik" value="{{ old('nik') }}" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nik') border-red-500 bg-red-50 @enderror" placeholder="NIK (16 Digit)" required>
