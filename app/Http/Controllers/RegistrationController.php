@@ -200,7 +200,7 @@ class RegistrationController extends Controller
                 $response = Http::withHeaders([
                     'Content-Type' => 'application/json',
                     'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'),
-                ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3001') . '/api/sendText', [
+                ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3003') . '/api/sendText', [
                     'session' => 'default',
                     'chatId'  => $chatId,
                     'text'    => $pesanWA
@@ -216,6 +216,47 @@ class RegistrationController extends Controller
             } catch (\Exception $waError) {
                 // Tangkap error koneksi WA agar tidak menggagalkan pendaftaran
                 Log::error("EXCEPTION WA Error: " . $waError->getMessage());
+            }
+            // ---------------------------------------------------------
+
+            // ---------------------------------------------------------
+            // G. KIRIM NOTIFIKASI WA KE ADMIN (TAMBAHAN BARU)
+            // ---------------------------------------------------------
+            try {
+                Log::info("--- MULAI KIRIM WA NOTIFIKASI PENDAFTARAN KE ADMIN ---");
+                
+                // Ambil nomor admin dari .env (Sama seperti yang Anda seting sebelumnya)
+                $adminWa = env('ADMIN_WA_NUMBER', '628xxxxxxxxxx'); 
+                $adminChatId = $adminWa . '@c.us';
+
+                // Susun Pesan untuk Admin
+                $pesanAdmin = "🔔 *NOTIFIKASI PENDAFTARAN BARU*\n\n"
+                            . "Assalamu'alaikum Admin,\n"
+                            . "Alhamdulillah, ada calon santri baru yang baru saja menyelesaikan pengisian biodata:\n\n"
+                            . "👤 Nama: *{$candidate->nama_lengkap}*\n"
+                            . "🔖 No. Daftar: *{$candidate->no_daftar}*\n"
+                            . "🏫 Jenjang: *{$candidate->jenjang}*\n"
+                            . "📱 No. HP Ortu: *{$request->no_hp_ayah}*\n\n"
+                            . "Mohon dicek di dashboard admin. Terima kasih.";
+
+                // Kirim Request ke WAHA
+                $responseAdmin = Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                    'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'),
+                ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3003') . '/api/sendText', [
+                    'session' => 'default',
+                    'chatId'  => $adminChatId,
+                    'text'    => $pesanAdmin
+                ]);
+
+                if ($responseAdmin->successful()) {
+                    Log::info("WA Notifikasi Pendaftaran ke Admin Sukses Terkirim!");
+                } else {
+                    Log::error("WA Notifikasi Pendaftaran ke Admin Gagal! Status: " . $responseAdmin->status());
+                }
+
+            } catch (\Exception $eAdmin) {
+                Log::error("EXCEPTION WA Admin (Pendaftaran) Error: " . $eAdmin->getMessage());
             }
             // ---------------------------------------------------------
 

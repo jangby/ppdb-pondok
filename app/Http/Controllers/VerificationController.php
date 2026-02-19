@@ -6,6 +6,8 @@ use App\Models\Verification;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class VerificationController extends Controller
 {
@@ -72,6 +74,45 @@ class VerificationController extends Controller
             'status'            => 'pending',       // Menunggu Cek Admin
             'status_pembayaran' => 'unpaid'         // Belum Bayar
         ]);
+
+        try {
+            Log::info("--- MULAI KIRIM WA NOTIFIKASI KE ADMIN ---");
+
+            // 1. Tentukan Nomor WA Admin
+            // Anda bisa mengambilnya dari tabel Setting atau file .env.
+            // Contoh pakai .env: ADMIN_WA_NUMBER=6281234567890 (Pastikan depannya 62)
+            $adminWa = env('ADMIN_WA_NUMBER', '6285136468097'); // Ganti default-nya dengan no Admin Anda jika belum ada di .env
+            $chatId = $adminWa . '@c.us';
+
+            // 2. Susun Pesan
+            $pesanWA = "🔔 *NOTIFIKASI PPDB BARU*\n\n"
+                     . "Assalamu'alaikum Admin,\n"
+                     . "Ada calon wali santri yang baru saja mengunggah *Surat Perjanjian*.\n\n"
+                     . "📱 No. WA Wali: *" . $wa . "*\n\n"
+                     . "Mohon segera login ke halaman Admin untuk memverifikasi berkas tersebut.\n"
+                     . "Terima kasih.";
+
+            // 3. Kirim via WAHA
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'),
+            ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3003') . '/api/sendText', [
+                'session' => 'default',
+                'chatId'  => $chatId,
+                'text'    => $pesanWA
+            ]);
+
+            if ($response->successful()) {
+                Log::info("WA Notifikasi Admin Sukses Terkirim!");
+            } else {
+                Log::error("WA Notifikasi Admin Gagal Terkirim! Status: " . $response->status());
+            }
+
+        } catch (\Exception $e) {
+            // Tangkap error agar proses upload pendaftar tidak gagal walau WA error
+            Log::error("EXCEPTION WA Admin Error: " . $e->getMessage());
+        }
+        // ---------------------------------------------------------
 
         return redirect()->route('pendaftaran.verify.success');
     }
