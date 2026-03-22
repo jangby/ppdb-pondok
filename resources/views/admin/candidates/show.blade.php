@@ -307,6 +307,25 @@
                                                     @if($bill->sisa_tagihan == 0)
                                                         <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold border border-green-200">LUNAS</span>
                                                     @endif
+
+                                                    {{-- FITUR REKONSTRUKSI TAGIHAN: Muncul jika tarif master berubah dan santri sudah pernah mencicil/bayar --}}
+    @if($bill->nominal_tagihan != $bill->payment_type->nominal && $bill->nominal_terbayar > 0)
+        <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
+            <div class="text-yellow-800 mb-2 leading-relaxed">
+                <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>
+                Harga dasar saat ini: <span class="font-bold">Rp {{ number_format($bill->payment_type->nominal, 0, ',', '.') }}</span>
+            </div>
+            
+            {{-- PERBAIKAN: Tanpa tag form, gunakan formaction langsung di dalam button --}}
+            <button type="submit" 
+                    formaction="{{ route('admin.bills.reconstruct', $bill->id) }}"
+                    onclick="return confirm('Yakin ingin merekonstruksi tagihan ini? Status Lunas/Cicilan dan Sisa Hutang akan dihitung ulang secara otomatis.');" 
+                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded font-bold transition flex items-center justify-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Sesuaikan Tagihan
+            </button>
+        </div>
+    @endif
                                                 </td>
                                                 <td class="px-5 py-4 text-sm text-gray-500 text-right">
                                                     {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}
@@ -404,6 +423,13 @@
                                         <a href="{{ route('admin.transactions.print', $trx->id) }}" target="_blank" class="text-gray-400 hover:text-gray-600 px-2 py-1" title="Print Biasa (PDF)">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                         </a>
+
+                                        {{-- 👇 3. [BARU] TOMBOL COPY GAMBAR DETAIL KE WA 👇 --}}
+                                        <button type="button" onclick="copyDetailToWA(this)" class="inline-flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 bg-green-50 px-3 py-1.5 rounded-lg hover:bg-green-100 transition border border-green-200">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                            <span class="btn-text">Copy WA</span>
+                                        </button>
+                                        {{-- 👆 ========================================= 👆 --}}
                                     </div>
 
                                 </div>
@@ -465,6 +491,113 @@
             </div>
         </div>
     </div>
+
+    {{-- TEMPLATE TERSEMBUNYI UNTUK GAMBAR WA --}}
+    <div id="waImageTemplate" style="position: absolute; left: -9999px; top: 0; background: white; padding: 20px; width: 600px; color: black; font-family: sans-serif; box-sizing: border-box;">
+        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 18px; font-weight: bold; text-transform: uppercase;">Rincian Pembayaran Santri</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Tanggal Update: {{ date('d M Y, H:i') }}</p>
+        </div>
+        
+        <table style="width: 100%; margin-bottom: 15px; font-size: 14px;">
+            <tr>
+                <td style="width: 100px; font-weight: bold; padding: 2px 0;">Nama Santri</td>
+                <td style="padding: 2px 0;">: {{ $candidate->nama_lengkap }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; padding: 2px 0;">No. Daftar</td>
+                <td style="padding: 2px 0;">: {{ $candidate->no_daftar }}</td>
+            </tr>
+        </table>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 15px;">
+            <thead>
+                <tr style="background-color: #f3f4f6;">
+                    <th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Item Pembayaran</th>
+                    <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Tagihan</th>
+                    <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Terbayar</th>
+                    <th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Sisa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($candidate->bills as $bill)
+                <tr>
+                    <td style="border: 1px solid #d1d5db; padding: 6px 8px;">
+                        {{ $bill->payment_type->nama_pembayaran }}
+                        @if($bill->sisa_tagihan == 0) <span style="color: green; font-weight: bold; font-size: 10px;">(LUNAS)</span> @endif
+                    </td>
+                    <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right;">Rp {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right;">Rp {{ number_format($bill->nominal_terbayar, 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 6px 8px; text-align: right; color: {{ $bill->sisa_tagihan > 0 ? 'red' : 'black' }}; font-weight: {{ $bill->sisa_tagihan > 0 ? 'bold' : 'normal' }};">
+                        Rp {{ number_format($bill->sisa_tagihan, 0, ',', '.') }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="font-weight: bold; background-color: #e5e7eb;">
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">TOTAL:</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Rp {{ number_format($totalTagihan, 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: green;">Rp {{ number_format($totalTerbayar, 0, ',', '.') }}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: red;">Rp {{ number_format($sisaTagihan, 0, ',', '.') }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        
+        <div style="text-align: center; font-size: 11px; color: #6b7280; font-style: italic;">
+            Simpan bukti rincian ini. Terima kasih telah menyelesaikan administrasi.
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        async function copyDetailToWA(btnElement) {
+            const originalText = btnElement.querySelector('.btn-text').innerText;
+            btnElement.querySelector('.btn-text').innerText = "Loading...";
+            btnElement.disabled = true;
+
+            const elementToCapture = document.getElementById('waImageTemplate');
+
+            try {
+                // Proses render HTML ke Canvas
+                const canvas = await html2canvas(elementToCapture, { 
+                    scale: 2, // Resolusi tinggi agar tidak pecah di WA
+                    backgroundColor: "#ffffff"
+                });
+
+                // Ubah ke Blob (File Gambar)
+                canvas.toBlob(async function(blob) {
+                    try {
+                        // Tulis ke Clipboard (Memori Copy-Paste)
+                        const item = new ClipboardItem({ "image/png": blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        // Notifikasi sukses
+                        btnElement.querySelector('.btn-text').innerText = "Tersalin! ✔️";
+                        btnElement.classList.replace('bg-green-50', 'bg-green-600');
+                        btnElement.classList.replace('text-green-600', 'text-white');
+                        
+                        alert("✅ Rincian berhasil disalin!\nSilakan buka WhatsApp wali santri, lalu tekan Ctrl+V (Paste) pada kolom chat.");
+                    } catch (err) {
+                        alert("⚠️ Browser Anda tidak mendukung fitur copy gambar otomatis. Gunakan browser versi terbaru (Chrome/Edge).");
+                        console.error(err);
+                    }
+                });
+            } catch (err) {
+                alert("Gagal memproses gambar.");
+                console.error(err);
+            } finally {
+                // Kembalikan tombol ke semula setelah 3 detik
+                setTimeout(() => {
+                    btnElement.querySelector('.btn-text').innerText = originalText;
+                    btnElement.disabled = false;
+                    btnElement.classList.replace('bg-green-600', 'bg-green-50');
+                    btnElement.classList.replace('text-white', 'text-green-600');
+                }, 3000);
+            }
+        }
+    </script>
 
     {{-- SCRIPT BLUETOOTH PRINTER --}}
     <script>

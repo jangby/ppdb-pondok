@@ -233,4 +233,36 @@ class AdminFinanceController extends Controller
 
         return $pdf->stream('Laporan-Keuangan-' . date('Ymd-His') . '.pdf');
     }
+
+    public function reconstructBill($id)
+    {
+        $bill = CandidateBill::findOrFail($id);
+        $masterPayment = $bill->payment_type;
+
+        // Update nominal mengikuti master terbaru
+        $bill->nominal_tagihan = $masterPayment->nominal;
+
+        // Logika Status & Uang Kembalian (Refund)
+        if ($bill->nominal_terbayar >= $bill->nominal_tagihan) {
+            $bill->status = 'Lunas';
+            
+            $kembalian = $bill->nominal_terbayar - $bill->nominal_tagihan;
+            if ($kembalian > 0) {
+                // Di sini Anda bisa menambahkan logika membuat record "Pengeluaran/Refund"
+                // Atau sekadar menyimpannya dengan status Lunas + Lebih Bayar
+                session()->flash('warning', 'Rekonstruksi berhasil. Terdapat LEBIH BAYAR sebesar Rp ' . number_format($kembalian, 0, ',', '.') . '. Harap kembalikan uang ke santri/wali.');
+            } else {
+                session()->flash('success', 'Rekonstruksi berhasil. Status tetap Lunas pas.');
+            }
+
+        } else {
+            // Jika nominal terbayar kurang dari tagihan baru
+            $bill->status = ($bill->nominal_terbayar > 0) ? 'Cicilan' : 'Belum Lunas';
+            session()->flash('info', 'Rekonstruksi berhasil. Status berubah menjadi Belum Lunas/Cicilan. Sisa tagihan menyesuaikan.');
+        }
+
+        $bill->save();
+
+        return redirect()->back();
+    }
 }

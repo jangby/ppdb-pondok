@@ -142,6 +142,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
     Route::post('/admin/santri/store', [AdminCandidateController::class, 'store'])->name('admin.candidates.store');
 
+    Route::get('/admin/santri/lanjutan/create', [AdminCandidateController::class, 'createLanjutan'])->name('admin.candidates.lanjutan.create');
+    Route::post('/admin/santri/lanjutan', [AdminCandidateController::class, 'storeLanjutan'])->name('admin.candidates.lanjutan.store');
+
     // Route Wildcard Santri
     Route::get('/admin/santri/{id}', [AdminCandidateController::class, 'show'])->name('admin.candidates.show');
     Route::get('/admin/santri/{id}/edit', [AdminCandidateController::class, 'edit'])->name('admin.candidates.edit');
@@ -165,6 +168,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/transaksi/{id}/cetak', [AdminTransactionController::class, 'print'])->name('admin.transactions.print');
     Route::get('/admin/transaksi/{id}/print-data', [App\Http\Controllers\AdminTransactionController::class, 'getDataForPrinter'])
     ->name('admin.transactions.print_data');
+    Route::post('/admin/tagihan/{id}/rekonstruksi', [App\Http\Controllers\AdminFinanceController::class, 'reconstructBill'])->name('admin.bills.reconstruct');
 
     // --- KEUANGAN (PENGELUARAN) ---
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');

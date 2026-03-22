@@ -6,6 +6,8 @@ use App\Models\PaymentType;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\Candidate;
+use App\Models\CandidateBill;
 
 class PaymentTypeController extends Controller
 {
@@ -38,42 +40,78 @@ class PaymentTypeController extends Controller
 
     public function store(Request $request)
     {
-        $jenjangList = json_decode(Setting::getValue('list_jenjang'), true) ?? [];
-        $validJenjangs = array_merge(['Semua'], $jenjangList);
-
         $request->validate([
-            'nama_pembayaran' => 'required|string|max:255',
-            'nominal' => 'required|numeric|min:0',
-            'jenjang' => ['required', Rule::in($validJenjangs)], 
+            'nama_pembayaran' => 'required|string',
+            'nominal' => 'required|numeric',
+            'jenjang' => 'required|string'
         ]);
 
-        PaymentType::create($request->all());
+        $paymentType = PaymentType::create($request->all());
 
-        return back()->with('success', 'Item pembayaran berhasil ditambahkan.');
+        // OTOMATIS TAMBAH TAGIHAN KE SANTRI YANG RELEVAN
+        // Cari santri yang jenjangnya sesuai (atau semua) dan statusnya Lulus/Diterima
+        $candidates = Candidate::whereIn('jenjang', [$request->jenjang, 'Semua'])
+                               ->where('status', 'Lulus')
+                               ->get();
+
+        foreach ($candidates as $candidate) {
+            // Cek apakah ini khusus lanjutan atau reguler berdasarkan nama pembayaran
+            $isLanjutanBill = str_contains(strtolower($paymentType->nama_pembayaran), 'lanjutan');
+            $isLanjutanCandidate = ($candidate->jalur == 'lanjutan');
+
+            // Jika tagihan lanjutan tapi anak reguler, atau tagihan reguler tapi anak lanjutan -> Skip
+            if ($isLanjutanBill != $isLanjutanCandidate) {
+                continue; 
+            }
+
+            CandidateBill::firstOrCreate([
+                'candidate_id' => $candidate->id,
+                'payment_type_id' => $paymentType->id
+            ], [
+                'nominal_tagihan' => $paymentType->nominal,
+                'nominal_terbayar' => 0,
+                'status' => 'Belum Lunas'
+            ]);
+        }
+
+        return redirect()->route('admin.payment_types.index')->with('success', 'Jenis Pembayaran dan Tagihan Santri berhasil ditambahkan!');
     }
 
     public function update(Request $request, $id)
     {
-        $jenjangList = json_decode(Setting::getValue('list_jenjang'), true) ?? [];
-        $validJenjangs = array_merge(['Semua'], $jenjangList);
+        $paymentType = PaymentType::findOrFail($id);
+        $oldNominal = $paymentType->nominal;
+        
+        $paymentType->update($request->all());
 
-        $request->validate([
-            'nama_pembayaran' => 'required|string|max:255',
-            'nominal' => 'required|numeric|min:0',
-            'jenjang' => ['required', Rule::in($validJenjangs)],
-        ]);
+        // OTOMATIS UPDATE NOMINAL TAGIHAN JIKA BELUM ADA PEMBAYARAN (Rp 0)
+        if ($oldNominal != $paymentType->nominal) {
+            CandidateBill::where('payment_type_id', $paymentType->id)
+                ->where('nominal_terbayar', 0) // Hanya yang belum bayar sama sekali
+                ->update(['nominal_tagihan' => $paymentType->nominal]);
+        }
 
-        $payment = PaymentType::findOrFail($id);
-        $payment->update($request->all());
-
-        return back()->with('success', 'Item pembayaran berhasil diperbarui.');
+        return redirect()->route('admin.payment_types.index')->with('success', 'Jenis Pembayaran diperbarui!');
     }
 
     public function destroy($id)
     {
-        $payment = PaymentType::findOrFail($id);
-        $payment->delete();
+        $paymentType = PaymentType::findOrFail($id);
 
-        return back()->with('success', 'Item pembayaran berhasil dihapus.');
+        // OTOMATIS HAPUS TAGIHAN YANG BELUM DIBAYAR
+        CandidateBill::where('payment_type_id', $paymentType->id)
+            ->where('nominal_terbayar', 0)
+            ->delete();
+
+        // Peringatan jika ada tagihan yang sudah dibayar (tidak bisa dihapus otomatis)
+        $paidBills = CandidateBill::where('payment_type_id', $paymentType->id)->where('nominal_terbayar', '>', 0)->count();
+
+        if ($paidBills > 0) {
+            // Opsi: Soft delete master, atau beri peringatan
+            return redirect()->route('admin.payment_types.index')->with('error', 'Item dihapus dari daftar, tapi ada '.$paidBills.' tagihan santri yang sudah terbayar (uang masuk) tidak kami hapus demi keamanan laporan kas.');
+        }
+
+        $paymentType->delete();
+        return redirect()->route('admin.payment_types.index')->with('success', 'Jenis Pembayaran dihapus!');
     }
 }

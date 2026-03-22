@@ -101,8 +101,6 @@ class AdminCandidateController extends Controller
                 'tahun_masuk' => date('Y'),
                 'jalur_pendaftaran' => 'Offline',
                 'status_seleksi' => 'Lulus', // Lulus Administrasi/Daftar
-                
-                // dormitory_id dibiarkan NULL dulu
             ]);
 
             CandidateAddress::create([
@@ -474,5 +472,70 @@ class AdminCandidateController extends Controller
             Log::error("Koneksi WA Gagal: " . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan sistem saat mengirim WA.');
         }
+    }
+
+    public function createLanjutan()
+    {
+        // Tampilkan form sederhana khusus santri lanjutan
+        return view('admin.candidates.create_lanjutan');
+    }
+
+    public function storeLanjutan(Request $request)
+    {
+        // Validasi input dari form
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'nis_lokal'    => 'required|string|max:50',
+            'jenjang'      => 'required|string', 
+            'jenis_kelamin'=> 'required|string'
+        ]);
+
+        // 1. Buat Data Kandidat 
+        $candidate = Candidate::create([
+            'jalur'             => 'lanjutan',
+            'nis_lokal'         => $request->nis_lokal,
+            'nama_lengkap'      => $request->nama_lengkap,
+            'jenis_kelamin'     => $request->jenis_kelamin,
+            'jenjang'           => $request->jenjang,
+            'status_seleksi'    => 'Diterima', 
+            'status'            => 'Lulus',    
+            'no_daftar'         => 'LJT-' . date('Y') . date('His'),
+            'tahun_masuk'       => date('Y'),
+            'jalur_pendaftaran' => 'Offline',
+            'tempat_lahir'      => '-', 
+            'tanggal_lahir'     => date('Y-m-d'), 
+            'anak_ke'           => 1, 
+            'jumlah_saudara'    => 0, 
+            'asal_sekolah'      => 'Internal Pondok', 
+        ]);
+
+        // ====================================================================
+        // 2. Mengambil Tagihan Khusus "Lanjutan" & Tagihan "Semua"
+        // ====================================================================
+        
+        $paymentTypes = PaymentType::where(function($query) use ($request) {
+            // KONDISI 1: Ambil tagihan yang namanya ada kata "Lanjutan" DAN jenjangnya cocok (misal: SMA)
+            $query->where('nama_pembayaran', 'LIKE', '%Lanjutan%')
+                  ->where('jenjang', $request->jenjang);
+                  
+        })->orWhere(function($query) {
+            // KONDISI 2: ATAU ambil tagihan yang jenjangnya diset "Semua" (apapun nama pembayarannya)
+            $query->where('jenjang', 'Semua');
+            
+        })->get();
+
+        // Looping untuk memasukkan semua tagihan yang ditemukan ke database
+        foreach ($paymentTypes as $paymentType) {
+            CandidateBill::create([
+                'candidate_id'     => $candidate->id,
+                'payment_type_id'  => $paymentType->id,
+                'nominal_tagihan'  => $paymentType->nominal, 
+                'nominal_terbayar' => 0, 
+                'status'           => 'Belum Lunas'
+            ]);
+        }
+        // ====================================================================
+
+        return redirect()->route('admin.candidates.index')->with('success', 'Santri Lanjutan berhasil ditambahkan dan tagihan telah dibuat!');
     }
 }

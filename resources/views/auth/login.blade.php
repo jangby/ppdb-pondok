@@ -25,7 +25,7 @@
         {{-- KIRI: BACKGROUND --}}
         <div class="hidden md:flex md:w-1/2 bg-green-900 relative justify-center items-center overflow-hidden">
             <div class="absolute inset-0 z-0">
-                <img src="{{ asset('assets/get2.webp') }}" alt="Pesantren Background" class="w-full h-full object-cover opacity-40">
+                <img src="{{ asset('assets/get2.jpg') }}" alt="Pesantren Background" class="w-full h-full object-cover opacity-40">
             </div>
             
             <div class="relative z-10 p-12 text-white max-w-lg">
