@@ -42,33 +42,41 @@ class AdminTransactionController extends Controller
             ]);
 
             // 3. Proses Rincian Pembayaran
-            foreach ($payments as $billId => $nominal) {
-                // Ambil data tagihan asli untuk validasi
-                $bill = CandidateBill::lockForUpdate()->findOrFail($billId);
+foreach ($payments as $billId => $nominal) {
+    // Ambil data tagihan asli untuk validasi
+    $bill = CandidateBill::lockForUpdate()->findOrFail($billId);
 
-                // Validasi: Jangan sampai bayar lebih dari sisa hutang
-                if ($nominal > $bill->sisa_tagihan) {
-                    throw new \Exception("Nominal pembayaran untuk {$bill->payment_type->nama_pembayaran} melebihi sisa tagihan!");
-                }
+    // Validasi: Jangan sampai bayar lebih dari sisa hutang
+    if ($nominal > $bill->sisa_tagihan) {
+        throw new \Exception("Nominal pembayaran untuk {$bill->payment_type->nama_pembayaran} melebihi sisa tagihan!");
+    }
 
-                // Simpan Detail
-                TransactionDetail::create([
-                    'transaction_id' => $transaction->id,
-                    'candidate_bill_id' => $billId,
-                    'nominal' => $nominal
-                ]);
+    // Simpan Detail
+    TransactionDetail::create([
+        'transaction_id' => $transaction->id,
+        'candidate_bill_id' => $billId,
+        'nominal' => $nominal
+    ]);
 
-                // Update Tagihan
-                $bill->nominal_terbayar += $nominal;
-                
-                // Cek Lunas
-                if ($bill->nominal_terbayar >= $bill->nominal_tagihan) {
-                    $bill->status = 'Lunas';
-                } else {
-                    $bill->status = 'Cicilan';
-                }
-                $bill->save();
-            }
+    // Update Tagihan
+    $bill->nominal_terbayar += $nominal;
+    
+    // --- FITUR TOLERANSI ANOMALI ---
+    $sisa_sekarang = $bill->nominal_tagihan - $bill->nominal_terbayar;
+    // Jika sisa tagihan menyisakan angka anomali (misal di bawah Rp 10), genapkan otomatis.
+    if ($sisa_sekarang > 0 && $sisa_sekarang <= 10) {
+        $bill->nominal_terbayar = $bill->nominal_tagihan; 
+    }
+    // -------------------------------
+    
+    // Cek Lunas
+    if ($bill->nominal_terbayar >= $bill->nominal_tagihan) {
+        $bill->status = 'Lunas';
+    } else {
+        $bill->status = 'Cicilan';
+    }
+    $bill->save();
+}
 
             DB::commit();
             return back()->with('success', 'Pembayaran berhasil disimpan!');
@@ -126,4 +134,48 @@ class AdminTransactionController extends Controller
         ]
     ]);
 }
+
+/**
+     * Membatalkan transaksi dan mengembalikan nominal tagihan santri
+     */
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            // Tarik data transaksi beserta detailnya
+            $transaction = Transaction::with('details')->findOrFail($id);
+
+            // 1. Kembalikan nominal di tabel CandidateBill
+            foreach ($transaction->details as $detail) {
+                $bill = CandidateBill::lockForUpdate()->find($detail->candidate_bill_id);
+                
+                if ($bill) {
+                    // Kurangi nominal terbayar dengan nominal yang dibatalkan
+                    $bill->nominal_terbayar -= $detail->nominal;
+                    
+                    // Pastikan tidak minus jika ada anomali sebelumnya
+                    if ($bill->nominal_terbayar <= 0) {
+                        $bill->nominal_terbayar = 0;
+                        $bill->status = 'Belum Lunas';
+                    } elseif ($bill->nominal_terbayar < $bill->nominal_tagihan) {
+                        $bill->status = 'Cicilan';
+                    }
+                    
+                    $bill->save();
+                }
+            }
+
+            // 2. Hapus Rincian dan Header Transaksi
+            // (Jika di model Transaction sudah pakai onDelete('cascade') di database, ->delete() rincian bisa dilewati)
+            $transaction->details()->delete(); 
+            $transaction->delete();
+
+            DB::commit();
+            return back()->with('success', 'Transaksi berhasil dibatalkan dan tagihan telah disesuaikan kembali.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal membatalkan transaksi: ' . $e->getMessage());
+        }
+    }
 }

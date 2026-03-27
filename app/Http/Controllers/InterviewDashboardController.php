@@ -22,7 +22,7 @@ class InterviewDashboardController extends Controller
             $q->where('status_seleksi', 'LIKE', '%Lulus%')
               ->orWhere('status_seleksi', 'LIKE', '%Diterima%')
               ->orWhere('status_seleksi', 'LIKE', '%Approved%');
-        });
+        })->where('jalur', '!=', 'lanjutan');
 
         $totalPeserta = $baseQuery->count();
         

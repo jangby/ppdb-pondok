@@ -122,6 +122,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/verifikasi', [AdminVerificationController::class, 'index'])->name('admin.verifications.index');
     Route::post('/admin/verifikasi/{id}/approve', [AdminVerificationController::class, 'approve'])->name('admin.verifications.approve');
     Route::post('/admin/verifikasi/{id}/reject', [AdminVerificationController::class, 'reject'])->name('admin.verifications.reject');
+    Route::post('/admin/verifikasi/{id}/resend-wa/{tahap}', [App\Http\Controllers\AdminVerificationController::class, 'resendWa'])->name('admin.verifications.resend_wa');
 
     // --- PENGATURAN PPDB ---
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');
@@ -168,6 +169,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/transaksi/{id}/cetak', [AdminTransactionController::class, 'print'])->name('admin.transactions.print');
     Route::get('/admin/transaksi/{id}/print-data', [App\Http\Controllers\AdminTransactionController::class, 'getDataForPrinter'])
     ->name('admin.transactions.print_data');
+    Route::delete('/admin/transaksi/{id}/batal', [AdminTransactionController::class, 'destroy'])->name('admin.transactions.destroy');
     Route::post('/admin/tagihan/{id}/rekonstruksi', [App\Http\Controllers\AdminFinanceController::class, 'reconstructBill'])->name('admin.bills.reconstruct');
 
     // --- KEUANGAN (PENGELUARAN) ---

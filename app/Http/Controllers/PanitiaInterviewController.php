@@ -33,7 +33,7 @@ class PanitiaInterviewController extends Controller
               ->orWhere('status_seleksi', 'LIKE', '%Diterima%')
               ->orWhere('status_seleksi', 'LIKE', '%Approved%')
               ->orWhere('status_seleksi', 'LIKE', '%Verifikasi%');
-        });
+        })->where('jalur', '!=', 'lanjutan');
 
         // Search
         if ($request->has('q') && !empty($request->q)) {

@@ -219,7 +219,7 @@
                                 <td class="px-6 py-4 align-top text-right">
                                     <div class="flex flex-col gap-2 items-end">
                                         
-                                        {{-- JIKA STATUS PENDING --}}
+                                        {{-- TAHAP 1: JIKA BERKAS MASIH PENDING --}}
                                         @if($v->status == 'pending')
                                             <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
                                                 @csrf
@@ -243,9 +243,36 @@
                                                 </div>
                                             </div>
 
-                                        {{-- JIKA STATUS BAYAR PENDING --}}
+                                        {{-- TAHAP 1.5: JIKA BERKAS ACC, TAPI WALI BELUM BAYAR/UPLOAD --}}
+                                        @elseif($v->status == 'approved' && $v->status_pembayaran == 'unpaid')
+                                            <div class="flex flex-col gap-2 items-end">
+                                                
+                                                {{-- [BARU] PERINGATAN WA GAGAL & TOMBOL RESEND TAHAP 1 --}}
+                                                @if(!$v->wa_tahap1_sent)
+                                                    <div class="w-28 bg-red-50 border border-red-200 p-1.5 rounded-lg shadow-sm text-center">
+                                                        <span class="text-[9px] font-bold text-red-600 block mb-1">⚠️ WA Tagihan Gagal</span>
+                                                        <form action="{{ route('admin.verifications.resend_wa', ['id' => $v->id, 'tahap' => 1]) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-1 rounded text-[9px] font-bold">Kirim Ulang WA</button>
+                                                        </form>
+                                                    </div>
+                                                @endif
+
+                                                <div class="w-28 bg-amber-50 border border-amber-200 text-amber-600 px-2 py-1.5 rounded-lg text-center shadow-sm">
+                                                    <div class="text-[9px] font-bold uppercase">Menunggu Transfer</div>
+                                                </div>
+                                                
+                                                <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="w-28 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1" onclick="return confirm('Terima Pembayaran CASH?')">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                                        Terima Cash
+                                                    </button>
+                                                </form>
+                                            </div>
+
+                                        {{-- TAHAP 2: JIKA WALI SUDAH UPLOAD, MENUNGGU ACC ADMIN --}}
                                         @elseif($v->status == 'approved' && $v->status_pembayaran == 'pending')
-                                            
                                             <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
                                                 @csrf
                                                 <button type="submit" class="w-28 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-1.5" onclick="return confirm('ACC Pembayaran?')">
@@ -270,6 +297,18 @@
 
                                         {{-- SUDAH SELESAI --}}
                                         @elseif($v->status_pembayaran == 'paid')
+                                            
+                                            {{-- [BARU] PERINGATAN WA GAGAL & TOMBOL RESEND TAHAP 2 --}}
+                                            @if(!$v->wa_tahap2_sent)
+                                                <div class="w-28 bg-red-50 border border-red-200 p-1.5 rounded-lg shadow-sm text-center mb-2">
+                                                    <span class="text-[9px] font-bold text-red-600 block mb-1">⚠️ WA Biodata Gagal</span>
+                                                    <form action="{{ route('admin.verifications.resend_wa', ['id' => $v->id, 'tahap' => 2]) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-1 rounded text-[9px] font-bold">Kirim Ulang WA</button>
+                                                    </form>
+                                                </div>
+                                            @endif
+
                                             <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 rounded-full text-[10px] font-bold border border-green-200">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                                 Verified

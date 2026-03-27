@@ -15,9 +15,11 @@ class Verification extends Model
         'file_perjanjian',
         'token',
         'status',
-        'jenjang',         // [BARU] Jenjang Pilihan
-        'bukti_transfer',  // [BARU] Path File
-        'status_pembayaran', // [BARU] Status Uang
+        'wa_tahap1_sent',  // <-- [BARU]
+        'jenjang',         
+        'bukti_transfer',  
+        'status_pembayaran', 
+        'wa_tahap2_sent',  // <-- [BARU]
         'catatan_pembayaran'
     ];
     

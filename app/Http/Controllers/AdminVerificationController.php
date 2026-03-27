@@ -19,10 +19,13 @@ class AdminVerificationController extends Controller
         $query = Verification::latest();
 
         if ($filter == 'pending') {
+            // PERBAIKAN: Tampilkan yang berkasnya pending, ATAU yang sedang menunggu wali bayar (unpaid), ATAU yang bukti bayarnya pending verifikasi
             $query->where(function($q) {
                 $q->where('status', 'pending')
+                  ->orWhere('status_pembayaran', 'unpaid')
                   ->orWhere('status_pembayaran', 'pending');
-            });
+            })->where('status', '!=', 'rejected')->where('status_pembayaran', '!=', 'rejected');
+            
         } elseif ($filter == 'approved') {
             $query->where('status', 'approved')
                   ->where('status_pembayaran', 'paid');
@@ -43,7 +46,7 @@ class AdminVerificationController extends Controller
             'ditolak'        => Verification::where('status', 'rejected')->orWhere('status_pembayaran', 'rejected')->count(),
         ];
         
-        // Total antrian yang harus dikerjakan admin sekarang
+        // Total antrian yang harus dikerjakan admin sekarang (tidak termasuk yang menunggu wali transfer)
         $stats['total_antrian'] = $stats['berkas_pending'] + $stats['bayar_pending'];
 
         return view('admin.verifications.index', compact('verifications', 'filter', 'stats'));
@@ -58,13 +61,13 @@ class AdminVerificationController extends Controller
         // ==========================================================
         if ($data->status == 'pending') {
             
-            // 1. Update Status Berkas
             $data->update(['status' => 'approved']);
+            $waSent = $this->sendPaymentNotification($data);
+            $data->update(['wa_tahap1_sent' => $waSent]);
 
-            // 2. Kirim WA: Instruksi Pembayaran (LENGKAP DENGAN NOMINAL & REKENING)
-            $this->sendPaymentNotification($data);
-
-            return back()->with('success', 'Berkas Perjanjian DISETUJUI. Pesan tagihan lengkap telah dikirim ke WA Wali.');
+        return back()->with($waSent ? 'success' : 'warning', 
+            $waSent ? 'Berkas DISETUJUI. Pesan tagihan telah dikirim.' : 'Berkas DISETUJUI, TETAPI WA GAGAL terkirim. Server WA bermasalah.'
+        );
         }
 
         // ==========================================================
@@ -72,15 +75,12 @@ class AdminVerificationController extends Controller
         // ==========================================================
         if ($data->status == 'approved' && $data->status_pembayaran == 'pending') {
             
-            // 1. Update Status Pembayaran
             $data->update(['status_pembayaran' => 'paid']);
 
-            // 2. [AUTO] Update Status Santri & Assign Ruangan Tes
-            if ($data->candidate) {
+            if ($data->candidate ?? false) {
                 $candidate = $data->candidate;
                 $candidate->update(['status_seleksi' => 'Lulus Administrasi']);
 
-                // Auto Assign Ruangan Santri
                 if (!$candidate->santri_room_id) {
                     $targetSantri = \App\Models\TestRoom::where('jenis', 'Santri')
                                 ->withCount('candidates_santri')
@@ -89,7 +89,6 @@ class AdminVerificationController extends Controller
                     if ($targetSantri) $candidate->update(['santri_room_id' => $targetSantri->id]);
                 }
 
-                // Auto Assign Ruangan Wali
                 if (!$candidate->wali_room_id) {
                     $targetWali = \App\Models\TestRoom::where('jenis', 'Wali')
                                 ->withCount('candidates_wali')
@@ -99,12 +98,55 @@ class AdminVerificationController extends Controller
                 }
             }
 
-            // 3. Kirim WA: Link Pengisian Biodata
-            $this->sendBioLinkNotification($data);
+            $waSent = $this->sendBioLinkNotification($data);
+            $data->update(['wa_tahap2_sent' => $waSent]);
 
-            return back()->with('success', 'Pembayaran DITERIMA (Lunas). Link pengisian biodata telah dikirim ke WA Wali.');
+        return back()->with($waSent ? 'success' : 'warning', 
+            $waSent ? 'Pembayaran DITERIMA. Link biodata telah dikirim.' : 'Pembayaran DITERIMA, TETAPI WA GAGAL terkirim. Server WA bermasalah.'
+        );
+
         }
 
+        // ==========================================================
+        // SKENARIO C: MENERIMA PEMBAYARAN CASH (DI PONDOK)
+        // ==========================================================
+        if ($data->status == 'approved' && $data->status_pembayaran == 'unpaid') {
+            
+            $data->update([
+                'status_pembayaran' => 'paid',
+                'catatan_pembayaran' => 'Pembayaran Cash Offline'
+            ]);
+
+            if ($data->candidate ?? false) {
+                $candidate = $data->candidate;
+                $candidate->update(['status_seleksi' => 'Lulus Administrasi']);
+
+                if (!$candidate->santri_room_id) {
+                    $targetSantri = \App\Models\TestRoom::where('jenis', 'Santri')
+                                ->withCount('candidates_santri')
+                                ->orderBy('candidates_santri_count', 'asc')
+                                ->first();
+                    if ($targetSantri) $candidate->update(['santri_room_id' => $targetSantri->id]);
+                }
+
+                if (!$candidate->wali_room_id) {
+                    $targetWali = \App\Models\TestRoom::where('jenis', 'Wali')
+                                ->withCount('candidates_wali')
+                                ->orderBy('candidates_wali_count', 'asc')
+                                ->first();
+                    if ($targetWali) $candidate->update(['wali_room_id' => $targetWali->id]);
+                }
+            }
+
+            $waSent = $this->sendBioLinkNotification($data);
+            $data->update(['wa_tahap2_sent' => $waSent]);
+
+        return back()->with($waSent ? 'success' : 'warning', 
+            $waSent ? 'Pembayaran DITERIMA. Link biodata telah dikirim.' : 'Pembayaran DITERIMA, TETAPI WA GAGAL terkirim. Server WA bermasalah.'
+        );
+        }
+
+        // Jika data tidak cocok dengan skenario manapun, kembalikan dengan pesan error
         return back()->with('error', 'Status data tidak valid untuk disetujui.');
     }
 
@@ -134,6 +176,27 @@ class AdminVerificationController extends Controller
         }
 
         return back();
+    }
+
+    public function resendWa($id, $tahap)
+    {
+        $data = Verification::findOrFail($id);
+
+        if ($tahap == 1) {
+            $waSent = $this->sendPaymentNotification($data);
+            if ($waSent) {
+                $data->update(['wa_tahap1_sent' => true]);
+                return back()->with('success', 'Pesan WA Tagihan berhasil dikirim ulang!');
+            }
+        } elseif ($tahap == 2) {
+            $waSent = $this->sendBioLinkNotification($data);
+            if ($waSent) {
+                $data->update(['wa_tahap2_sent' => true]);
+                return back()->with('success', 'Pesan WA Link Biodata berhasil dikirim ulang!');
+            }
+        }
+
+        return back()->with('error', 'Masih gagal mengirim WA. Pastikan server WAHA sedang menyala.');
     }
 
     // =========================================================================
@@ -174,7 +237,9 @@ class AdminVerificationController extends Controller
                . "{$linkBayar}\n\n"
                . "Mohon segera diselesaikan agar bisa lanjut ke pengisian biodata. Terima kasih.";
 
-        $this->sendWA($data->no_wa, $pesan);
+
+        // PENTING: Tambahkan 'return' di depannya
+        return $this->sendWA($data->no_wa, $pesan);
     }
 
     private function sendBioLinkNotification($data)
@@ -191,7 +256,8 @@ class AdminVerificationController extends Controller
 
         $pesan .= "Terima kasih - Panitia PPDB {$namaSekolah}";
 
-        $this->sendWA($data->no_wa, $pesan);
+        // PENTING: Tambahkan 'return' di depannya
+        return $this->sendWA($data->no_wa, $pesan);
     }
 
     private function sendPaymentRejectedNotification($data, $alasan)
@@ -210,24 +276,28 @@ class AdminVerificationController extends Controller
 
     private function sendWA($number, $message)
     {
-        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3003');
+        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3000');
         $endpoint = $baseUrl . '/api/sendText';
         $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'); 
 
-        // Format Nomor
         $chatId = preg_replace('/[^0-9]/', '', $number);
         if (substr($chatId, 0, 1) == '0') $chatId = '62' . substr($chatId, 1);
         $chatId .= '@c.us';
 
         try {
-            Http::withHeaders(['Content-Type' => 'application/json', 'X-Api-Key' => $apiKey])
+            // [BARU] Simpan respons dari WAHA dan gunakan timeout agar tidak loading lama jika server mati
+            $response = Http::timeout(10)->withHeaders(['Content-Type' => 'application/json', 'X-Api-Key' => $apiKey])
                 ->post($endpoint, [
                     'session' => 'default',
                     'chatId' => $chatId,
                     'text' => $message
                 ]);
+            
+            // [BARU] Kembalikan nilai true jika berhasil, false jika error
+            return $response->successful();
         } catch (\Exception $e) {
             Log::error("WA Gagal: " . $e->getMessage());
+            return false;
         }
     }
 }
