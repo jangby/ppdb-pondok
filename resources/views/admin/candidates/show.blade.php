@@ -326,6 +326,19 @@
             </button>
         </div>
     @endif
+
+    {{-- FITUR RESET ANOMALI: Muncul jika ada sisa tagihan aneh (misal 1-100 perak) --}}
+    @if($bill->sisa_tagihan > 0 && $bill->sisa_tagihan <= 100)
+        <div class="mt-2 block w-full">
+            <button type="submit" 
+                    formaction="{{ route('admin.bills.fix_anomaly', $bill->id) }}"
+                    onclick="return confirm('Sisa tagihan anomali: Rp {{ $bill->sisa_tagihan }}.\n\nYakin ingin MERESET tagihan ini kembali menjadi Belum Bayar (Rp 0)?\nSetelah direset, Anda bisa menginputkan ulang pembayarannya dengan benar agar tercatat di Riwayat Transaksi.');" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-orange-600">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset ke Belum Bayar
+            </button>
+        </div>
+    @endif
                                                 </td>
                                                 <td class="px-5 py-4 text-sm text-gray-500 text-right">
                                                     {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}

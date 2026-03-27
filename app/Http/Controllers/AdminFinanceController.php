@@ -265,4 +265,19 @@ class AdminFinanceController extends Controller
 
         return redirect()->back();
     }
+
+    /**
+     * Mereset anomali tagihan menjadi Belum Bayar (Rp 0)
+     */
+    public function fixAnomaly($id)
+    {
+        $bill = CandidateBill::findOrFail($id);
+        
+        // Kembalikan nominal terbayar menjadi 0 dan status menjadi Belum Lunas
+        $bill->nominal_terbayar = 0;
+        $bill->status = 'Belum Lunas';
+        $bill->save();
+        
+        return back()->with('success', 'Tagihan berhasil di-reset menjadi Belum Bayar (Rp 0). Silakan input ulang nominal pembayarannya lewat Kasir agar tercatat di Riwayat Transaksi.');
+    }
 }
