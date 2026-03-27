@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
     ->name('admin.transactions.print_data');
     Route::delete('/admin/transaksi/{id}/batal', [AdminTransactionController::class, 'destroy'])->name('admin.transactions.destroy');
     Route::post('/admin/tagihan/{id}/rekonstruksi', [App\Http\Controllers\AdminFinanceController::class, 'reconstructBill'])->name('admin.bills.reconstruct');
+    Route::post('/admin/tagihan/{id}/fix-anomaly', [App\Http\Controllers\AdminFinanceController::class, 'fixAnomaly'])->name('admin.bills.fix_anomaly');
 
     // --- KEUANGAN (PENGELUARAN) ---
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
