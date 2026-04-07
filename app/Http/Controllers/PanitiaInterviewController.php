@@ -174,7 +174,7 @@ class PanitiaInterviewController extends Controller
             Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'), 
-            ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3003') . '/api/sendText', [
+            ])->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3001') . '/api/sendText', [
                 'session' => 'default',
                 'chatId'  => $chatId,
                 'text'    => $pesanWA

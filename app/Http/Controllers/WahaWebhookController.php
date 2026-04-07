@@ -91,7 +91,7 @@ class WahaWebhookController extends Controller
     private function sendWA($number, $message)
     {
         // Konfigurasi WAHA
-        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3003');
+        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3001');
         $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'); 
         $sessionName = env('WAHA_SESSION_NAME', 'default'); // Sesuaikan dengan nama session di dashboard WAHA
 
