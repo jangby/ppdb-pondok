@@ -46,24 +46,31 @@ class PaymentTypeController extends Controller
             'jenjang' => 'required|string'
         ]);
 
+        // Simpan jenis pembayaran baru
         $paymentType = PaymentType::create($request->all());
 
+        // ====================================================================
         // OTOMATIS TAMBAH TAGIHAN KE SANTRI YANG RELEVAN
-        // Cari santri yang jenjangnya sesuai (atau semua) dan statusnya Lulus/Diterima
-        $candidates = Candidate::whereIn('jenjang', [$request->jenjang, 'Semua'])
-                               ->where('status', 'Lulus')
-                               ->get();
+        // ====================================================================
 
+        // 1. Tentukan target kandidat
+        // Ambil santri yang statusnya 'Lulus' (Sesuaikan jika ada status lain seperti 'Diterima')
+        $query = Candidate::where('status', 'Lulus');
+
+        if ($paymentType->jenjang !== 'Semua') {
+            // Jika panitia memilih jenjang spesifik (misal: 'SMA Lanjutan', 'SMP', 'SMK')
+            // Maka filter hanya untuk santri di jenjang tersebut
+            $query->where('jenjang', $paymentType->jenjang);
+        }
+        // Jika panitia memilih 'Semua', maka $query tidak difilter jenjangnya (artinya ditarik semua jenjang)
+
+        $candidates = $query->get();
+
+        // 2. Looping dan buatkan tagihan ke masing-masing santri
         foreach ($candidates as $candidate) {
-            // Cek apakah ini khusus lanjutan atau reguler berdasarkan nama pembayaran
-            $isLanjutanBill = str_contains(strtolower($paymentType->nama_pembayaran), 'lanjutan');
-            $isLanjutanCandidate = ($candidate->jalur == 'lanjutan');
-
-            // Jika tagihan lanjutan tapi anak reguler, atau tagihan reguler tapi anak lanjutan -> Skip
-            if ($isLanjutanBill != $isLanjutanCandidate) {
-                continue; 
-            }
-
+            
+            // firstOrCreate berfungsi mencari data tagihan yang sama.
+            // Jika belum ada, maka otomatis dibuatkan. Jika sudah ada, maka dilewati (mencegah tagihan ganda).
             CandidateBill::firstOrCreate([
                 'candidate_id' => $candidate->id,
                 'payment_type_id' => $paymentType->id
@@ -72,9 +79,11 @@ class PaymentTypeController extends Controller
                 'nominal_terbayar' => 0,
                 'status' => 'Belum Lunas'
             ]);
+            
         }
 
-        return redirect()->route('admin.payment_types.index')->with('success', 'Jenis Pembayaran dan Tagihan Santri berhasil ditambahkan!');
+        return redirect()->route('admin.payment_types.index')
+            ->with('success', 'Jenis Pembayaran dan Tagihan Santri berhasil ditambahkan!');
     }
 
     public function update(Request $request, $id)

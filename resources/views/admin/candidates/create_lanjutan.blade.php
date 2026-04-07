@@ -35,14 +35,9 @@
                             <select name="jenjang" class="form-select w-full rounded-md shadow-sm" required>
                                 <option value="" disabled selected>-- Pilih Jenjang --</option>
                                 @php
-                                    // Mengambil data dari tabel settings
-                                    $setting = \App\Models\Setting::first();
-                                    
-                                    // Memastikan formatnya array (jika kosong diatur fallback ke SMP/SMK)
-                                    $jenjang_tersedia = $setting && is_array($setting->jenjang_tersedia) 
-                                                        ? $setting->jenjang_tersedia 
-                                                        : ['SMA'];
-                                @endphp
+    // Mengambil data list_jenjang dari settings sesuai format di sistem
+    $jenjang_tersedia = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK', 'SMA', 'SMA Lanjutan'];
+@endphp
                                 
                                 {{-- Looping data jenjang dari database --}}
                                 @foreach($jenjang_tersedia as $jnj)

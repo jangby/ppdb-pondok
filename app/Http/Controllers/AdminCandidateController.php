@@ -513,16 +513,10 @@ class AdminCandidateController extends Controller
         // 2. Mengambil Tagihan Khusus "Lanjutan" & Tagihan "Semua"
         // ====================================================================
         
-        $paymentTypes = PaymentType::where(function($query) use ($request) {
-            // KONDISI 1: Ambil tagihan yang namanya ada kata "Lanjutan" DAN jenjangnya cocok (misal: SMA)
-            $query->where('nama_pembayaran', 'LIKE', '%Lanjutan%')
-                  ->where('jenjang', $request->jenjang);
-                  
-        })->orWhere(function($query) {
-            // KONDISI 2: ATAU ambil tagihan yang jenjangnya diset "Semua" (apapun nama pembayarannya)
-            $query->where('jenjang', 'Semua');
-            
-        })->get();
+        // Cukup cari tagihan yang jenjangnya "Semua" atau sesuai jenjang yang dipilih (misal: "SMA Lanjutan")
+        $paymentTypes = PaymentType::where('jenjang', 'Semua')
+                            ->orWhere('jenjang', $request->jenjang)
+                            ->get();
 
         // Looping untuk memasukkan semua tagihan yang ditemukan ke database
         foreach ($paymentTypes as $paymentType) {
