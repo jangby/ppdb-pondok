@@ -279,14 +279,25 @@ class AdminCandidateController extends Controller
 
     // --- FUNGSI KIRIM API ---
     private function sendWhatsAppNotification($candidate)
-    {
-        try {
-            $rawNo = $candidate->parent->no_hp_ayah ?? $candidate->parent->no_hp_ibu;
-            
-            if (empty($rawNo)) {
-                Log::warning("Gagal Kirim WA: No HP Kosong untuk ID: " . $candidate->id);
-                return;
-            }
+{
+    try {
+        // 1. Cek nomor dari tabel verifikasi berdasarkan file_perjanjian
+        $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
+        
+        $rawNo = null;
+
+        if ($verification && !empty($verification->no_wa)) {
+            $rawNo = $verification->no_wa; // Gunakan nomor verifikasi awal
+        } elseif (!empty($candidate->parent->no_hp_ibu)) {
+            $rawNo = $candidate->parent->no_hp_ibu; // Prioritas kedua: Ibu
+        } elseif (!empty($candidate->parent->no_hp_ayah)) {
+            $rawNo = $candidate->parent->no_hp_ayah; // Prioritas ketiga: Ayah
+        }
+        
+        if (empty($rawNo)) {
+            Log::warning("Gagal Kirim WA: No HP Kosong untuk ID: " . $candidate->id);
+            return;
+        }
 
             $cleanNo = preg_replace('/[^0-9]/', '', $rawNo); 
             if (substr($cleanNo, 0, 1) == '0') {
