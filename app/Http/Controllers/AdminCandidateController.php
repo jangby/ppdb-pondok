@@ -270,7 +270,9 @@ class AdminCandidateController extends Controller
         $old = strtolower($oldStatus);
         $new = strtolower($newStatus);
 
-        if (in_array($new, ['lulus', 'diterima', 'approved']) && !in_array($old, ['lulus', 'diterima', 'approved'])) {
+        // Kirim WA setiap kali status diubah ke Lulus/Diterima, 
+        // asalkan statusnya memang benar-benar berubah (tidak sama dengan status sebelumnya)
+        if (in_array($new, ['lulus', 'diterima', 'approved']) && $old !== $new) {
             $this->sendWhatsAppNotification($candidate);
         }
     }
