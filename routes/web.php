@@ -176,6 +176,7 @@ Route::middleware('auth')->group(function () {
 
     // --- KEUANGAN (PENGELUARAN) ---
     Route::get('/admin/keuangan', [AdminFinanceController::class, 'index'])->name('admin.finance.index');
+    Route::get('/admin/keuangan/rincian', [AdminFinanceController::class, 'rincian'])->name('admin.finance.rincian');
     Route::post('/admin/keuangan', [AdminFinanceController::class, 'store'])->name('admin.finance.store');
     Route::delete('/admin/keuangan/{id}', [AdminFinanceController::class, 'destroy'])->name('admin.finance.destroy');
     Route::get('/admin/keuangan/cetak-laporan', [AdminFinanceController::class, 'printReport'])->name('admin.finance.print');

@@ -280,4 +280,30 @@ class AdminFinanceController extends Controller
         
         return back()->with('success', 'Tagihan berhasil di-reset menjadi Belum Bayar (Rp 0). Silakan input ulang nominal pembayarannya lewat Kasir agar tercatat di Riwayat Transaksi.');
     }
+
+    /**
+     * Menampilkan Halaman Detail Rincian Pembayaran Santri
+     */
+    public function rincian()
+    {
+        // Ambil semua PaymentType beserta tagihan dan data santrinya
+        $jenjangs = PaymentType::with(['bills.candidate'])->get()->groupBy('jenjang');
+
+        foreach ($jenjangs as $jenjang => $types) {
+            foreach ($types as $type) {
+                // Hitung total target (seharusnya) dan terkumpul (masuk)
+                $type->total_target = $type->bills->sum('nominal_tagihan');
+                $type->total_terkumpul = $type->bills->sum('nominal_terbayar');
+                
+                // Hitung persentase progress
+                $type->progress = $type->total_target > 0 ? round(($type->total_terkumpul / $type->total_target) * 100) : 0;
+                
+                // Filter hanya tagihan yang sudah ada uang masuk (> 0)
+                // Diurutkan berdasarkan nominal terbayar paling besar
+                $type->paid_bills = $type->bills->where('nominal_terbayar', '>', 0)->sortByDesc('nominal_terbayar')->values();
+            }
+        }
+
+        return view('admin.finance.rincian', compact('jenjangs'));
+    }
 }
