@@ -276,7 +276,7 @@ class AdminVerificationController extends Controller
 
     private function sendWA($number, $message)
     {
-        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3001');
+        $baseUrl = env('WAHA_BASE_URL', 'http://72.61.208.130:3002');
         $endpoint = $baseUrl . '/api/sendText';
         $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'); 
 
