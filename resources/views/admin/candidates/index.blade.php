@@ -126,98 +126,148 @@
                                 <th class="px-6 py-4 font-bold tracking-wider">Jenjang</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Asal Sekolah</th>
                                 <th class="px-6 py-4 font-bold tracking-wider">Status</th>
+                                <th class="px-6 py-4 font-bold tracking-wider">Pembayaran</th>
                                 <th class="px-6 py-4 font-bold tracking-wider text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @forelse($candidates as $candidate)
-                                <tr class="bg-white hover:bg-blue-50/50 transition duration-150">
-                                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                        {{ $candidate->no_daftar }}
-                                        <div class="text-[10px] text-gray-400 mt-0.5">{{ $candidate->created_at->format('d M Y') }}</div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <div class="font-bold text-gray-800">{{ $candidate->nama_lengkap }}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                            @if($candidate->jenis_kelamin == 'L')
-                                                <span class="text-blue-500 bg-blue-50 px-1 rounded">Laki-laki</span>
-                                            @else
-                                                <span class="text-pink-500 bg-pink-50 px-1 rounded">Perempuan</span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
-                                            {{ $candidate->jenjang }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600 truncate max-w-[150px]" title="{{ $candidate->asal_sekolah }}">
-                                        {{ $candidate->asal_sekolah ?? '-' }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @if($candidate->status_seleksi == 'Lulus' || $candidate->status_seleksi == 'Diterima' || $candidate->status_seleksi == 'Approved')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Lulus
-                                            </span>
-                                        @elseif($candidate->status_seleksi == 'Ditolak')
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Ditolak
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Pending
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-    <div class="flex items-center justify-center gap-2">
-        {{-- 1. Tombol Detail --}}
-        <a href="{{ route('admin.candidates.show', $candidate->id) }}" 
-           class="text-blue-600 hover:text-white hover:bg-blue-600 bg-blue-50 border border-blue-200 p-2 rounded-lg transition" 
-           title="Detail & Edit">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-        </a>
+    @forelse($candidates as $candidate)
+        <tr class="bg-white hover:bg-blue-50/50 transition duration-150">
+            {{-- 1. Kolom No Daftar --}}
+            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                {{ $candidate->no_daftar }}
+                <div class="text-[10px] text-gray-400 mt-0.5">{{ $candidate->created_at->format('d M Y') }}</div>
+            </td>
+            
+            {{-- 2. Kolom Nama --}}
+            <td class="px-6 py-4">
+                <div class="font-bold text-gray-800">{{ $candidate->nama_lengkap }}</div>
+                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                    @if($candidate->jenis_kelamin == 'L')
+                        <span class="text-blue-500 bg-blue-50 px-1 rounded">Laki-laki</span>
+                    @else
+                        <span class="text-pink-500 bg-pink-50 px-1 rounded">Perempuan</span>
+                    @endif
+                </div>
+            </td>
 
-        {{-- 2. Tombol Kirim QR Code (Ungu) --}}
-        <form action="{{ route('admin.attendance.send_qr', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim QR Code Absensi ke WA Wali Santri ini?');">
-            @csrf
-            <button type="submit" class="text-purple-600 hover:text-white hover:bg-purple-600 bg-purple-50 border border-purple-200 p-2 rounded-lg transition" title="Kirim QR Code ke WA">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-            </button>
-        </form>
+            {{-- 3. Kolom Jenjang --}}
+            <td class="px-6 py-4">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                    {{ $candidate->jenjang }}
+                </span>
+            </td>
 
-        {{-- 3. Tombol Pengingat / Status Hadir --}}
-        @if($candidate->waktu_hadir)
-            {{-- Jika Sudah Hadir (Tanda Ceklis Hijau) --}}
-            <div class="text-green-600 bg-green-50 border border-green-200 p-2 rounded-lg cursor-help" title="Sudah Hadir (Antrian: {{ $candidate->nomor_antrian }})">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-        @else
-            {{-- Jika Belum Hadir (Tombol Lonceng Kuning) --}}
-            <form action="{{ route('admin.attendance.remind', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim Pengingat Jadwal ke WA Wali?');">
-                @csrf
-                <button type="submit" class="text-orange-600 hover:text-white hover:bg-orange-600 bg-orange-50 border border-orange-200 p-2 rounded-lg transition" title="Kirim Pengingat (Belum Hadir)">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                </button>
-            </form>
-        @endif
-    </div>
-</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <div class="bg-gray-50 rounded-full p-4 mb-3">
-                                                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                            </div>
-                                            <p class="text-gray-500 font-medium">Belum ada data calon santri.</p>
-                                            <p class="text-gray-400 text-xs mt-1">Coba ubah filter atau tambah data manual.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
+            {{-- 4. Kolom Asal Sekolah --}}
+            <td class="px-6 py-4 text-gray-600 truncate max-w-[150px]" title="{{ $candidate->asal_sekolah }}">
+                {{ $candidate->asal_sekolah ?? '-' }}
+            </td>
+
+            {{-- 5. Kolom Status --}}
+            <td class="px-6 py-4">
+                @if($candidate->status_seleksi == 'Lulus' || $candidate->status_seleksi == 'Diterima' || $candidate->status_seleksi == 'Approved')
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Lulus
+                    </span>
+                @elseif($candidate->status_seleksi == 'Ditolak')
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Ditolak
+                    </span>
+                @else
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span> Pending
+                    </span>
+                @endif
+            </td>
+
+            {{-- 6. Kolom Pembayaran (Tambahan Baru) --}}
+            <td class="px-6 py-4">
+                @php
+                    $totalTagihan = $candidate->bills->sum('nominal_tagihan');
+                    $totalTerbayar = $candidate->bills->sum('nominal_terbayar');
+                    $sisaTagihan = $totalTagihan - $totalTerbayar;
+                    $persentase = $totalTagihan > 0 ? round(($totalTerbayar / $totalTagihan) * 100) : 0;
+                    
+                    // Logika warna progress bar
+                    $colorClass = 'bg-red-500';
+                    if($persentase == 100) $colorClass = 'bg-green-500';
+                    elseif($persentase >= 50) $colorClass = 'bg-yellow-500';
+                @endphp
+                
+                <div class="w-full min-w-[200px]">
+                    <div class="flex justify-between items-end text-[10px] mb-1 font-bold">
+                        <span class="text-gray-700">Masuk: Rp {{ number_format($totalTerbayar, 0, ',', '.') }}</span>
+                        <span class="{{ $persentase == 100 ? 'text-green-600' : 'text-blue-600' }}">{{ $persentase }}%</span>
+                    </div>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-2 mb-1.5 shadow-inner overflow-hidden">
+                        <div class="{{ $colorClass }} h-2 rounded-full transition-all duration-500" style="width: {{ $persentase }}%"></div>
+                    </div>
+                    
+                    <div class="text-[10px] flex justify-between items-center mt-1">
+                        <span class="text-gray-500">Total: Rp {{ number_format($totalTagihan, 0, ',', '.') }}</span>
+                        @if($sisaTagihan > 0)
+                            <span class="text-red-600 font-semibold bg-red-50 border border-red-100 px-1.5 py-0.5 rounded">
+                                Sisa: Rp {{ number_format($sisaTagihan, 0, ',', '.') }}
+                            </span>
+                        @else
+                            <span class="text-green-700 font-bold bg-green-100 border border-green-200 px-2 py-0.5 rounded flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                LUNAS
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </td>
+
+            {{-- 7. Kolom Aksi (YANG SEMPAT HILANG) --}}
+            <td class="px-6 py-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                    {{-- Tombol Detail --}}
+                    <a href="{{ route('admin.candidates.show', $candidate->id) }}" 
+                       class="text-blue-600 hover:text-white hover:bg-blue-600 bg-blue-50 border border-blue-200 p-2 rounded-lg transition" 
+                       title="Detail & Edit">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    </a>
+
+                    {{-- Tombol Kirim QR Code --}}
+                    <form action="{{ route('admin.attendance.send_qr', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim QR Code Absensi ke WA Wali Santri ini?');">
+                        @csrf
+                        <button type="submit" class="text-purple-600 hover:text-white hover:bg-purple-600 bg-purple-50 border border-purple-200 p-2 rounded-lg transition" title="Kirim QR Code ke WA">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </button>
+                    </form>
+
+                    {{-- Tombol Pengingat / Status Hadir --}}
+                    @if($candidate->waktu_hadir)
+                        <div class="text-green-600 bg-green-50 border border-green-200 p-2 rounded-lg cursor-help" title="Sudah Hadir (Antrian: {{ $candidate->nomor_antrian }})">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                    @else
+                        <form action="{{ route('admin.attendance.remind', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim Pengingat Jadwal ke WA Wali?');">
+                            @csrf
+                            <button type="submit" class="text-orange-600 hover:text-white hover:bg-orange-600 bg-orange-50 border border-orange-200 p-2 rounded-lg transition" title="Kirim Pengingat (Belum Hadir)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            </td>
+        </tr>
+    @empty
+        <tr>
+            <td colspan="7" class="px-6 py-12 text-center">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="bg-gray-50 rounded-full p-4 mb-3">
+                        <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <p class="text-gray-500 font-medium">Belum ada data calon santri.</p>
+                    <p class="text-gray-400 text-xs mt-1">Coba ubah filter atau tambah data manual.</p>
+                </div>
+            </td>
+        </tr>
+    @endforelse
+</tbody>
                     </table>
                 </div>
                 

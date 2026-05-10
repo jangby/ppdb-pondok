@@ -42,7 +42,7 @@ class AdminCandidateController extends Controller
         }
 
         // Hapus with('dormitory') jika belum perlu ditampilkan di tabel ini
-        $candidates = $query->latest()->paginate(10)->withQueryString();
+        $candidates = $query->with('bills')->latest()->paginate(10)->withQueryString();
 
         $kpi = [
             'total' => Candidate::count(),
@@ -544,5 +544,38 @@ class AdminCandidateController extends Controller
         // ====================================================================
 
         return redirect()->route('admin.candidates.index')->with('success', 'Santri Lanjutan berhasil ditambahkan dan tagihan telah dibuat!');
+    }
+
+    // --- FUNGSI UPLOAD SURAT PERJANJIAN SUSULAN ---
+    public function uploadPerjanjian(Request $request, $id)
+    {
+        $request->validate([
+            'file_perjanjian' => 'required|mimes:pdf|max:2048', // Wajib PDF, Maksimal 2MB
+        ], [
+            'file_perjanjian.required' => 'File dokumen wajib dipilih.',
+            'file_perjanjian.mimes' => 'File harus berformat PDF.',
+            'file_perjanjian.max' => 'Ukuran file maksimal 2MB.',
+        ]);
+
+        try {
+            $candidate = Candidate::findOrFail($id);
+
+            if ($request->hasFile('file_perjanjian')) {
+                // Upload file ke folder storage/app/public/surat_perjanjian
+                $file = $request->file('file_perjanjian');
+                $path = $file->store('surat_perjanjian', 'public');
+                
+                // Simpan path ke database
+                $candidate->file_perjanjian = $path;
+                $candidate->save();
+
+                return back()->with('success', 'Surat Perjanjian berhasil diunggah!');
+            }
+
+            return back()->with('error', 'Gagal mengunggah file.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+        }
     }
 }

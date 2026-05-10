@@ -181,12 +181,28 @@
                                     </a>
                                 </div>
                             @else
-                                {{-- JIKA TIDAK ADA FILE --}}
-                                <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    <p class="text-sm font-bold text-gray-500">Berkas tidak tersedia</p>
-                                    <p class="text-xs text-gray-400 mt-1">Santri ini mendaftar manual.</p>
-                                </div>
+                                {{-- JIKA TIDAK ADA FILE - FORM UPLOAD --}}
+                                <form action="{{ route('admin.candidates.upload_perjanjian', $candidate->id) }}" method="POST" enctype="multipart/form-data" class="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-indigo-300 hover:bg-indigo-50/50 transition">
+                                    @csrf
+                                    <svg class="w-10 h-10 text-indigo-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                    <p class="text-sm font-bold text-gray-600 mb-1">Berkas tidak tersedia</p>
+                                    <p class="text-xs text-gray-500 mb-4">Upload Surat Perjanjian (PDF, Max 2MB)</p>
+                                    
+                                    <div class="flex flex-col items-center justify-center gap-3 px-4">
+                                        <input type="file" name="file_perjanjian" accept=".pdf" required 
+                                            class="block w-full text-xs text-gray-500 
+                                            file:mr-4 file:py-2 file:px-4 
+                                            file:rounded-full file:border-0 
+                                            file:text-xs file:font-bold 
+                                            file:bg-indigo-100 file:text-indigo-700 
+                                            hover:file:bg-indigo-200 cursor-pointer">
+                                        
+                                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition shadow-sm w-full sm:w-auto flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                            Simpan Dokumen
+                                        </button>
+                                    </div>
+                                </form>
                             @endif
                         </div>
                     </div>

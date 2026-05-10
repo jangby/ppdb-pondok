@@ -153,6 +153,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/santri/{id}', [AdminCandidateController::class, 'destroy'])->name('admin.candidates.destroy');
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
+    Route::post('/candidates/{candidate}/upload-perjanjian', [AdminCandidateController::class, 'uploadPerjanjian'])->name('admin.candidates.upload_perjanjian');
 
     // [TAMBAHKAN INI] Route Kirim Notifikasi Tagihan
     Route::post('/admin/santri/{id}/notify-bill', [AdminCandidateController::class, 'sendBillNotification'])
