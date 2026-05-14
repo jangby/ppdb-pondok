@@ -578,4 +578,41 @@ class AdminCandidateController extends Controller
             return back()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
+
+    // --- FUNGSI UNTUK MENDETEKSI & MENAMBAHKAN ITEM TAGIHAN BARU YANG TERTINGGAL ---
+    public function generateMissingBills($id)
+    {
+        $candidate = Candidate::with('bills')->findOrFail($id);
+        
+        // Ambil semua master data untuk jenjang santri ini (atau yang berlaku untuk 'Semua')
+        $masterItems = \App\Models\PaymentType::whereIn('jenjang', ['Semua', $candidate->jenjang])->get();
+        
+        // Ambil ID payment type yang sudah dimiliki santri
+        $existingItemIds = $candidate->bills->pluck('payment_type_id')->toArray();
+        
+        // Cari item yang ada di master tapi belum ada di tagihan santri
+        $missingItems = $masterItems->whereNotIn('id', $existingItemIds);
+
+        if ($missingItems->count() == 0) {
+            return back()->with('error', 'Tidak ada tagihan yang tertinggal.');
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($missingItems as $item) {
+                CandidateBill::create([
+                    'candidate_id' => $candidate->id,
+                    'payment_type_id' => $item->id,
+                    'nominal_tagihan' => $item->nominal,
+                    'nominal_terbayar' => 0,
+                    'status' => 'Belum Lunas',
+                ]);
+            }
+            DB::commit();
+            return back()->with('success', 'Berhasil menambahkan ' . $missingItems->count() . ' item tagihan baru ke santri ini.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menambahkan tagihan: ' . $e->getMessage());
+        }
+    }
 }

@@ -305,6 +305,31 @@
                         <div class="p-6">
                             <form action="{{ route('admin.transactions.store', $candidate->id) }}" method="POST">
                                 @csrf
+
+                                {{-- FITUR DETEKSI ITEM TERTINGGAL --}}
+                                @php
+                                    $masterItems = \App\Models\PaymentType::whereIn('jenjang', ['Semua', $candidate->jenjang])->get();
+                                    $existingItemIds = $candidate->bills->pluck('payment_type_id')->toArray();
+                                    $missingItems = $masterItems->whereNotIn('id', $existingItemIds);
+                                @endphp
+
+                                @if($missingItems->count() > 0)
+                                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 animate-pulse">
+                                        <div>
+                                            <h4 class="font-bold text-red-800 flex items-center gap-2">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                Peringatan: Ada Item Pembayaran yang Tertinggal!
+                                            </h4>
+                                            <p class="text-xs text-red-600 mt-1">Sistem mendeteksi ada <b>{{ $missingItems->count() }} item pembayaran baru</b> (Total: Rp {{ number_format($missingItems->sum('nominal'), 0, ',', '.') }}) di Master Data yang belum dimasukkan ke tagihan anak ini.</p>
+                                        </div>
+                                        <button type="submit" formaction="{{ route('admin.candidates.generate_missing_bills', $candidate->id) }}" class="whitespace-nowrap px-4 py-2 bg-red-600 text-white font-bold rounded-lg text-xs hover:bg-red-700 shadow-md transition flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                            Tambahkan Item
+                                        </button>
+                                    </div>
+                                @endif
+                                {{-- END FITUR DETEKSI --}}
+                                
                                 <div class="overflow-hidden rounded-xl border border-gray-200 mb-6">
                                     <table class="min-w-full divide-y divide-gray-200">
                                         <thead class="bg-gray-50">
@@ -325,7 +350,7 @@
                                                     @endif
 
                                                     {{-- FITUR REKONSTRUKSI TAGIHAN: Muncul jika tarif master berubah dan santri sudah pernah mencicil/bayar --}}
-    @if($bill->nominal_tagihan != $bill->payment_type->nominal && $bill->nominal_terbayar > 0)
+    @if($bill->nominal_tagihan != $bill->payment_type->nominal)
         <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
             <div class="text-yellow-800 mb-2 leading-relaxed">
                 <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>

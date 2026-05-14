@@ -152,6 +152,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/santri/{id}', [AdminCandidateController::class, 'update'])->name('admin.candidates.update');
     Route::delete('/admin/santri/{id}', [AdminCandidateController::class, 'destroy'])->name('admin.candidates.destroy');
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
+    Route::post('/admin/santri/{id}/generate-missing-bills', [AdminCandidateController::class, 'generateMissingBills'])->name('admin.candidates.generate_missing_bills');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
     Route::post('/candidates/{candidate}/upload-perjanjian', [AdminCandidateController::class, 'uploadPerjanjian'])->name('admin.candidates.upload_perjanjian');
 
