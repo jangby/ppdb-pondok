@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         ::-webkit-scrollbar { width: 8px; }
@@ -46,33 +48,7 @@
 
         <form action="{{ route('pendaftaran.store') }}" method="POST" class="bg-white rounded-b-3xl shadow-xl p-6 sm:p-10 space-y-10">
             @csrf
-            <input type="hidden" name="token" value="{{ $token ?? '' }}">
-
-            {{-- ALERT ERROR GLOBAL (PENTING: Agar user tahu ada yg salah) --}}
-            @if ($errors->any())
-                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">Terdapat kesalahan pada isian formulir:</h3>
-                            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                    <strong class="font-bold">Error!</strong>
-                    <span class="block sm:inline">{{ session('error') }}</span>
-                </div>
-            @endif
+            <input type="hidden" name="token" value="{{ $verification->token ?? request()->route('token') }}">
 
             {{-- SECTION A: DATA PRIBADI --}}
             <section>
@@ -83,30 +59,27 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="md:col-span-2">
-    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
-    
-    @php
-        // Ambil Data Jenjang dari Setting
-        $listJenjang = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
-    @endphp
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @foreach($listJenjang as $item)
-            <label class="cursor-pointer relative">
-                <input type="radio" name="jenjang" value="{{ $item }}" {{ old('jenjang') == $item ? 'checked' : '' }} required class="radio-input">
-                <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
-                    <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg">
-                        {{ substr($item, 0, 1) }} </div>
-                    <div>
-                        <span class="block font-bold text-slate-800">{{ $item }}</span>
-                        <span class="text-xs text-slate-500">Program Pendidikan</span>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
+                        @php
+                            $listJenjang = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+                        @endphp
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            @foreach($listJenjang as $item)
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="jenjang" value="{{ $item }}" {{ old('jenjang') == $item ? 'checked' : '' }} required class="radio-input">
+                                    <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
+                                        <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg">
+                                            {{ substr($item, 0, 1) }} </div>
+                                        <div>
+                                            <span class="block font-bold text-slate-800">{{ $item }}</span>
+                                            <span class="text-xs text-slate-500">Program Pendidikan</span>
+                                        </div>
+                                    </div>
+                                </label>
+                            @endforeach
+                        </div>
+                        @error('jenjang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
-                </div>
-            </label>
-        @endforeach
-    </div>
-    @error('jenjang') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-</div>
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Nama Lengkap</label>
@@ -147,25 +120,18 @@
                         @error('tanggal_lahir') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- NISN & NIK dengan Error Message --}}
                     <div>
-    {{-- 1. Label ditambah keterangan Opsional --}}
-    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">
-        NISN <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
-    </label>
-    
-    {{-- 2. Hapus attribute 'required' dan ubah placeholder --}}
-    <input type="number" name="nisn" value="{{ old('nisn') }}" 
-           class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nisn') border-red-500 bg-red-50 @enderror" 
-           placeholder="Kosongkan jika belum ada">
-    
-    {{-- ERROR MESSAGE --}}
-    @error('nisn') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
-</div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">
+                            NISN <span class="text-slate-400 font-normal normal-case">(Opsional)</span>
+                        </label>
+                        <input type="number" name="nisn" value="{{ old('nisn') }}" 
+                               class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nisn') border-red-500 bg-red-50 @enderror" 
+                               placeholder="Kosongkan jika belum ada">
+                        @error('nisn') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
+                    </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">NIK</label>
                         <input type="number" name="nik" value="{{ old('nik') }}" class="custom-input w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none @error('nik') border-red-500 bg-red-50 @enderror" placeholder="NIK (16 Digit)" required>
-                        {{-- ERROR MESSAGE --}}
                         @error('nik') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
                     </div>
                     
@@ -238,7 +204,11 @@
                             <div><label class="text-xs font-bold text-blue-800 uppercase">Nama Ayah</label><input type="text" name="nama_ayah" value="{{ old('nama_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none" required></div>
                             <div><label class="text-xs font-bold text-blue-800 uppercase">NIK Ayah</label><input type="number" name="nik_ayah" value="{{ old('nik_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none"></div>
                             <div><label class="text-xs font-bold text-blue-800 uppercase">Pekerjaan</label><input type="text" name="pekerjaan_ayah" value="{{ old('pekerjaan_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none" required></div>
-                            <div><label class="text-xs font-bold text-blue-800 uppercase">No. HP / WA</label><input type="number" name="no_hp_ayah" value="{{ old('no_hp_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none" required></div>
+                            <div>
+                                <label class="text-xs font-bold text-blue-800 uppercase">No. HP / WA</label>
+                                <input type="number" name="no_hp_ayah" value="{{ old('no_hp_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none @error('no_hp_ayah') border-red-500 bg-red-50 @enderror" required>
+                                @error('no_hp_ayah') <p class="text-red-500 text-xs mt-1 font-bold">{{ $message }}</p> @enderror
+                            </div>
                             <div><label class="text-xs font-bold text-blue-800 uppercase">Penghasilan (Rp)</label><input type="text" name="penghasilan_ayah" value="{{ old('penghasilan_ayah') }}" class="w-full px-4 py-3 bg-white border border-blue-200 rounded-xl outline-none"></div>
                         </div>
                     </div>
@@ -261,5 +231,43 @@
 
         </form>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            @if ($errors->any())
+                let errorHtml = '<ul style="text-align: left; font-size: 14px; margin-top: 10px; color: #ef4444; list-style: none; padding: 0;">';
+                @foreach ($errors->all() as $error)
+                    errorHtml += '<li style="margin-bottom: 4px;">&bull; {{ $error }}</li>';
+                @endforeach
+                errorHtml += '</ul>';
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Mohon Periksa Kembali',
+                    html: 'Ada beberapa bagian formulir yang perlu diperbaiki:' + errorHtml,
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: 'Baik, Saya Perbaiki',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl font-bold px-6 py-2'
+                    }
+                });
+            @endif
+
+            @if(session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan',
+                    text: '{{ session('error') }}',
+                    confirmButtonColor: '#ef4444',
+                    confirmButtonText: 'Tutup',
+                    customClass: {
+                        popup: 'rounded-2xl',
+                        confirmButton: 'rounded-xl font-bold px-6 py-2'
+                    }
+                });
+            @endif
+        });
+    </script>
 </body>
 </html>

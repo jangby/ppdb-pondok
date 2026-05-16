@@ -19,15 +19,37 @@ class RegistrationController extends Controller
 {
     public function showForm($token)
     {
-        $verify = Verification::where('token', $token)
-                    ->where('status', 'approved')
-                    ->first();
+        // 1. Cari data verifikasi berdasarkan token dari WA
+        $verification = \App\Models\Verification::where('token', $token)->firstOrFail();
+        
+        // 2. CEK APAKAH SUDAH MENGISI FORMULIR SEBELUMNYA
+        // Karena tidak ada verification_id, kita cek berdasarkan NAMA LENGKAP dan Nomor WA
+        // Mengapa Nomor WA? Karena token ini dikirim ke nomor WA tersebut, jadi logikanya no_hp_ayah atau ibu akan sama.
+        $noWaVerifikasi = preg_replace('/[^0-9]/', '', $verification->no_wa); // Bersihkan nomor WA
+        
+        // Cek kandidat yang punya nama sama persis (dari tabel verifications)
+        $namaSantri = $verification->nama_lengkap ?? $verification->nama;
+        $candidateExists = \App\Models\Candidate::where('nama_lengkap', $namaSantri)->first();
 
-        if (!$verify) {
-            abort(403, 'Link pendaftaran tidak valid atau sudah kadaluarsa.');
+        // Jika nama tidak cocok, coba cari berdasarkan Nomor HP orang tua yang sama dengan nomor verifikasi
+        if (!$candidateExists) {
+             // Cari di tabel parents yang no_hp-nya mirip/sama
+             $parentExists = \App\Models\CandidateParent::where('no_hp_ayah', 'like', '%' . substr($noWaVerifikasi, -8))
+                                                        ->orWhere('no_hp_ibu', 'like', '%' . substr($noWaVerifikasi, -8))
+                                                        ->first();
+             if($parentExists) {
+                 $candidateExists = \App\Models\Candidate::find($parentExists->candidate_id);
+             }
         }
 
-        return view('pendaftaran.index', compact('token'));
+        // 3. JIKA SUDAH ADA, LANGSUNG REDIRECT KE HALAMAN SUKSES
+        if ($candidateExists) {
+            return redirect()->route('pendaftaran.sukses', $candidateExists->no_daftar)
+                             ->with('info', 'Anda sudah berhasil mengisi formulir pendaftaran sebelumnya. Data Anda aman!');
+        }
+
+        // Jika belum ada, tampilkan form seperti biasa
+        return view('pendaftaran.index', compact('verification'));
     }
 
     public function store(Request $request)
@@ -44,9 +66,7 @@ class RegistrationController extends Controller
         $request->validate([
             'token' => 'required',
             'nama_lengkap' => 'required|string|max:255',
-            // Tambahkan 'unique:candidates,nisn' agar NISN tidak boleh kembar di tabel candidates
             'nisn' => 'nullable|numeric|digits_between:10,12|unique:candidates,nisn', 
-            // Tambahkan 'unique:candidates,nik' agar NIK tidak boleh kembar
             'nik' => 'required|numeric|digits:16|unique:candidates,nik', 
             'jenjang' => ['required', Rule::in($validJenjang)],
             'no_hp_ayah' => 'required|numeric',
@@ -55,14 +75,28 @@ class RegistrationController extends Controller
             'kecamatan' => 'required|string',
             'kabupaten' => 'required|string',
             'provinsi' => 'required|string',
-            'no_kk' => 'required|numeric', // Tambahan validasi KK
+            'no_kk' => 'required|numeric', 
         ], [
             // PESAN ERROR BAHASA INDONESIA
             'nisn.unique' => 'NISN ini sudah terdaftar sebelumnya. Silakan cek kembali.',
             'nik.unique' => 'NIK ini sudah terdaftar di sistem kami.',
-            'nisn.numeric' => 'NISN harus berupa angka.',
+            'nisn.numeric' => 'NISN harus berupa angka tanpa karakter lain.',
             'nik.digits' => 'NIK harus 16 digit.',
-            'required' => 'Kolom ini wajib diisi.',
+            'numeric' => 'Kolom :attribute harus berupa angka tanpa spasi/strip.',
+            'required' => 'Kolom :attribute wajib diisi.', // <-- PERBAIKAN: Menambahkan :attribute
+        ], [
+            // MENTRANSLATE NAMA KOLOM AGAR MUDAH DIBACA USER
+            'nama_lengkap' => 'Nama Lengkap',
+            'jenjang' => 'Jenjang Pendidikan',
+            'no_hp_ayah' => 'Nomor HP / WA Ayah',
+            'alamat' => 'Alamat Lengkap',
+            'desa' => 'Desa / Kelurahan',
+            'kecamatan' => 'Kecamatan',
+            'kabupaten' => 'Kabupaten',
+            'provinsi' => 'Provinsi',
+            'no_kk' => 'Nomor Kartu Keluarga (KK)',
+            'nik' => 'NIK',
+            'nisn' => 'NISN'
         ]);
 
         // 3. AMBIL DATA VERIFIKASI
@@ -261,7 +295,7 @@ class RegistrationController extends Controller
             // ---------------------------------------------------------
 
             // Redirect ke Halaman Sukses
-            return redirect()->route('pendaftaran.sukses', ['no_daftar' => $candidate->no_daftar]);
+            return redirect()->route('pendaftaran.sukses', $candidate->no_daftar);
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -273,7 +307,9 @@ class RegistrationController extends Controller
 
     public function sukses($no_daftar)
     {
-        return view('pendaftaran.sukses', compact('no_daftar'));
+        $candidate = \App\Models\Candidate::where('no_daftar', $no_daftar)->first();
+        
+        return view('pendaftaran.sukses', compact('no_daftar', 'candidate'));
     }
 
     // Tampilkan Form Edit Publik
