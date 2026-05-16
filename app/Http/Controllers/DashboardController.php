@@ -95,4 +95,46 @@ class DashboardController extends Controller
             'latestCandidates', 'latestExpenses'
         ));
     }
+
+    /**
+     * Menampilkan Rincian Pemasukan dengan Fitur Filter Jenjang & Gender
+     */
+    public function rincianPemasukan(Request $request)
+    {
+        // 1. Mulai query dasar (hanya mengambil santri yang sudah ada nominal terbayar > 0)
+        $query = \App\Models\Candidate::whereHas('bills', function($q) {
+            $q->where('nominal_terbayar', '>', 0);
+        });
+
+        // Filter Berdasarkan Jenjang
+        if ($request->filled('jenjang') && $request->jenjang != 'Semua') {
+            $query->where('jenjang', $request->jenjang);
+        }
+
+        // Filter Berdasarkan Gender (L/P)
+        if ($request->filled('gender') && $request->gender != 'Semua') {
+            $query->where('jenis_kelamin', $request->gender);
+        }
+
+        // Ambil data beserta relasi tagihannya
+        $candidates = $query->with('bills.payment_type')->get();
+
+        // 2. Kalkulasi nominal keuangan per santri
+        $candidates->map(function($candidate) {
+            $candidate->total_tagihan = $candidate->bills->sum('nominal_tagihan');
+            $candidate->total_terbayar = $candidate->bills->sum('nominal_terbayar');
+            $candidate->sisa_tagihan = $candidate->total_tagihan - $candidate->total_terbayar;
+            $candidate->progress = $candidate->total_tagihan > 0 ? round(($candidate->total_terbayar / $candidate->total_tagihan) * 100) : 0;
+            
+            return $candidate;
+        });
+
+        // 3. Urutkan dari nominal pembayaran terbesar
+        $candidates = $candidates->sortByDesc('total_terbayar')->values();
+
+        // Ambil daftar jenjang secara dinamis dari master data untuk opsi pilihan filter
+        $listJenjang = \App\Models\PaymentType::select('jenjang')->distinct()->pluck('jenjang');
+
+        return view('dashboard_rincian', compact('candidates', 'listJenjang'));
+    }
 }

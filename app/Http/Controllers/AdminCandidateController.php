@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use App\Exports\CandidatesExport; 
 use Maatwebsite\Excel\Facades\Excel; 
 use Illuminate\Support\Facades\Http; 
-use Illuminate\Support\Facades\Log;  
+use Illuminate\Support\Facades\Log; 
 
 class AdminCandidateController extends Controller
 {
@@ -54,7 +54,27 @@ class AdminCandidateController extends Controller
 
         $jenjangs = json_decode(Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
 
-        return view('admin.candidates.index', compact('candidates', 'kpi', 'jenjangs'));
+        // --- TAMBAHAN LOGIKA KPI JENJANG ---
+        $kpiJenjangData = DB::table('candidates')
+            ->select('jenjang', 'jenis_kelamin', DB::raw('count(*) as total'))
+            ->groupBy('jenjang', 'jenis_kelamin')
+            ->get();
+
+        $statistikJenjang = [];
+        foreach ($kpiJenjangData as $item) {
+            $jenjang = $item->jenjang ?: 'Lainnya'; // Jaga-jaga jika ada jenjang kosong
+            
+            if (!isset($statistikJenjang[$jenjang])) {
+                $statistikJenjang[$jenjang] = ['L' => 0, 'P' => 0, 'Total' => 0];
+            }
+            
+            $statistikJenjang[$jenjang][$item->jenis_kelamin] = $item->total;
+            $statistikJenjang[$jenjang]['Total'] += $item->total;
+        }
+        
+        // Pastikan Anda mem-passing variabel $statistikJenjang ke dalam view
+        // Contoh return view-nya menjadi seperti ini:
+        return view('admin.candidates.index', compact('candidates', 'kpi', 'jenjangs', 'statistikJenjang'));
     }
 
     public function export()

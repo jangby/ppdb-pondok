@@ -143,6 +143,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
     Route::post('/admin/santri/store', [AdminCandidateController::class, 'store'])->name('admin.candidates.store');
 
+    // --- RINCIAN PEMASUKAN DASHBOARD ---
+    Route::get('/dashboard/pemasukan', [DashboardController::class, 'rincianPemasukan'])->name('dashboard.pemasukan.rincian');
+
     Route::get('/admin/santri/lanjutan/create', [AdminCandidateController::class, 'createLanjutan'])->name('admin.candidates.lanjutan.create');
     Route::post('/admin/santri/lanjutan', [AdminCandidateController::class, 'storeLanjutan'])->name('admin.candidates.lanjutan.store');
 

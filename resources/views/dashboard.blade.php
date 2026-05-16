@@ -39,21 +39,32 @@
                 </div>
 
                 {{-- Card: Pemasukan --}}
-                <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 h-24 w-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-4">
-                            <div class="p-3 bg-green-100 text-green-600 rounded-xl">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Pemasukan</p>
-                                <h3 class="text-2xl font-bold text-gray-800">Rp {{ number_format($totalPemasukan/1000000, 1, ',', '.') }}jt</h3>
-                            </div>
-                        </div>
-                        <p class="mt-4 text-xs text-green-600 font-medium">+ Realtime dari tagihan</p>
-                    </div>
-                </div>
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group flex flex-col justify-between">
+    {{-- Dekorasi Latar Belakang --}}
+    <div class="absolute right-0 top-0 h-24 w-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+    
+    <div class="relative z-10 mb-4">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-green-100 text-green-600 rounded-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-500">Pemasukan</p>
+                <h3 class="text-2xl font-bold text-gray-800">Rp {{ number_format($totalPemasukan/1000000, 1, ',', '.') }}jt</h3>
+            </div>
+        </div>
+    </div>
+
+    {{-- Bagian Bawah: Info & Tombol Rincian --}}
+    <div class="relative z-10 flex items-center justify-between mt-auto pt-2 border-t border-gray-50">
+        <p class="text-[10px] text-green-600 font-medium">+ Realtime dari tagihan</p>
+        
+        <a href="{{ route('dashboard.pemasukan.rincian') }}" class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 hover:text-green-900 bg-green-100/50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition border border-green-200/50">
+            Lihat Rincian
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </a>
+    </div>
+</div>
 
                 {{-- Card: Pengeluaran --}}
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300 relative overflow-hidden group">

@@ -61,7 +61,7 @@ class CandidateSheet implements FromQuery, WithTitle, WithHeadings, WithMapping,
         return [
             $no,
             $candidate->no_daftar,
-            $candidate->nisn . ' ', // Tambah spasi agar Excel membacanya sebagai teks (biar angka 0 di depan tidak hilang)
+            $candidate->nisn . ' ', // Tambah spasi agar Excel membacanya sebagai teks
             $candidate->nik . ' ',
             $candidate->no_kk . ' ',
             $candidate->nama_lengkap,
@@ -72,28 +72,28 @@ class CandidateSheet implements FromQuery, WithTitle, WithHeadings, WithMapping,
             $candidate->jumlah_saudara,
             $candidate->asal_sekolah,
             
-            // Data Alamat
-            $candidate->address->alamat ?? '',
-            $candidate->address->rt ?? '',
-            $candidate->address->rw ?? '',
-            $candidate->address->desa ?? '',
-            $candidate->address->kecamatan ?? '',
-            $candidate->address->kabupaten ?? '',
-            $candidate->address->provinsi ?? '',
-            $candidate->address->kode_pos ?? '',
+            // Data Alamat (Gunakan optional agar aman jika null)
+            optional($candidate->address)->alamat ?? '',
+            optional($candidate->address)->rt ?? '',
+            optional($candidate->address)->rw ?? '',
+            optional($candidate->address)->desa ?? '',
+            optional($candidate->address)->kecamatan ?? '',
+            optional($candidate->address)->kabupaten ?? '',
+            optional($candidate->address)->provinsi ?? '',
+            optional($candidate->address)->kode_pos ?? '',
 
-            // Data Orang Tua
-            $candidate->parent->nama_ayah ?? '',
-            $candidate->parent->nik_ayah ? $candidate->parent->nik_ayah . ' ' : '',
-            $candidate->parent->pekerjaan_ayah ?? '',
-            $candidate->parent->penghasilan_ayah ?? '',
-            $candidate->parent->no_hp_ayah ?? '',
+            // Data Orang Tua (Gunakan optional agar aman jika null)
+            optional($candidate->parent)->nama_ayah ?? '',
+            optional($candidate->parent)->nik_ayah ? optional($candidate->parent)->nik_ayah . ' ' : '',
+            optional($candidate->parent)->pekerjaan_ayah ?? '',
+            optional($candidate->parent)->penghasilan_ayah ?? '',
+            optional($candidate->parent)->no_hp_ayah ?? '',
             
-            $candidate->parent->nama_ibu ?? '',
-            $candidate->parent->nik_ibu ? $candidate->parent->nik_ibu . ' ' : '',
-            $candidate->parent->pekerjaan_ibu ?? '',
-            $candidate->parent->penghasilan_ibu ?? '',
-            $candidate->parent->no_hp_ibu ?? '',
+            optional($candidate->parent)->nama_ibu ?? '',
+            optional($candidate->parent)->nik_ibu ? optional($candidate->parent)->nik_ibu . ' ' : '',
+            optional($candidate->parent)->pekerjaan_ibu ?? '',
+            optional($candidate->parent)->penghasilan_ibu ?? '',
+            optional($candidate->parent)->no_hp_ibu ?? '',
 
             $candidate->status_seleksi,
         ];

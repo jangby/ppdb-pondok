@@ -75,6 +75,42 @@
                 </div>
             </div>
 
+            {{-- KPI JENJANG COMPACT (MINIMALIS) --}}
+            <div class="flex flex-wrap gap-3 mt-2">
+                @foreach($statistikJenjang as $jenjang => $data)
+                <div class="bg-white border border-gray-200 shadow-sm rounded-lg flex overflow-hidden text-xs transition hover:shadow-md">
+                    {{-- Nama Jenjang --}}
+                    <div class="bg-indigo-50 text-indigo-700 font-bold px-3 py-1.5 flex items-center border-r border-indigo-100">
+                        {{ $jenjang }}
+                    </div>
+                    
+                    {{-- Detail Putra/Putri/Total --}}
+                    <div class="flex items-center px-3 py-1.5 gap-2.5 bg-white">
+                        {{-- Putra --}}
+                        <span class="flex items-center gap-1 text-blue-600 font-bold" title="Putra (Laki-laki)">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            {{ $data['L'] }}
+                        </span>
+                        
+                        <span class="w-px h-3.5 bg-gray-200"></span>
+                        
+                        {{-- Putri --}}
+                        <span class="flex items-center gap-1 text-pink-600 font-bold" title="Putri (Perempuan)">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            {{ $data['P'] }}
+                        </span>
+                        
+                        <span class="w-px h-3.5 bg-gray-200"></span>
+                        
+                        {{-- Total --}}
+                        <span class="text-gray-500 font-black" title="Total Pendaftar {{ $jenjang }}">
+                            Σ {{ $data['Total'] }}
+                        </span>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
             {{-- 2. FORM PENCARIAN & FILTER --}}
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <form method="GET" action="{{ route('admin.candidates.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
