@@ -234,4 +234,40 @@ Route::get('/cek-webhook', function () {
     return view('debug_webhook', compact('logs'));
 });
 
+Route::get('/debug-wa', function (\Illuminate\Http\Request $request) {
+    // Gunakan nomor HP Anda sendiri untuk testing (Ganti 628xxx)
+    $no_tujuan = $request->query('no', '628xxxxxxxxxx') . '@c.us'; 
+    $pesan = "Halo! Ini adalah pesan test dari Server Ubuntu pada " . now();
+    
+    $url = env('WAHA_BASE_URL', 'http://72.61.208.130:3001') . '/api/sendText';
+    $apiKey = env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e');
+    
+    try {
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'X-Api-Key'    => $apiKey,
+            'Accept'       => 'application/json',
+        ])->post($url, [
+            'session' => 'default',
+            'chatId'  => $no_tujuan,
+            'text'    => $pesan
+        ]);
+        
+        return response()->json([
+            '1_KESIMPULAN' => $response->successful() ? 'API BERHASIL DIHIT!' : 'API GAGAL DIHIT!',
+            '2_URL_YANG_DIPAKAI' => $url,
+            '3_HTTP_STATUS' => $response->status(),
+            '4_RESPONSE_DARI_WAHA' => $response->json(),
+            '5_SARAN' => 'Jika status 201/200 tapi WA tidak masuk, masalah BUKAN di kodingan Laravel, melainkan di Session WAHA Server Ubuntu Anda yang terputus.'
+        ], 200, [], JSON_PRETTY_PRINT);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            '1_KESIMPULAN' => 'LARAVEL GAGAL KONEK KE WAHA',
+            '2_ERROR_MESSAGE' => $e->getMessage(),
+            '3_SARAN' => 'Ini masalah jaringan server. Pastikan Firewall Ubuntu (UFW) tidak memblokir port keluar.'
+        ]);
+    }
+});
+
 require __DIR__.'/auth.php';
