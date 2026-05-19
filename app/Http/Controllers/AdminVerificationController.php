@@ -7,6 +7,10 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Candidate;
+use App\Models\CandidateBill;
+use App\Models\PaymentType;
+use Illuminate\Support\Facades\DB;
 
 class AdminVerificationController extends Controller
 {
@@ -300,4 +304,70 @@ class AdminVerificationController extends Controller
             return false;
         }
     }
+
+public function registerBasic(Request $request, $id)
+{
+    $request->validate([
+        'nama_lengkap' => 'required|string|max:255',
+        'jenjang' => 'required|string',
+        'jenis_kelamin' => 'required|in:L,P',
+    ]);
+
+    $verification = \App\Models\Verification::findOrFail($id);
+
+    // Cek apakah data santri dengan nama ini sudah terdaftar sebelumnya
+    $exists = Candidate::where('nama_lengkap', $request->nama_lengkap)->first();
+    if ($exists) {
+        return back()->with('error', 'Santri dengan nama tersebut sudah terdaftar.');
+    }
+
+    DB::beginTransaction();
+    try {
+        // 1. Buat data Candidate awal (data parsial)
+        $candidate = Candidate::create([
+            'no_daftar' => 'REG-' . date('Y') . date('His'),
+            'nama_lengkap' => $request->nama_lengkap,
+            'jenjang' => $request->jenjang,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'tahun_masuk' => date('Y'),
+            'jalur_pendaftaran' => 'Online',
+            'status' => 'Baru',
+            'file_perjanjian' => $verification->file_perjanjian,
+            
+            // --- DATA SEMENTARA YANG DIPERBAIKI (PASTI UNIK) ---
+            'tempat_lahir' => '-',
+            'tanggal_lahir' => date('Y-m-d'),
+            
+            // Generate 16 digit unik: Tahun(4)Bulan(2)Tanggal(2)Jam(2)Menit(2)Detik(2) + 2 angka acak
+            'nik' => date('YmdHis') . rand(10, 99), 
+            'no_kk' => date('YmdHis') . rand(10, 99), 
+            
+            'asal_sekolah' => '-',
+            'anak_ke' => 1,
+            'jumlah_saudara' => 0,
+        ]);
+
+        // 2. Generate Tagihan otomatis berdasarkan jenjang yang dipilih admin
+        $biaya = PaymentType::where('jenjang', 'Semua')
+                            ->orWhere('jenjang', $request->jenjang)
+                            ->get();
+
+        foreach ($biaya as $item) {
+            CandidateBill::create([
+                'candidate_id' => $candidate->id,
+                'payment_type_id' => $item->id,
+                'nominal_tagihan' => $item->nominal,
+                'nominal_terbayar' => 0,
+                'status' => 'Belum Lunas',
+            ]);
+        }
+
+        DB::commit();
+        return back()->with('success', 'Berhasil mendaftarkan data awal santri ' . $request->nama_lengkap);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Gagal mendaftarkan santri: ' . $e->getMessage());
+    }
+}
 }

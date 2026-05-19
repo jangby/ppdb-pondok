@@ -14,7 +14,6 @@
 
             {{-- 1. KPI STATS CARDS (Statistik Ringkas) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                
                 {{-- Card 1: Antrian Berkas --}}
                 <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition">
                     <div class="absolute right-0 top-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition group-hover:bg-amber-100"></div>
@@ -78,9 +77,15 @@
 
             {{-- ALERT NOTIFIKASI --}}
             @if(session('success'))
-                <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-r-lg shadow-sm animate-fade-in-down flex items-center gap-3">
+                <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-4 py-3 rounded-r-lg shadow-sm flex items-center gap-3">
                     <div class="bg-green-100 p-1.5 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
                     <span class="font-bold text-sm">{{ session('success') }}</span>
+                </div>
+            @endif
+            @if(session('error'))
+                <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-lg shadow-sm flex items-center gap-3">
+                    <div class="bg-red-100 p-1.5 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                    <span class="font-bold text-sm">{{ session('error') }}</span>
                 </div>
             @endif
 
@@ -94,27 +99,16 @@
                         Daftar Antrian
                     </h3>
 
-                    {{-- Custom Tab Pills --}}
                     <div class="flex bg-gray-200/60 p-1 rounded-xl">
-                        <a href="{{ route('admin.verifications.index', ['status' => 'pending']) }}" 
-                           class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 {{ $filter == 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                        <a href="{{ route('admin.verifications.index', ['status' => 'pending']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 {{ $filter == 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
                             <span>⏳ Menunggu</span>
                             @if($stats['total_antrian'] > 0)
                                 <span class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px]">{{ $stats['total_antrian'] }}</span>
                             @endif
                         </a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'approved']) }}" 
-                           class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'approved' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                            ✅ Selesai
-                        </a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'rejected']) }}" 
-                           class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'rejected' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                            ❌ Ditolak
-                        </a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'all']) }}" 
-                           class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                            Semua
-                        </a>
+                        <a href="{{ route('admin.verifications.index', ['status' => 'approved']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'approved' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">✅ Selesai</a>
+                        <a href="{{ route('admin.verifications.index', ['status' => 'rejected']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'rejected' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">❌ Ditolak</a>
+                        <a href="{{ route('admin.verifications.index', ['status' => 'all']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Semua</a>
                     </div>
                 </div>
 
@@ -131,12 +125,17 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @forelse($verifications as $v)
+                            
+                            {{-- LOGIKA CEK APAKAH SUDAH TERDAFTAR (Agar tombol Isi Nama otomatis hilang) --}}
+                            @php
+                                $namaSantri = $v->nama_lengkap ?? $v->nama;
+                                $isRegistered = $namaSantri ? \App\Models\Candidate::where('nama_lengkap', $namaSantri)->exists() : false;
+                            @endphp
+
                             <tr class="hover:bg-indigo-50/30 transition group">
-                                
                                 {{-- KOLOM 1: Info Pendaftar --}}
                                 <td class="px-6 py-4 align-top">
                                     <div class="flex items-start gap-3">
-                                        {{-- Avatar Initials --}}
                                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
                                             {{ substr($v->no_wa, -2) }}
                                         </div>
@@ -151,6 +150,9 @@
                                                     {{ $v->jenjang }}
                                                 </span>
                                             @endif
+                                            @if($namaSantri)
+                                                <div class="text-xs text-indigo-600 font-bold mt-1">👤 {{ $namaSantri }}</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -158,7 +160,6 @@
                                 {{-- KOLOM 2: Status Progress --}}
                                 <td class="px-6 py-4 align-top">
                                     <div class="flex flex-col gap-2">
-                                        {{-- 1. Status Berkas --}}
                                         <div class="flex items-center justify-between w-40 text-xs p-1.5 rounded-lg border {{ $v->status == 'pending' ? 'bg-amber-50 border-amber-100' : ($v->status == 'approved' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100') }}">
                                             <span class="text-gray-500 font-medium text-[10px]">Berkas</span>
                                             @if($v->status == 'pending')
@@ -170,7 +171,6 @@
                                             @endif
                                         </div>
 
-                                        {{-- 2. Status Bayar --}}
                                         <div class="flex items-center justify-between w-40 text-xs p-1.5 rounded-lg border {{ $v->status_pembayaran == 'pending' && $v->bukti_transfer ? 'bg-blue-50 border-blue-100' : ($v->status_pembayaran == 'paid' ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100') }}">
                                             <span class="text-gray-500 font-medium text-[10px]">Bayar</span>
                                             @if($v->status_pembayaran == 'pending' && $v->bukti_transfer)
@@ -190,26 +190,14 @@
                                 <td class="px-6 py-4 align-top">
                                     <div class="flex flex-col gap-2">
                                         <a href="{{ asset('storage/'.$v->file_perjanjian) }}" target="_blank" class="group/link flex items-center gap-3 p-2 rounded-lg border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition bg-white w-48">
-                                            <div class="bg-indigo-100 p-1.5 rounded text-indigo-600">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="text-[10px] uppercase text-gray-400 font-bold">Dokumen</div>
-                                                <div class="text-xs font-bold text-gray-700 group-hover/link:text-indigo-700">Surat Perjanjian</div>
-                                            </div>
-                                            <svg class="w-4 h-4 text-gray-300 group-hover/link:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            <div class="bg-indigo-100 p-1.5 rounded text-indigo-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                                            <div class="flex-1"><div class="text-[10px] uppercase text-gray-400 font-bold">Dokumen</div><div class="text-xs font-bold text-gray-700 group-hover/link:text-indigo-700">Surat Perjanjian</div></div>
                                         </a>
 
                                         @if($v->bukti_transfer)
                                         <a href="{{ asset('storage/'.$v->bukti_transfer) }}" target="_blank" class="group/link flex items-center gap-3 p-2 rounded-lg border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 transition bg-white w-48">
-                                            <div class="bg-emerald-100 p-1.5 rounded text-emerald-600">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="text-[10px] uppercase text-gray-400 font-bold">Keuangan</div>
-                                                <div class="text-xs font-bold text-gray-700 group-hover/link:text-emerald-700">Bukti Transfer</div>
-                                            </div>
-                                            <svg class="w-4 h-4 text-gray-300 group-hover/link:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            <div class="bg-emerald-100 p-1.5 rounded text-emerald-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                                            <div class="flex-1"><div class="text-[10px] uppercase text-gray-400 font-bold">Keuangan</div><div class="text-xs font-bold text-gray-700 group-hover/link:text-emerald-700">Bukti Transfer</div></div>
                                         </a>
                                         @endif
                                     </div>
@@ -228,11 +216,8 @@
                                                     ACC Berkas
                                                 </button>
                                             </form>
-
                                             <div x-data="{ open: false }" class="relative">
-                                                <button @click="open = !open" type="button" class="w-28 bg-white border border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition">
-                                                    Tolak
-                                                </button>
+                                                <button @click="open = !open" type="button" class="w-28 bg-white border border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition">Tolak</button>
                                                 <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-xl p-3 z-50 text-left">
                                                     <form action="{{ route('admin.verifications.reject', $v->id) }}" method="POST">
                                                         @csrf
@@ -245,46 +230,64 @@
 
                                         {{-- TAHAP 1.5: JIKA BERKAS ACC, TAPI WALI BELUM BAYAR/UPLOAD --}}
                                         @elseif($v->status == 'approved' && $v->status_pembayaran == 'unpaid')
-                                            <div class="flex flex-col gap-2 items-end">
-                                                
-                                                {{-- [BARU] PERINGATAN WA GAGAL & TOMBOL RESEND TAHAP 1 --}}
-                                                @if(!$v->wa_tahap1_sent)
-                                                    <div class="w-28 bg-red-50 border border-red-200 p-1.5 rounded-lg shadow-sm text-center">
-                                                        <span class="text-[9px] font-bold text-red-600 block mb-1">⚠️ WA Tagihan Gagal</span>
-                                                        <form action="{{ route('admin.verifications.resend_wa', ['id' => $v->id, 'tahap' => 1]) }}" method="POST">
-                                                            @csrf
-                                                            <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-1 rounded text-[9px] font-bold">Kirim Ulang WA</button>
-                                                        </form>
-                                                    </div>
-                                                @endif
-
-                                                <div class="w-28 bg-amber-50 border border-amber-200 text-amber-600 px-2 py-1.5 rounded-lg text-center shadow-sm">
-                                                    <div class="text-[9px] font-bold uppercase">Menunggu Transfer</div>
+                                            
+                                            {{-- CEK APAKAH SUDAH TERDAFTAR --}}
+                                            @if(!$isRegistered)
+                                                <button type="button" onclick="openRegisterModal('{{ $v->id }}', '{{ $namaSantri }}')" class="w-28 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1 mb-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                    Isi Nama
+                                                </button>
+                                            @else
+                                                <div class="w-28 bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1.5 rounded-lg text-[10px] font-bold text-center shadow-sm mb-1 flex items-center justify-center gap-1 cursor-default" title="Nama anak sudah masuk ke database utama">
+                                                    <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    Terdaftar
                                                 </div>
-                                                
-                                                <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="w-28 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1" onclick="return confirm('Terima Pembayaran CASH?')">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                                        Terima Cash
-                                                    </button>
-                                                </form>
-                                            </div>
+                                            @endif
 
-                                        {{-- TAHAP 2: JIKA WALI SUDAH UPLOAD, MENUNGGU ACC ADMIN --}}
-                                        @elseif($v->status == 'approved' && $v->status_pembayaran == 'pending')
+                                            @if(!$v->wa_tahap1_sent)
+                                                <div class="w-28 bg-red-50 border border-red-200 p-1.5 rounded-lg shadow-sm text-center">
+                                                    <span class="text-[9px] font-bold text-red-600 block mb-1">⚠️ WA Tagihan Gagal</span>
+                                                    <form action="{{ route('admin.verifications.resend_wa', ['id' => $v->id, 'tahap' => 1]) }}" method="POST">
+                                                        @csrf
+                                                        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white py-1 rounded text-[9px] font-bold">Kirim Ulang WA</button>
+                                                    </form>
+                                                </div>
+                                            @endif
+
+                                            <div class="w-28 bg-amber-50 border border-amber-200 text-amber-600 px-2 py-1.5 rounded-lg text-center shadow-sm">
+                                                <div class="text-[9px] font-bold uppercase">Menunggu Transfer</div>
+                                            </div>
                                             <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="w-28 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-1.5" onclick="return confirm('ACC Pembayaran?')">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                    Terima Bayar
+                                                <button type="submit" class="w-28 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1" onclick="return confirm('Terima Pembayaran CASH?')">
+                                                    Terima Cash
                                                 </button>
                                             </form>
 
-                                            <div x-data="{ open: false }" class="relative">
-                                                <button @click="open = !open" type="button" class="w-28 bg-white border border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition">
-                                                    Tolak
+                                        {{-- TAHAP 2: JIKA WALI SUDAH UPLOAD, MENUNGGU ACC ADMIN --}}
+                                        @elseif($v->status == 'approved' && $v->status_pembayaran == 'pending')
+
+                                            {{-- CEK APAKAH SUDAH TERDAFTAR --}}
+                                            @if(!$isRegistered)
+                                                <button type="button" onclick="openRegisterModal('{{ $v->id }}', '{{ $namaSantri }}')" class="w-28 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1 mb-1">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                    Isi Nama
                                                 </button>
+                                            @else
+                                                <div class="w-28 bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1.5 rounded-lg text-[10px] font-bold text-center shadow-sm mb-1 flex items-center justify-center gap-1 cursor-default" title="Nama anak sudah masuk ke database utama">
+                                                    <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    Terdaftar
+                                                </div>
+                                            @endif
+
+                                            <form action="{{ route('admin.verifications.approve', $v->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="w-28 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-1.5" onclick="return confirm('ACC Pembayaran?')">
+                                                    Terima Bayar
+                                                </button>
+                                            </form>
+                                            <div x-data="{ open: false }" class="relative">
+                                                <button @click="open = !open" type="button" class="w-28 bg-white border border-gray-300 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 px-3 py-2 rounded-lg text-xs font-bold transition">Tolak</button>
                                                 <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-64 bg-white border border-gray-200 shadow-xl rounded-xl p-3 z-50 text-left">
                                                     <form action="{{ route('admin.verifications.reject', $v->id) }}" method="POST">
                                                         @csrf
@@ -297,8 +300,20 @@
 
                                         {{-- SUDAH SELESAI --}}
                                         @elseif($v->status_pembayaran == 'paid')
-                                            
-                                            {{-- [BARU] PERINGATAN WA GAGAL & TOMBOL RESEND TAHAP 2 --}}
+
+                                            {{-- CEK APAKAH SUDAH TERDAFTAR --}}
+                                            @if(!$isRegistered)
+                                                <button type="button" onclick="openRegisterModal('{{ $v->id }}', '{{ $namaSantri }}')" class="w-28 bg-amber-600 hover:bg-amber-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1 mb-2">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                    Isi Nama
+                                                </button>
+                                            @else
+                                                <div class="w-28 bg-slate-100 border border-slate-200 text-slate-500 px-2 py-1.5 rounded-lg text-[10px] font-bold text-center shadow-sm mb-2 flex items-center justify-center gap-1 cursor-default" title="Nama anak sudah masuk ke database utama">
+                                                    <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                                    Terdaftar
+                                                </div>
+                                            @endif
+
                                             @if(!$v->wa_tahap2_sent)
                                                 <div class="w-28 bg-red-50 border border-red-200 p-1.5 rounded-lg shadow-sm text-center mb-2">
                                                     <span class="text-[9px] font-bold text-red-600 block mb-1">⚠️ WA Biodata Gagal</span>
@@ -342,4 +357,76 @@
 
         </div>
     </div>
+
+    <div id="registerBasicModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800">Daftarkan Nama Santri</h3>
+                <button type="button" onclick="closeRegisterModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form id="registerBasicForm" method="POST" action="">
+                @csrf
+                <div class="space-y-4">
+                    {{-- Input Nama --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Nama Lengkap</label>
+                        <input type="text" name="nama_lengkap" id="modal_nama_lengkap" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" required>
+                    </div>
+
+                    {{-- Input Jenjang (Sekarang Dinamis dari Database) --}}
+                    @php
+                        $listJenjangModal = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+                    @endphp
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Jenjang Pendidikan</label>
+                        <select name="jenjang" class="w-full rounded-xl border-slate-200 bg-slate-50 text-sm p-2.5 outline-none focus:ring-2 focus:ring-emerald-500" required>
+                            <option value="">-- Pilih Jenjang --</option>
+                            @foreach($listJenjangModal as $j)
+                                <option value="{{ $j }}">{{ $j }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Input Jenis Kelamin --}}
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5">Jenis Kelamin</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 cursor-pointer">
+                                <input type="radio" name="jenis_kelamin" value="L" required class="text-emerald-600 focus:ring-emerald-500"> Laki-laki
+                            </label>
+                            <label class="flex items-center gap-1.5 text-sm font-semibold text-slate-700 cursor-pointer">
+                                <input type="radio" name="jenis_kelamin" value="P" class="text-emerald-600 focus:ring-emerald-500"> Perempuan
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-md">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openRegisterModal(id, name) {
+            const modal = document.getElementById('registerBasicModal');
+            const form = document.getElementById('registerBasicForm');
+            const inputNama = document.getElementById('modal_nama_lengkap');
+            
+            // Pasang URL Action Form secara dinamis
+            form.action = `/admin/verifications/${id}/register-basic`;
+            inputNama.value = name; // Isi otomatis dengan nama yang ada di verifikasi berkas
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerBasicModal').classList.add('hidden');
+        }
+    </script>
 </x-app-layout>

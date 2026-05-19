@@ -124,6 +124,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/verifikasi/{id}/reject', [AdminVerificationController::class, 'reject'])->name('admin.verifications.reject');
     Route::post('/admin/verifikasi/{id}/resend-wa/{tahap}', [App\Http\Controllers\AdminVerificationController::class, 'resendWa'])->name('admin.verifications.resend_wa');
 
+    Route::post('/admin/verifications/{id}/register-basic', [AdminVerificationController::class, 'registerBasic'])
+     ->name('admin.verifications.register_basic');
+
     // --- PENGATURAN PPDB ---
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/pengaturan', [SettingController::class, 'update'])->name('admin.settings.update');

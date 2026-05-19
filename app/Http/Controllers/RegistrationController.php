@@ -111,26 +111,36 @@ class RegistrationController extends Controller
             $gajiAyah = preg_replace('/[^0-9]/', '', $request->penghasilan_ayah);
             $gajiIbu = preg_replace('/[^0-9]/', '', $request->penghasilan_ibu);
 
-            // A. SIMPAN DATA SANTRI
-            $candidate = Candidate::create([
-                'no_daftar' => 'REG-' . date('Y') . date('His'),
-                'nisn' => $request->nisn,
-                'nik' => $request->nik,
-                'no_kk' => $request->no_kk,
-                'nama_lengkap' => $request->nama_lengkap,
-                'jenis_kelamin' => $request->jenis_kelamin,
-                'tempat_lahir' => $request->tempat_lahir,
-                'tanggal_lahir' => $request->tanggal_lahir,
-                'anak_ke' => $request->anak_ke ?? 1,
-                'jumlah_saudara' => $request->jumlah_saudara ?? 0,
-                'riwayat_penyakit' => $request->riwayat_penyakit,
-                'jenjang' => $request->jenjang,
-                'asal_sekolah' => $request->asal_sekolah,
-                'tahun_masuk' => date('Y'),
-                'jalur_pendaftaran' => 'Online',
-                'status' => 'Baru',
-                'file_perjanjian' => $verifyData->file_perjanjian, 
-            ]);
+            // A. SIMPAN / UPDATE DATA SANTRI
+            // Cari berdasarkan Nama Lengkap yang diinput admin, jika tidak ketemu baru buat baru
+            $candidate = Candidate::updateOrCreate(
+                [
+                    'nama_lengkap' => $request->nama_lengkap,
+                ],
+                [
+                    'nisn' => $request->nisn,
+                    'nik' => $request->nik,
+                    'no_kk' => $request->no_kk,
+                    'jenis_kelamin' => $request->jenis_kelamin,
+                    'tempat_lahir' => $request->tempat_lahir,
+                    'tanggal_lahir' => $request->tanggal_lahir,
+                    'anak_ke' => $request->anak_ke ?? 1,
+                    'jumlah_saudara' => $request->jumlah_saudara ?? 0,
+                    'riwayat_penyakit' => $request->riwayat_penyakit,
+                    'jenjang' => $request->jenjang,
+                    'asal_sekolah' => $request->asal_sekolah,
+                    'tahun_masuk' => date('Y'),
+                    'jalur_pendaftaran' => 'Online',
+                    'status' => 'Baru',
+                    'file_perjanjian' => $verifyData->file_perjanjian, 
+                ]
+            );
+
+            // Jika nomor pendaftaran kosong (karena baru di-update dari input admin), buatkan nomor pendaftarannya
+            if (!$candidate->no_daftar) {
+                $candidate->no_daftar = 'REG-' . date('Y') . date('His');
+                $candidate->save();
+            }
 
             // B. SIMPAN ALAMAT
             CandidateAddress::create([
@@ -160,19 +170,21 @@ class RegistrationController extends Controller
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
-            // D. GENERATE TAGIHAN
-            $biaya = PaymentType::where('jenjang', 'Semua')
-                        ->orWhere('jenjang', $request->jenjang)
-                        ->get();
+            // D. GENERATE TAGIHAN (Hanya jika data santri ini baru dibuat pertama kali, bukan update data admin)
+            if ($candidate->wasRecentlyCreated) {
+                $biaya = PaymentType::where('jenjang', 'Semua')
+                            ->orWhere('jenjang', $request->jenjang)
+                            ->get();
 
-            foreach ($biaya as $item) {
-                CandidateBill::create([
-                    'candidate_id' => $candidate->id,
-                    'payment_type_id' => $item->id,
-                    'nominal_tagihan' => $item->nominal,
-                    'nominal_terbayar' => 0,
-                    'status' => 'Belum Lunas',
-                ]);
+                foreach ($biaya as $item) {
+                    CandidateBill::create([
+                        'candidate_id' => $candidate->id,
+                        'payment_type_id' => $item->id,
+                        'nominal_tagihan' => $item->nominal,
+                        'nominal_terbayar' => 0,
+                        'status' => 'Belum Lunas',
+                    ]);
+                }
             }
 
             DB::commit();

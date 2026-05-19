@@ -62,11 +62,21 @@
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Pilih Jenjang Pendidikan</label>
                         @php
                             $listJenjang = json_decode(\App\Models\Setting::getValue('list_jenjang'), true) ?? ['SMP', 'SMK'];
+                            $lockedJenjang = isset($verification->jenjang);
                         @endphp
+                        
+                        {{-- Hidden input diperlukan karena radio button yang di-disabled nilainya tidak akan terkirim --}}
+                        @if($lockedJenjang)
+                            <input type="hidden" name="jenjang" value="{{ $verification->jenjang }}">
+                        @endif
+
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             @foreach($listJenjang as $item)
-                                <label class="cursor-pointer relative">
-                                    <input type="radio" name="jenjang" value="{{ $item }}" {{ old('jenjang') == $item ? 'checked' : '' }} required class="radio-input">
+                                <label class="relative {{ $lockedJenjang ? 'cursor-not-allowed opacity-75' : 'cursor-pointer' }}">
+                                    <input type="radio" name="jenjang" value="{{ $item }}" 
+                                           {{ old('jenjang', $verification->jenjang ?? '') == $item ? 'checked' : '' }} 
+                                           {{ $lockedJenjang ? 'disabled' : '' }} 
+                                           required class="radio-input">
                                     <div class="radio-content flex items-center gap-3 p-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200 transition-all">
                                         <div class="radio-icon w-10 h-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-lg">
                                             {{ substr($item, 0, 1) }} </div>
@@ -83,8 +93,16 @@
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Nama Lengkap</label>
+                        @php
+                            $namaVal = $verification->nama_lengkap ?? $verification->nama ?? '';
+                            $lockedNama = !empty($namaVal);
+                        @endphp
                         <div class="relative">
-                            <input type="text" name="nama_lengkap" value="{{ old('nama_lengkap') }}" class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="Contoh: Muhammad Rizky" required>
+                            <input type="text" name="nama_lengkap" 
+                                   value="{{ old('nama_lengkap', $namaVal) }}" 
+                                   class="custom-input w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none {{ $lockedNama ? 'cursor-not-allowed text-slate-500 bg-slate-200/50' : '' }}" 
+                                   placeholder="Contoh: Muhammad Rizky" 
+                                   {{ $lockedNama ? 'readonly' : '' }} required>
                             <svg class="input-icon absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
                         @error('nama_lengkap') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
@@ -92,15 +110,30 @@
 
                     <div class="md:col-span-2">
                         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 ml-1">Jenis Kelamin</label>
+                        @php
+                            $lockedGender = isset($verification->jenis_kelamin);
+                        @endphp
+
+                        {{-- Hidden input jika jenis kelamin sudah dikunci admin --}}
+                        @if($lockedGender)
+                            <input type="hidden" name="jenis_kelamin" value="{{ $verification->jenis_kelamin }}">
+                        @endif
+
                         <div class="grid grid-cols-2 gap-4">
-                            <label class="cursor-pointer relative">
-                                <input type="radio" name="jenis_kelamin" value="L" {{ old('jenis_kelamin') == 'L' ? 'checked' : '' }} required class="radio-input">
+                            <label class="relative {{ $lockedGender ? 'cursor-not-allowed opacity-75' : 'cursor-pointer' }}">
+                                <input type="radio" name="jenis_kelamin" value="L" 
+                                       {{ old('jenis_kelamin', $verification->jenis_kelamin ?? '') == 'L' ? 'checked' : '' }} 
+                                       {{ $lockedGender ? 'disabled' : '' }} 
+                                       required class="radio-input">
                                 <div class="radio-content flex flex-col items-center justify-center text-center py-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200">
                                     <span class="font-bold text-slate-700">Laki-laki</span>
                                 </div>
                             </label>
-                            <label class="cursor-pointer relative">
-                                <input type="radio" name="jenis_kelamin" value="P" {{ old('jenis_kelamin') == 'P' ? 'checked' : '' }} class="radio-input">
+                            <label class="relative {{ $lockedGender ? 'cursor-not-allowed opacity-75' : 'cursor-pointer' }}">
+                                <input type="radio" name="jenis_kelamin" value="P" 
+                                       {{ old('jenis_kelamin', $verification->jenis_kelamin ?? '') == 'P' ? 'checked' : '' }} 
+                                       {{ $lockedGender ? 'disabled' : '' }} 
+                                       class="radio-input">
                                 <div class="radio-content flex flex-col items-center justify-center text-center py-4 rounded-xl border-2 border-slate-100 bg-white hover:border-emerald-200">
                                     <span class="font-bold text-slate-700">Perempuan</span>
                                 </div>
