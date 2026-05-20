@@ -127,10 +127,22 @@
                             @forelse($verifications as $v)
                             
                             {{-- LOGIKA CEK APAKAH SUDAH TERDAFTAR (Agar tombol Isi Nama otomatis hilang) --}}
-                            @php
-                                $namaSantri = $v->nama_lengkap ?? $v->nama;
-                                $isRegistered = $namaSantri ? \App\Models\Candidate::where('nama_lengkap', $namaSantri)->exists() : false;
-                            @endphp
+@php
+    $candidateData = null;
+    
+    // 1. Cek dari relasi (jika sudah dihubungkan)
+    if ($v->candidate ?? false) {
+        $candidateData = $v->candidate;
+    } 
+    // 2. Jika belum, cek pencocokan file_perjanjian yang di-copy saat submit "Isi Nama"
+    elseif (!empty($v->file_perjanjian)) {
+        $candidateData = \App\Models\Candidate::where('file_perjanjian', $v->file_perjanjian)->first();
+    }
+    
+    // Tentukan status terdaftar & ambil nama dari tabel candidate
+    $isRegistered = $candidateData ? true : false;
+    $namaSantri = $candidateData ? $candidateData->nama_lengkap : '';
+@endphp
 
                             <tr class="hover:bg-indigo-50/30 transition group">
                                 {{-- KOLOM 1: Info Pendaftar --}}

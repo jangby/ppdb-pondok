@@ -22,18 +22,21 @@ class RegistrationController extends Controller
         // 1. Cari data verifikasi berdasarkan token dari WA
         $verification = \App\Models\Verification::where('token', $token)->firstOrFail();
         
+        // [TAMBAHAN KEAMANAN] Cek apakah pembayaran sudah lunas sebelum mengizinkan isi biodata
+        if ($verification->status_pembayaran != 'paid') {
+            return redirect()->route('pendaftaran.payment', $token)
+                             ->with('error', 'Silakan selesaikan pembayaran pendaftaran terlebih dahulu.');
+        }
+
         // 2. CEK APAKAH SUDAH MENGISI FORMULIR SEBELUMNYA
-        // Karena tidak ada verification_id, kita cek berdasarkan NAMA LENGKAP dan Nomor WA
-        // Mengapa Nomor WA? Karena token ini dikirim ke nomor WA tersebut, jadi logikanya no_hp_ayah atau ibu akan sama.
         $noWaVerifikasi = preg_replace('/[^0-9]/', '', $verification->no_wa); // Bersihkan nomor WA
         
-        // Cek kandidat yang punya nama sama persis (dari tabel verifications)
+        // Cek kandidat yang punya nama sama persis
         $namaSantri = $verification->nama_lengkap ?? $verification->nama;
         $candidateExists = \App\Models\Candidate::where('nama_lengkap', $namaSantri)->first();
 
-        // Jika nama tidak cocok, coba cari berdasarkan Nomor HP orang tua yang sama dengan nomor verifikasi
+        // Jika nama tidak cocok, coba cari berdasarkan Nomor HP
         if (!$candidateExists) {
-             // Cari di tabel parents yang no_hp-nya mirip/sama
              $parentExists = \App\Models\CandidateParent::where('no_hp_ayah', 'like', '%' . substr($noWaVerifikasi, -8))
                                                         ->orWhere('no_hp_ibu', 'like', '%' . substr($noWaVerifikasi, -8))
                                                         ->first();
@@ -42,13 +45,14 @@ class RegistrationController extends Controller
              }
         }
 
-        // 3. JIKA SUDAH ADA, LANGSUNG REDIRECT KE HALAMAN SUKSES
-        if ($candidateExists) {
+        // 3. JIKA SUDAH ADA & SUDAH LENGKAP ISI BIODATA, REDIRECT KE HALAMAN SUKSES
+        // PERBAIKAN: Kita pastikan 'tempat_lahir' bukan '-' (Tanda bahwa admin cuma sekadar isi nama awal)
+        if ($candidateExists && $candidateExists->tempat_lahir != '-') {
             return redirect()->route('pendaftaran.sukses', $candidateExists->no_daftar)
                              ->with('info', 'Anda sudah berhasil mengisi formulir pendaftaran sebelumnya. Data Anda aman!');
         }
 
-        // Jika belum ada, tampilkan form seperti biasa
+        // Jika belum ada, atau data baru diisi nama saja oleh Admin, tampilkan form biodata
         return view('pendaftaran.index', compact('verification'));
     }
 
