@@ -11,4 +11,5 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/waha/webhook', [WahaWebhookController::class, 'handle']);
 Route::get('/ppdb/stat', [PPDBController::class, 'getStat']);
-Route::get('/ppdb/status/{nik}', [PPDBController::class, 'checkStatus']);
+Route::get('/ppdb/status/{nomor_pendaftaran}', [PPDBController::class, 'checkStatus']);
+Route::get('/ppdb/rincian', [PPDBController::class, 'getRincian']);

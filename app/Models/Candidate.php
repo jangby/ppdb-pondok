@@ -130,4 +130,9 @@ public function santri_room()
     {
         return $this->hasOne(Verification::class);
     }
+
+    public function testRoom()
+{
+    return $this->belongsTo(TestRoom::class, 'test_room_id');
+}
 }
