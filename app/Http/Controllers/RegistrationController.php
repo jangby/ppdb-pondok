@@ -18,43 +18,40 @@ use Illuminate\Validation\Rule;
 class RegistrationController extends Controller
 {
     public function showForm($token)
-    {
-        // 1. Cari data verifikasi berdasarkan token dari WA
-        $verification = \App\Models\Verification::where('token', $token)->firstOrFail();
-        
-        // [TAMBAHAN KEAMANAN] Cek apakah pembayaran sudah lunas sebelum mengizinkan isi biodata
-        if ($verification->status_pembayaran != 'paid') {
-            return redirect()->route('pendaftaran.payment', $token)
-                             ->with('error', 'Silakan selesaikan pembayaran pendaftaran terlebih dahulu.');
-        }
-
-        // 2. CEK APAKAH SUDAH MENGISI FORMULIR SEBELUMNYA
-        $noWaVerifikasi = preg_replace('/[^0-9]/', '', $verification->no_wa); // Bersihkan nomor WA
-        
-        // Cek kandidat yang punya nama sama persis
-        $namaSantri = $verification->nama_lengkap ?? $verification->nama;
-        $candidateExists = \App\Models\Candidate::where('nama_lengkap', $namaSantri)->first();
-
-        // Jika nama tidak cocok, coba cari berdasarkan Nomor HP
-        if (!$candidateExists) {
-             $parentExists = \App\Models\CandidateParent::where('no_hp_ayah', 'like', '%' . substr($noWaVerifikasi, -8))
-                                                        ->orWhere('no_hp_ibu', 'like', '%' . substr($noWaVerifikasi, -8))
-                                                        ->first();
-             if($parentExists) {
-                 $candidateExists = \App\Models\Candidate::find($parentExists->candidate_id);
-             }
-        }
-
-        // 3. JIKA SUDAH ADA & SUDAH LENGKAP ISI BIODATA, REDIRECT KE HALAMAN SUKSES
-        // PERBAIKAN: Kita pastikan 'tempat_lahir' bukan '-' (Tanda bahwa admin cuma sekadar isi nama awal)
-        if ($candidateExists && $candidateExists->tempat_lahir != '-') {
-            return redirect()->route('pendaftaran.sukses', $candidateExists->no_daftar)
-                             ->with('info', 'Anda sudah berhasil mengisi formulir pendaftaran sebelumnya. Data Anda aman!');
-        }
-
-        // Jika belum ada, atau data baru diisi nama saja oleh Admin, tampilkan form biodata
-        return view('pendaftaran.index', compact('verification'));
+{
+    // 1. Cari data verifikasi berdasarkan token dari WA
+    $verification = \App\Models\Verification::where('token', $token)->firstOrFail();
+    
+    // [TAMBAHAN KEAMANAN] Cek apakah pembayaran sudah lunas sebelum mengizinkan isi biodata
+    if ($verification->status_pembayaran != 'paid') {
+        return redirect()->route('pendaftaran.payment', $token)
+                         ->with('error', 'Silakan selesaikan pembayaran pendaftaran terlebih dahulu.');
     }
+
+    // 2. CARA BARU MENCARI CANDIDATE: Gunakan file_perjanjian sebagai penghubung ID yang unik
+    $candidateExists = \App\Models\Candidate::where('file_perjanjian', $verification->file_perjanjian)->first();
+
+    // Jika tidak ketemu via file (misal data legacy), baru fallback ke Nomor HP
+    if (!$candidateExists) {
+        $noWaVerifikasi = preg_replace('/[^0-9]/', '', $verification->no_wa);
+        $parentExists = \App\Models\CandidateParent::where('no_hp_ayah', 'like', '%' . substr($noWaVerifikasi, -8))
+                                                   ->orWhere('no_hp_ibu', 'like', '%' . substr($noWaVerifikasi, -8))
+                                                   ->first();
+        if ($parentExists) {
+            $candidateExists = \App\Models\Candidate::find($parentExists->candidate_id);
+        }
+    }
+
+    // 3. JIKA SUDAH ADA & SUDAH LENGKAP ISI BIODATA, REDIRECT KE HALAMAN SUKSES
+    // Patokan lengkap: tempat lahir tidak sama dengan '-'
+    if ($candidateExists && $candidateExists->tempat_lahir != '-') {
+        return redirect()->route('pendaftaran.sukses', $candidateExists->no_daftar)
+                         ->with('info', 'Anda sudah berhasil mengisi formulir pendaftaran sebelumnya. Data Anda aman!');
+    }
+
+    // Tampilkan form biodata (Kirim juga data candidateExists agar nama yg diisi admin bisa otomatis muncul di form)
+    return view('pendaftaran.index', compact('verification', 'candidateExists'));
+}
 
     public function store(Request $request)
     {
