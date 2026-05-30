@@ -116,10 +116,9 @@ class RegistrationController extends Controller
             $gajiIbu = preg_replace('/[^0-9]/', '', $request->penghasilan_ibu);
 
             // A. SIMPAN / UPDATE DATA SANTRI
-            // Cari berdasarkan Nama Lengkap yang diinput admin, jika tidak ketemu baru buat baru
             $candidate = Candidate::updateOrCreate(
                 [
-                    'nama_lengkap' => $request->nama_lengkap,
+                    'nama_lengkap' => trim($request->nama_lengkap),
                 ],
                 [
                     'nisn' => $request->nisn,
@@ -174,20 +173,24 @@ class RegistrationController extends Controller
                 'no_hp_ibu' => $request->no_hp_ibu,
             ]);
 
-            // D. GENERATE TAGIHAN (Hanya jika data santri ini baru dibuat pertama kali, bukan update data admin)
+            // D. GENERATE TAGIHAN
             if ($candidate->wasRecentlyCreated) {
                 $biaya = PaymentType::where('jenjang', 'Semua')
                             ->orWhere('jenjang', $request->jenjang)
                             ->get();
 
                 foreach ($biaya as $item) {
-                    CandidateBill::create([
-                        'candidate_id' => $candidate->id,
-                        'payment_type_id' => $item->id,
-                        'nominal_tagihan' => $item->nominal,
-                        'nominal_terbayar' => 0,
-                        'status' => 'Belum Lunas',
-                    ]);
+                    CandidateBill::firstOrCreate(
+                        [
+                            'candidate_id' => $candidate->id,
+                            'payment_type_id' => $item->id,
+                        ],
+                        [
+                            'nominal_tagihan' => $item->nominal,
+                            'nominal_terbayar' => 0,
+                            'status' => 'Belum Lunas',
+                        ]
+                    );
                 }
             }
 

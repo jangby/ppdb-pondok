@@ -353,13 +353,17 @@ public function registerBasic(Request $request, $id)
                             ->get();
 
         foreach ($biaya as $item) {
-            CandidateBill::create([
-                'candidate_id' => $candidate->id,
-                'payment_type_id' => $item->id,
-                'nominal_tagihan' => $item->nominal,
-                'nominal_terbayar' => 0,
-                'status' => 'Belum Lunas',
-            ]);
+            CandidateBill::firstOrCreate(
+                [
+                    'candidate_id' => $candidate->id,
+                    'payment_type_id' => $item->id,
+                ],
+                [
+                    'nominal_tagihan' => $item->nominal,
+                    'nominal_terbayar' => 0,
+                    'status' => 'Belum Lunas',
+                ]
+            );
         }
 
         DB::commit();
