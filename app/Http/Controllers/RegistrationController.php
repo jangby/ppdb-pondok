@@ -113,33 +113,45 @@ class RegistrationController extends Controller
             $gajiIbu = preg_replace('/[^0-9]/', '', $request->penghasilan_ibu);
 
             // A. SIMPAN / UPDATE DATA SANTRI
-            $candidate = Candidate::updateOrCreate(
-                [
-                    'nama_lengkap' => trim($request->nama_lengkap),
-                ],
-                [
-                    'nisn' => $request->nisn,
-                    'nik' => $request->nik,
-                    'no_kk' => $request->no_kk,
-                    'jenis_kelamin' => $request->jenis_kelamin,
-                    'tempat_lahir' => $request->tempat_lahir,
-                    'tanggal_lahir' => $request->tanggal_lahir,
-                    'anak_ke' => $request->anak_ke ?? 1,
-                    'jumlah_saudara' => $request->jumlah_saudara ?? 0,
-                    'riwayat_penyakit' => $request->riwayat_penyakit,
-                    'jenjang' => $request->jenjang,
-                    'asal_sekolah' => $request->asal_sekolah,
-                    'tahun_masuk' => date('Y'),
-                    'jalur_pendaftaran' => 'Online',
-                    'status' => 'Baru',
-                    'file_perjanjian' => $verifyData->file_perjanjian, 
-                ]
-            );
+            // 1. Kumpulkan semua data form ke dalam variabel array
+            $dataSantri = [
+                'nisn' => $request->nisn,
+                'nik' => $request->nik,
+                'no_kk' => $request->no_kk,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'tempat_lahir' => $request->tempat_lahir,
+                'tanggal_lahir' => $request->tanggal_lahir,
+                'anak_ke' => $request->anak_ke ?? 1,
+                'jumlah_saudara' => $request->jumlah_saudara ?? 0,
+                'riwayat_penyakit' => $request->riwayat_penyakit,
+                'jenjang' => $request->jenjang,
+                'asal_sekolah' => $request->asal_sekolah,
+                'tahun_masuk' => date('Y'),
+                'jalur_pendaftaran' => 'Online',
+                'status' => 'Baru',
+                'file_perjanjian' => $verifyData->file_perjanjian,
+            ];
 
-            // Jika nomor pendaftaran kosong (karena baru di-update dari input admin), buatkan nomor pendaftarannya
-            if (!$candidate->no_daftar) {
-                $candidate->no_daftar = 'REG-' . date('Y') . date('His');
-                $candidate->save();
+            // 2. Cari apakah data santri sudah ada (dibuat via admin sebelumnya)
+            $candidate = Candidate::where('nama_lengkap', trim($request->nama_lengkap))->first();
+
+            if ($candidate) {
+                // JIKA DATA SUDAH ADA (UPDATE)
+                $candidate->update($dataSantri);
+                
+                // Pastikan no_daftar sudah terisi, jika belum buatkan
+                if (!$candidate->no_daftar) {
+                    $candidate->no_daftar = 'REG-' . date('Y') . date('His');
+                    $candidate->save();
+                }
+            } else {
+                // JIKA PENDAFTAR MURNI BARU / ORANG TUA MENGISI SENDIRI (CREATE)
+                $dataSantri['nama_lengkap'] = trim($request->nama_lengkap);
+                
+                // Masukkan no_daftar SEBELUM fungsi create/insert berjalan agar tidak terjadi Error 1364
+                $dataSantri['no_daftar'] = 'REG-' . date('Y') . date('His');
+                
+                $candidate = Candidate::create($dataSantri);
             }
 
             // B. SIMPAN ALAMAT
