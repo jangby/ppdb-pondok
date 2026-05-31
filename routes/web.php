@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\MonitorController;
 
 // Import Controller Fitur Utama
 use App\Http\Controllers\VerificationController;      // Untuk User Upload Berkas
@@ -131,6 +133,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::put('/admin/pengaturan', [SettingController::class, 'update'])->name('admin.settings.update');
     Route::delete('/admin/settings/gallery', [SettingController::class, 'deleteGallery'])->name('admin.settings.delete_gallery');
+
+    // --- MANAJEMEN PENGGUNA (AKUN) ---
+    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index');
+    Route::post('/admin/users', [AdminUserController::class, 'store'])->name('admin.users.store');
+    Route::delete('/admin/users/{id}', [AdminUserController::class, 'destroy'])->name('admin.users.destroy');
 
     // --- MANAJEMEN JENIS PEMBAYARAN ---
     Route::get('/admin/jenis-pembayaran', [PaymentTypeController::class, 'index'])->name('admin.payment_types.index');
@@ -271,6 +278,12 @@ Route::get('/debug-wa', function (\Illuminate\Http\Request $request) {
             '3_SARAN' => 'Ini masalah jaringan server. Pastikan Firewall Ubuntu (UFW) tidak memblokir port keluar.'
         ]);
     }
+});
+
+// --- DASHBOARD EKSEKUTIF (MONITORING YAYASAN/KEPSEK) ---
+Route::middleware(['auth', 'role:pimpinan,admin'])->group(function () {
+    Route::get('/monitor/santri', [MonitorController::class, 'index'])->name('monitor.santri');
+    Route::get('/monitor/santri/{id}', [MonitorController::class, 'show'])->name('monitor.santri.detail');
 });
 
 require __DIR__.'/auth.php';

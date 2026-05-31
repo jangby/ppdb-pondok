@@ -87,6 +87,10 @@
                 Konfigurasi
             </p>
 
+            <x-nav-link-sidebar :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')" icon="users">
+                {{ __('Manajemen Akun') }}
+            </x-nav-link-sidebar>
+
             <x-nav-link-sidebar :href="route('admin.settings.index')" :active="request()->routeIs('admin.settings.*')" icon="settings">
                 {{ __('Pengaturan PPDB') }}
             </x-nav-link-sidebar>

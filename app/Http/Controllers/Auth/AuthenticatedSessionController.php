@@ -28,6 +28,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // --- TAMBAHKAN LOGIKA PENGECEKAN ROLE DI SINI ---
+        
+        // Jika yang login adalah pimpinan, langsung arahkan ke halaman Executive Dashboard
+        if ($request->user()->role === 'pimpinan') {
+            return redirect()->route('monitor.santri');
+        }
+
+        // Jika selain pimpinan (seperti admin), tetap arahkan ke dashboard utama
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

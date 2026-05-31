@@ -28,28 +28,19 @@ class RegistrationController extends Controller
                          ->with('error', 'Silakan selesaikan pembayaran pendaftaran terlebih dahulu.');
     }
 
-    // 2. CARA BARU MENCARI CANDIDATE: Gunakan file_perjanjian sebagai penghubung ID yang unik
+    // 2. CARI CANDIDATE HANYA BERDASARKAN FILE PERJANJIAN
     $candidateExists = \App\Models\Candidate::where('file_perjanjian', $verification->file_perjanjian)->first();
 
-    // Jika tidak ketemu via file (misal data legacy), baru fallback ke Nomor HP
-    if (!$candidateExists) {
-        $noWaVerifikasi = preg_replace('/[^0-9]/', '', $verification->no_wa);
-        $parentExists = \App\Models\CandidateParent::where('no_hp_ayah', 'like', '%' . substr($noWaVerifikasi, -8))
-                                                   ->orWhere('no_hp_ibu', 'like', '%' . substr($noWaVerifikasi, -8))
-                                                   ->first();
-        if ($parentExists) {
-            $candidateExists = \App\Models\Candidate::find($parentExists->candidate_id);
-        }
-    }
+    // (BLOK PENCARIAN NOMOR HP SUDAH DIHAPUS DARI SINI UNTUK MENCEGAH BUG DOUBLE-SUBMIT)
 
     // 3. JIKA SUDAH ADA & SUDAH LENGKAP ISI BIODATA, REDIRECT KE HALAMAN SUKSES
-    // Patokan lengkap: tempat lahir tidak sama dengan '-'
-    if ($candidateExists && $candidateExists->tempat_lahir != '-') {
+    // Patokan lengkap: tempat lahir tidak kosong dan bukan '-'
+    if ($candidateExists && !empty($candidateExists->tempat_lahir) && $candidateExists->tempat_lahir != '-') {
         return redirect()->route('pendaftaran.sukses', $candidateExists->no_daftar)
                          ->with('info', 'Anda sudah berhasil mengisi formulir pendaftaran sebelumnya. Data Anda aman!');
     }
 
-    // Tampilkan form biodata (Kirim juga data candidateExists agar nama yg diisi admin bisa otomatis muncul di form)
+    // Tampilkan form biodata
     return view('pendaftaran.index', compact('verification', 'candidateExists'));
 }
 

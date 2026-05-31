@@ -19,8 +19,10 @@
     
     <div class="flex h-screen overflow-hidden">
         
-        {{-- INCLUDE SIDEBAR --}}
-        @include('layouts.navigation')
+        {{-- INCLUDE SIDEBAR HANYA UNTUK ADMIN --}}
+        @if(Auth::user()->role === 'admin')
+            @include('layouts.navigation')
+        @endif
 
         {{-- MAIN CONTENT WRAPPER --}}
         <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -29,19 +31,28 @@
             <header class="bg-white shadow-sm sticky top-0 z-30">
                 <div class="flex items-center justify-between px-6 py-3">
                     
-                    {{-- Tombol Toggle Sidebar --}}
+                    {{-- Tombol Toggle Sidebar ATAU Logo (Tergantung Role) --}}
                     <div class="flex items-center gap-4">
-                        <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+                        @if(Auth::user()->role === 'admin')
+                            <button @click="sidebarOpen = !sidebarOpen" class="text-gray-500 focus:outline-none lg:hidden">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
 
-                        <button @click="sidebarExpanded = !sidebarExpanded" class="hidden lg:block text-gray-500 focus:outline-none hover:text-gray-700 transition">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
-                            </svg>
-                        </button>
+                            <button @click="sidebarExpanded = !sidebarExpanded" class="hidden lg:block text-gray-500 focus:outline-none hover:text-gray-700 transition">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                                </svg>
+                            </button>
+                        @else
+                            <div class="flex items-center gap-2">
+                                <div class="bg-blue-600 p-1.5 rounded-lg">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                                </div>
+                                <span class="font-bold text-xl text-blue-800 tracking-wide hidden sm:block">PSB Eksekutif</span>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- User Dropdown --}}
