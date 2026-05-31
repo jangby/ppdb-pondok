@@ -110,40 +110,38 @@ class PPDBController extends Controller
     public function getRincian()
     {
         try {
-            // Hanya ambil kolom yang dibutuhkan agar respon API lebih cepat
-            // GANTI DENGAN INI (Hanya memanggil kolom yang benar-benar ada)
             $candidates = Candidate::select('nama_lengkap', 'jenis_kelamin', 'jenjang')->get();
 
+            // Inisialisasi sebagai array kosong
             $santri = [];
             $santriyah = [];
             $progresSantri = 0;
             $progresSantriyah = 0;
-            $target = 50; // Target masing-masing 50
+            $target = 50; 
 
             foreach ($candidates as $c) {
-                // GANTI DENGAN INI
                 $nama = $c->nama_lengkap ?? 'Tanpa Nama';
                 $jenjang = $c->jenjang ?? '-';
                 
-                // Cek jenis kelamin. Sesuaikan 'L' atau 'Laki-laki' dengan data di database Anda
                 $isSantri = in_array(strtoupper($c->jenis_kelamin), ['L', 'LAKI-LAKI', 'PUTRA']);
 
                 if ($isSantri) {
-                    $santri[] = $nama . ' (' . $jenjang . ')';
-                    // Hitung ke progres JIKA BUKAN SMA Lanjutan
+                    // Kelompokkan nama berdasarkan jenjang
+                    $santri[$jenjang][] = $nama;
+                    
                     if (strtoupper($jenjang) !== 'SMA LANJUTAN') {
                         $progresSantri++;
                     }
                 } else {
-                    $santriyah[] = $nama . ' (' . $jenjang . ')';
-                    // Hitung ke progres JIKA BUKAN SMA Lanjutan
+                    // Kelompokkan nama berdasarkan jenjang
+                    $santriyah[$jenjang][] = $nama;
+                    
                     if (strtoupper($jenjang) !== 'SMA LANJUTAN') {
                         $progresSantriyah++;
                     }
                 }
             }
 
-            // Hitung persentase progres (dibatasi maksimal 100% jika melebihi target)
             $persenSantri = min(round(($progresSantri / $target) * 100, 1), 100);
             $persenSantriyah = min(round(($progresSantriyah / $target) * 100, 1), 100);
 
@@ -152,13 +150,13 @@ class PPDBController extends Controller
                 'message' => 'Rincian berhasil diambil',
                 'data' => [
                     'santri' => [
-                        'list' => $santri,
+                        'list' => $santri, // Berisi Object: {"SMP": ["Ahmad", "Budi"], "SMA": ["Doni"]}
                         'progres' => $progresSantri,
                         'persentase' => $persenSantri,
                         'target' => $target
                     ],
                     'santriyah' => [
-                        'list' => $santriyah,
+                        'list' => $santriyah, 
                         'progres' => $progresSantriyah,
                         'persentase' => $persenSantriyah,
                         'target' => $target
