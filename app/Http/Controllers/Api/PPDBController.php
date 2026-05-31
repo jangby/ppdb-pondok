@@ -110,9 +110,10 @@ class PPDBController extends Controller
     public function getRincian()
     {
         try {
-            $candidates = Candidate::select('nama_lengkap', 'jenis_kelamin', 'jenjang')->get();
+            // 1. TAMBAHKAN 'id' dan 'with('address')' 
+            // 'id' wajib dipanggil agar tabel Candidate bisa menyambung ke tabel Address
+            $candidates = Candidate::with('address')->select('id', 'nama_lengkap', 'jenis_kelamin', 'jenjang')->get();
 
-            // Inisialisasi sebagai array kosong
             $santri = [];
             $santriyah = [];
             $progresSantri = 0;
@@ -123,19 +124,28 @@ class PPDBController extends Controller
                 $nama = $c->nama_lengkap ?? 'Tanpa Nama';
                 $jenjang = $c->jenjang ?? '-';
                 
+                // 2. CEK ALAMAT: Hanya untuk yang bukan SMA Lanjutan
+                $alamatTeks = '';
+                if (strtoupper($jenjang) !== 'SMA LANJUTAN' && $c->address) {
+                    $alamatRaw = $c->address->alamat ?? '-';
+                    $kecamatanRaw = $c->address->kecamatan ?? '-';
+                    // Gunakan simbol '#' sebagai pemisah antara Nama dan Alamat
+                    $alamatTeks = " # {$alamatRaw}, Kec. {$kecamatanRaw}";
+                }
+
+                // Hasil teks: "Ahmad # Jl. Mawar, Kec. X (SMP)" 
+                // Atau jika SMA Lanjutan: "Ciko (SMA Lanjutan)"
+                $formatData = $nama . $alamatTeks . ' (' . $jenjang . ')';
+
                 $isSantri = in_array(strtoupper($c->jenis_kelamin), ['L', 'LAKI-LAKI', 'PUTRA']);
 
                 if ($isSantri) {
-                    // Kelompokkan nama berdasarkan jenjang
-                    $santri[$jenjang][] = $nama;
-                    
+                    $santri[] = $formatData;
                     if (strtoupper($jenjang) !== 'SMA LANJUTAN') {
                         $progresSantri++;
                     }
                 } else {
-                    // Kelompokkan nama berdasarkan jenjang
-                    $santriyah[$jenjang][] = $nama;
-                    
+                    $santriyah[] = $formatData;
                     if (strtoupper($jenjang) !== 'SMA LANJUTAN') {
                         $progresSantriyah++;
                     }
