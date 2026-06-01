@@ -13,3 +13,7 @@ Route::post('/waha/webhook', [WahaWebhookController::class, 'handle']);
 Route::get('/ppdb/stat', [PPDBController::class, 'getStat']);
 Route::get('/ppdb/status/{nomor_pendaftaran}', [PPDBController::class, 'checkStatus']);
 Route::get('/ppdb/rincian', [PPDBController::class, 'getRincian']);
+
+// Endpoint untuk sistem pendaftaran via WA
+Route::get('/ppdb/wa-check-token/{token}', [PPDBController::class, 'checkTokenWA']);
+Route::post('/ppdb/wa-submit-daftar', [PPDBController::class, 'submitDaftarWA']);
