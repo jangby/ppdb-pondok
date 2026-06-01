@@ -126,20 +126,30 @@
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @forelse($verifications as $v)
                             
-                            {{-- LOGIKA CEK APAKAH SUDAH TERDAFTAR (Agar tombol Isi Nama otomatis hilang) --}}
+                            {{-- LOGIKA CEK PINTAR: Mencari Relasi, File, atau Nomor WA --}}
 @php
     $candidateData = null;
     
-    // 1. Cek dari relasi (jika sudah dihubungkan)
+    // 1. Cek dari relasi database langsung (jika sudah terhubung)
     if ($v->candidate ?? false) {
         $candidateData = $v->candidate;
     } 
-    // 2. Jika belum, cek pencocokan file_perjanjian yang di-copy saat submit "Isi Nama"
+    // 2. Cek pencocokan dari file perjanjian
     elseif (!empty($v->file_perjanjian)) {
         $candidateData = \App\Models\Candidate::where('file_perjanjian', $v->file_perjanjian)->first();
     }
     
-    // Tentukan status terdaftar & ambil nama dari tabel candidate
+    // 3. JIKA MASIH KOSONG: Cek pencocokan berdasarkan Nomor WA (Untuk yang daftar via Link WAHA)
+    if (!$candidateData && !empty($v->no_wa)) {
+        // Bersihkan nomor WA (buang awalan 0 atau 62 agar pencariannya akurat)
+        $cleanWa = ltrim($v->no_wa, '0');
+        $cleanWa = ltrim($cleanWa, '62');
+        
+        // Cari di database Data Santri (candidates) yang ujung nomor WA-nya sama
+        $candidateData = \App\Models\Candidate::where('no_wa', 'LIKE', '%' . $cleanWa)->first();
+    }
+    
+    // Tentukan status akhir
     $isRegistered = $candidateData ? true : false;
     $namaSantri = $candidateData ? $candidateData->nama_lengkap : '';
 @endphp
