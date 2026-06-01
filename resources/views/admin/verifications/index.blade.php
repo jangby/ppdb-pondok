@@ -162,9 +162,14 @@
                                                     {{ $v->jenjang }}
                                                 </span>
                                             @endif
+                                            
+                                            {{-- PERBAIKAN: Menampilkan Nama atau Peringatan Merah --}}
                                             @if($namaSantri)
-                                                <div class="text-xs text-indigo-600 font-bold mt-1">👤 {{ $namaSantri }}</div>
+                                                <div class="text-xs text-indigo-700 font-bold mt-1 bg-indigo-50 inline-block px-1.5 py-0.5 rounded">👤 {{ $namaSantri }}</div>
+                                            @else
+                                                <div class="text-[10px] text-red-500 font-bold italic mt-1 bg-red-50 inline-block px-1.5 py-0.5 rounded border border-red-100">⚠️ Belum Ada Nama</div>
                                             @endif
+                                            
                                         </div>
                                     </div>
                                 </td>
