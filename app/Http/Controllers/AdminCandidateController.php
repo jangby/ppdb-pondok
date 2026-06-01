@@ -600,25 +600,57 @@ class AdminCandidateController extends Controller
     }
 
     // --- FUNGSI UNTUK MENDETEKSI & MENAMBAHKAN ITEM TAGIHAN BARU YANG TERTINGGAL ---
+    // --- FUNGSI UNTUK MENDETEKSI, MEMBERSIHKAN, & MENAMBAHKAN ITEM TAGIHAN ---
     public function generateMissingBills($id)
     {
-        $candidate = Candidate::with('bills')->findOrFail($id);
+        // PERBAIKAN: Load juga relasi payment_type agar kita bisa mengecek jenjangnya
+        $candidate = Candidate::with(['bills.payment_type'])->findOrFail($id);
         
-        // Ambil semua master data untuk jenjang santri ini (atau yang berlaku untuk 'Semua')
-        $masterItems = \App\Models\PaymentType::whereIn('jenjang', ['Semua', $candidate->jenjang])->get();
-        
-        // Ambil ID payment type yang sudah dimiliki santri
-        $existingItemIds = $candidate->bills->pluck('payment_type_id')->toArray();
-        
-        // Cari item yang ada di master tapi belum ada di tagihan santri
-        $missingItems = $masterItems->whereNotIn('id', $existingItemIds);
-
-        if ($missingItems->count() == 0) {
-            return back()->with('error', 'Tidak ada tagihan yang tertinggal.');
-        }
-
         DB::beginTransaction();
         try {
+            $deletedCount = 0;
+
+            // =================================================================
+            // 1. PROSES PEMBERSIHAN (CLEAN UP) TAGIHAN SALAH JENJANG
+            // =================================================================
+            foreach ($candidate->bills as $bill) {
+                // Cek apakah tagihan ini punya master data
+                if ($bill->payment_type) {
+                    $jenjangTagihan = $bill->payment_type->jenjang;
+                    
+                    // Jika jenjang tagihannya BUKAN untuk 'Semua' dan BUKAN jenjang anak saat ini
+                    if ($jenjangTagihan != 'Semua' && $jenjangTagihan != $candidate->jenjang) {
+                        // AMAN DIHAPUS JIKA: belum ada uang masuk sama sekali (nominal = 0)
+                        if ($bill->nominal_terbayar == 0) {
+                            $bill->delete();
+                            $deletedCount++;
+                        }
+                    }
+                }
+            }
+
+            // Refresh data keranjang tagihan anak setelah dibersihkan
+            $candidate->load('bills'); 
+
+            // =================================================================
+            // 2. PROSES PENAMBAHAN ITEM BARU YANG SESUAI JENJANG
+            // =================================================================
+            $masterItems = \App\Models\PaymentType::whereIn('jenjang', ['Semua', $candidate->jenjang])->get();
+            $existingItemIds = $candidate->bills->pluck('payment_type_id')->toArray();
+            
+            // Cari item master yang belum ada di keranjang tagihan santri saat ini
+            $missingItems = $masterItems->whereNotIn('id', $existingItemIds);
+
+            // Jika setelah dibersihkan ternyata tidak ada tagihan baru yang kurang
+            if ($missingItems->count() == 0) {
+                DB::commit();
+                $msg = $deletedCount > 0 
+                    ? "Berhasil menghapus $deletedCount tagihan salah jenjang. Tidak ada tagihan baru yang tertinggal." 
+                    : "Tidak ada tagihan yang tertinggal.";
+                return back()->with( $deletedCount > 0 ? 'success' : 'info', $msg);
+            }
+
+            // Tambahkan item yang kurang ke keranjang tagihan
             foreach ($missingItems as $item) {
                 CandidateBill::create([
                     'candidate_id' => $candidate->id,
@@ -628,11 +660,13 @@ class AdminCandidateController extends Controller
                     'status' => 'Belum Lunas',
                 ]);
             }
+            
             DB::commit();
-            return back()->with('success', 'Berhasil menambahkan ' . $missingItems->count() . ' item tagihan baru ke santri ini.');
+            return back()->with('success', "Sistem telah membersihkan $deletedCount tagihan salah jenjang, dan menambahkan " . $missingItems->count() . " item tagihan {$candidate->jenjang} baru.");
+            
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menambahkan tagihan: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memproses tagihan: ' . $e->getMessage());
         }
     }
 }
