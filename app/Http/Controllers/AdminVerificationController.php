@@ -256,10 +256,7 @@ class AdminVerificationController extends Controller
                . "Pembayaran pendaftaran Anda telah *DITERIMA & TERVERIFIKASI*.\n\n"
                . "Silakan lengkapi *FORMULIR BIODATA SANTRI* melalui link rahasia berikut:\n"
                . "{$linkForm}\n\n"
-               . "_(Mohon data diisi dengan teliti dan lengkap)_\n\n"
-               . "💡 *OPSI PRAKTIS:*\n"
-               . "Jika Anda ingin mengisi biodata langsung melalui chat WhatsApp ini (tanpa membuka link web di atas), silakan *Copy* dan *Kirim* pesan di bawah ini ke bot kami:\n\n"
-               . "*!daftar {$data->token}*\n\n";
+               . "_(Mohon data diisi dengan teliti dan lengkap)_\n\n";
 
         $pesan .= "Terima kasih - Panitia PPDB {$namaSekolah}";
 
