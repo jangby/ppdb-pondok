@@ -33,7 +33,7 @@
     <div class="py-8 bg-gray-50/50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
 
-        @if(session('success'))
+            @if(session('success'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
                     <strong class="font-bold">Berhasil!</strong>
                     <span class="block sm:inline">{!! session('success') !!}</span>
@@ -151,7 +151,7 @@
                 {{-- LEFT COLUMN (SIDEBAR) --}}
                 <div class="space-y-8">
                     
-                    {{-- [PENTING] CARD FILE PERJANJIAN --}}
+                    {{-- CARD FILE PERJANJIAN --}}
                     <div class="bg-white rounded-2xl shadow-md border border-indigo-100 overflow-hidden">
                         <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-6 py-4 flex items-center gap-3">
                             <div class="p-2 bg-white/20 rounded-lg text-white">
@@ -162,7 +162,6 @@
                         
                         <div class="p-6">
                             @if($candidate->file_perjanjian)
-                                {{-- JIKA ADA FILE --}}
                                 <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
                                     <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" class="w-10 h-10 opacity-80" alt="PDF Icon">
                                     <div class="overflow-hidden">
@@ -181,7 +180,6 @@
                                     </a>
                                 </div>
                             @else
-                                {{-- JIKA TIDAK ADA FILE - FORM UPLOAD --}}
                                 <form action="{{ route('admin.candidates.upload_perjanjian', $candidate->id) }}" method="POST" enctype="multipart/form-data" class="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-indigo-300 hover:bg-indigo-50/50 transition">
                                     @csrf
                                     <svg class="w-10 h-10 text-indigo-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
@@ -252,8 +250,6 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-400 uppercase font-bold">Ayah</p>
-                                    
-                                    {{-- PERBAIKAN: Gunakan optional() agar tidak error jika data ortu kosong --}}
                                     <p class="font-semibold text-gray-800">
                                         {{ optional($candidate->parent)->nama_ayah ?? 'Belum diisi' }}
                                     </p>
@@ -275,60 +271,77 @@
                 {{-- RIGHT COLUMN (MAIN) --}}
                 <div class="lg:col-span-2 space-y-8">
                     
-                    {{-- 1. KASIR PEMBAYARAN (Modern Dark Theme Header) --}}
+                    {{-- 1. KASIR PEMBAYARAN --}}
                     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-    <div class="bg-gray-900 px-6 py-5 flex justify-between items-center">
-        <h3 class="font-bold text-white flex items-center gap-2 text-lg">
-            <span class="p-1 bg-gray-700 rounded text-green-400">
-                {{-- Icon Uang --}}
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </span>
-            Kasir Pembayaran
-        </h3>
-        
-        <div class="flex items-center gap-2">
-            {{-- [TOMBOL BARU] KIRIM NOTIFIKASI --}}
-            @if($sisaTagihan > 0)
-            <form action="{{ route('admin.candidates.notify_bill', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim pengingat tagihan ke WA Orang Tua?');">
-                @csrf
-                <button type="submit" class="text-[10px] font-bold text-white bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-full border border-green-500 flex items-center gap-1 transition shadow-lg shadow-green-900/50">
-                    <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
-                    Kirim Tagihan WA
-                </button>
-            </form>
-            @endif
-            
-            <span class="text-[10px] font-bold text-gray-300 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">MODE INPUT MANUAL</span>
-        </div>
-    </div>
+                        <div class="bg-gray-900 px-6 py-5 flex justify-between items-center">
+                            <h3 class="font-bold text-white flex items-center gap-2 text-lg">
+                                <span class="p-1 bg-gray-700 rounded text-green-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </span>
+                                Kasir Pembayaran
+                            </h3>
+                            
+                            <div class="flex items-center gap-2">
+                                @if($sisaTagihan > 0)
+                                <form action="{{ route('admin.candidates.notify_bill', $candidate->id) }}" method="POST" onsubmit="return confirm('Kirim pengingat tagihan ke WA Orang Tua?');">
+                                    @csrf
+                                    <button type="submit" class="text-[10px] font-bold text-white bg-green-600 hover:bg-green-500 px-3 py-1.5 rounded-full border border-green-500 flex items-center gap-1 transition shadow-lg shadow-green-900/50">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                        Kirim Tagihan WA
+                                    </button>
+                                </form>
+                                @endif
+                                
+                                <span class="text-[10px] font-bold text-gray-300 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">MODE INPUT MANUAL</span>
+                            </div>
+                        </div>
                         
                         <div class="p-6">
                             <form action="{{ route('admin.transactions.store', $candidate->id) }}" method="POST">
                                 @csrf
 
-                                {{-- FITUR DETEKSI ITEM TERTINGGAL --}}
+                                {{-- ================================================================= --}}
+                                {{-- [BARU]: RADAR DETEKSI PINTAR (TERTINGGAL & SALAH JENJANG)         --}}
+                                {{-- ================================================================= --}}
                                 @php
+                                    // 1. Hitung Item yang Tertinggal
                                     $masterItems = \App\Models\PaymentType::whereIn('jenjang', ['Semua', $candidate->jenjang])->get();
                                     $existingItemIds = $candidate->bills->pluck('payment_type_id')->toArray();
                                     $missingItems = $masterItems->whereNotIn('id', $existingItemIds);
+
+                                    // 2. Hitung Item yang Salah Jenjang (Belum Terbayar)
+                                    $mismatchCount = 0;
+                                    foreach($candidate->bills as $b) {
+                                        if($b->payment_type && $b->payment_type->jenjang != 'Semua' && $b->payment_type->jenjang != $candidate->jenjang) {
+                                            if($b->nominal_terbayar == 0) {
+                                                $mismatchCount++;
+                                            }
+                                        }
+                                    }
                                 @endphp
 
-                                @if($missingItems->count() > 0)
-                                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4 animate-pulse">
-                                        <div>
-                                            <h4 class="font-bold text-red-800 flex items-center gap-2">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                                Peringatan: Ada Item Pembayaran yang Tertinggal!
+                                @if($missingItems->count() > 0 || $mismatchCount > 0)
+                                    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl flex flex-col sm:flex-row justify-between items-center gap-4 shadow-sm">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-red-800 flex items-center gap-2 text-sm">
+                                                <svg class="w-5 h-5 text-red-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                Struktur Tagihan Tidak Sesuai Jenjang Santri!
                                             </h4>
-                                            <p class="text-xs text-red-600 mt-1">Sistem mendeteksi ada <b>{{ $missingItems->count() }} item pembayaran baru</b> (Total: Rp {{ number_format($missingItems->sum('nominal'), 0, ',', '.') }}) di Master Data yang belum dimasukkan ke tagihan anak ini.</p>
+                                            <p class="text-xs text-red-600 mt-1 leading-relaxed">
+                                                Sistem mendeteksi anomali pada keuangan anak ini: 
+                                                @if($missingItems->count() > 0) <b>[{{ $missingItems->count() }} item tagjang baru belum diinput]</b> @endif
+                                                @if($missingItems->count() > 0 && $mismatchCount > 0) dan @endif
+                                                @if($mismatchCount > 0) <b>[{{ $mismatchCount }} item tagihan jenjang lama masih tersisa]</b> @endif.
+                                                Harap sinkronisasikan agar struktur tagihan sesuai dengan jenjang aktif saat ini (<b>{{ $candidate->jenjang }}</b>).
+                                            </p>
                                         </div>
-                                        <button type="submit" formaction="{{ route('admin.candidates.generate_missing_bills', $candidate->id) }}" class="whitespace-nowrap px-4 py-2 bg-red-600 text-white font-bold rounded-lg text-xs hover:bg-red-700 shadow-md transition flex items-center gap-2">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                            Tambahkan Item
+                                        <button type="submit" formaction="{{ route('admin.candidates.generate_missing_bills', $candidate->id) }}" class="whitespace-nowrap px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg text-xs hover:bg-red-700 shadow-md transition flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                            Sinkronisasi Tagihan
                                         </button>
                                     </div>
                                 @endif
-                                {{-- END FITUR DETEKSI --}}
+                                {{-- ================================================================= --}}
                                 
                                 <div class="overflow-hidden rounded-xl border border-gray-200 mb-6">
                                     <table class="min-w-full divide-y divide-gray-200">
@@ -349,37 +362,33 @@
                                                         <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold border border-green-200">LUNAS</span>
                                                     @endif
 
-                                                    {{-- FITUR REKONSTRUKSI TAGIHAN: Muncul jika tarif master berubah dan santri sudah pernah mencicil/bayar --}}
-    @if($bill->nominal_tagihan != $bill->payment_type->nominal)
-        <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
-            <div class="text-yellow-800 mb-2 leading-relaxed">
-                <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>
-                Harga dasar saat ini: <span class="font-bold">Rp {{ number_format($bill->payment_type->nominal, 0, ',', '.') }}</span>
-            </div>
-            
-            {{-- PERBAIKAN: Tanpa tag form, gunakan formaction langsung di dalam button --}}
-            <button type="submit" 
-                    formaction="{{ route('admin.bills.reconstruct', $bill->id) }}"
-                    onclick="return confirm('Yakin ingin merekonstruksi tagihan ini? Status Lunas/Cicilan dan Sisa Hutang akan dihitung ulang secara otomatis.');" 
-                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded font-bold transition flex items-center justify-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Sesuaikan Tagihan
-            </button>
-        </div>
-    @endif
+                                                    @if($bill->nominal_tagihan != $bill->payment_type->nominal)
+                                                        <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
+                                                            <div class="text-yellow-800 mb-2 leading-relaxed">
+                                                                <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>
+                                                                Harga dasar saat ini: <span class="font-bold">Rp {{ number_format($bill->payment_type->nominal, 0, ',', '.') }}</span>
+                                                            </div>
+                                                            <button type="submit" 
+                                                                    formaction="{{ route('admin.bills.reconstruct', $bill->id) }}"
+                                                                    onclick="return confirm('Yakin ingin merekonstruksi tagihan ini? Status Lunas/Cicilan dan Sisa Hutang akan dihitung ulang secara otomatis.');" 
+                                                                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded font-bold transition flex items-center justify-center gap-1">
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                                Sesuaikan Tagihan
+                                                            </button>
+                                                        </div>
+                                                    @endif
 
-    {{-- FITUR RESET ANOMALI: Muncul jika ada sisa tagihan aneh (misal 1-100 perak) --}}
-    @if($bill->sisa_tagihan > 0 && $bill->sisa_tagihan <= 100)
-        <div class="mt-2 block w-full">
-            <button type="submit" 
-                    formaction="{{ route('admin.bills.fix_anomaly', $bill->id) }}"
-                    onclick="return confirm('Sisa tagihan anomali: Rp {{ $bill->sisa_tagihan }}.\n\nYakin ingin MERESET tagihan ini kembali menjadi Belum Bayar (Rp 0)?\nSetelah direset, Anda bisa menginputkan ulang pembayarannya dengan benar agar tercatat di Riwayat Transaksi.');" 
-                    class="w-full bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-orange-600">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Reset ke Belum Bayar
-            </button>
-        </div>
-    @endif
+                                                    @if($bill->sisa_tagihan > 0 && $bill->sisa_tagihan <= 100)
+                                                        <div class="mt-2 block w-full">
+                                                            <button type="submit" 
+                                                                    formaction="{{ route('admin.bills.fix_anomaly', $bill->id) }}"
+                                                                    onclick="return confirm('Sisa tagihan anomali: Rp {{ $bill->sisa_tagihan }}.\n\nYakin ingin MERESET tagihan ini kembali menjadi Belum Bayar (Rp 0)?\nSetelah direset, Anda bisa menginputkan ulang pembayarannya dengan benar agar tercatat di Riwayat Transaksi.');" 
+                                                                    class="w-full bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-orange-600">
+                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                                                Reset ke Belum Bayar
+                                                            </button>
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td class="px-5 py-4 text-sm text-gray-500 text-right">
                                                     {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}
@@ -465,38 +474,35 @@
                                         Rp {{ number_format($trx->total_bayar, 0, ',', '.') }}
                                     </div>
                                     
-                                    {{-- TOMBOL CETAK & AKSI --}}
-<div class="flex flex-wrap items-center justify-end gap-2 mt-2">
-    
-    {{-- 1. Cetak Bluetooth (JS) --}}
-    <button onclick="printReceipt({{ $trx->id }})" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm" title="Cetak Struk Thermal">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-        Struk
-    </button>
-    
-    {{-- 2. Cetak PDF (Backup) --}}
-    <a href="{{ route('admin.transactions.print', $trx->id) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-50 px-3 py-2 rounded-lg hover:bg-gray-100 transition border border-gray-200 shadow-sm" title="Print Biasa (PDF A4)">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-        PDF
-    </a>
+                                    <div class="flex flex-wrap items-center justify-end gap-2 mt-2">
+                                        {{-- 1. Cetak Bluetooth (JS) --}}
+                                        <button onclick="printReceipt({{ $trx->id }})" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg hover:bg-blue-100 transition border border-blue-200 shadow-sm" title="Cetak Struk Thermal">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                            Struk
+                                        </button>
+                                        
+                                        {{-- 2. Cetak PDF (Backup) --}}
+                                        <a href="{{ route('admin.transactions.print', $trx->id) }}" target="_blank" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-gray-700 bg-gray-50 px-3 py-2 rounded-lg hover:bg-gray-100 transition border border-gray-200 shadow-sm" title="Print Biasa (PDF A4)">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            PDF
+                                        </a>
 
-    {{-- 3. Copy WA --}}
-    <button type="button" onclick="copyDetailToWA(this)" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition border border-green-200 shadow-sm" title="Copy Struk untuk WhatsApp">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-        <span class="btn-text">Copy WA</span>
-    </button>
+                                        {{-- 3. Copy WA --}}
+                                        <button type="button" onclick="copyDetailToWA(this)" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-lg hover:bg-green-100 transition border border-green-200 shadow-sm" title="Copy Struk untuk WhatsApp">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                            <span class="btn-text">Copy WA</span>
+                                        </button>
 
-    {{-- 4. TOMBOL BATAL/HAPUS TRANSAKSI --}}
-    <form action="{{ route('admin.transactions.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin MEMBATALKAN transaksi ini?\n\nSaldo tagihan santri akan dikembalikan seperti sebelum transaksi ini terjadi.');" class="m-0 p-0 inline-flex">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-red-700 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition border border-red-200 shadow-sm" title="Batalkan Transaksi Ini">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            <span class="btn-text">Batal</span>
-        </button>
-    </form>
-</div>
-
+                                        {{-- 4. TOMBOL BATAL/HAPUS TRANSAKSI --}}
+                                        <form action="{{ route('admin.transactions.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin MEMBATALKAN transaksi ini?\n\nSaldo tagihan santri akan dikembalikan seperti sebelum transaksi ini terjadi.');" class="m-0 p-0 inline-flex">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-red-700 bg-red-50 px-3 py-2 rounded-lg hover:bg-red-100 transition border border-red-200 shadow-sm" title="Batalkan Transaksi Ini">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                <span class="btn-text">Batal</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                             @endforeach
@@ -625,20 +631,16 @@
             const elementToCapture = document.getElementById('waImageTemplate');
 
             try {
-                // Proses render HTML ke Canvas
                 const canvas = await html2canvas(elementToCapture, { 
-                    scale: 2, // Resolusi tinggi agar tidak pecah di WA
+                    scale: 2, 
                     backgroundColor: "#ffffff"
                 });
 
-                // Ubah ke Blob (File Gambar)
                 canvas.toBlob(async function(blob) {
                     try {
-                        // Tulis ke Clipboard (Memori Copy-Paste)
                         const item = new ClipboardItem({ "image/png": blob });
                         await navigator.clipboard.write([item]);
                         
-                        // Notifikasi sukses
                         btnElement.querySelector('.btn-text').innerText = "Tersalin! ✔️";
                         btnElement.classList.replace('bg-green-50', 'bg-green-600');
                         btnElement.classList.replace('text-green-600', 'text-white');
@@ -653,7 +655,6 @@
                 alert("Gagal memproses gambar.");
                 console.error(err);
             } finally {
-                // Kembalikan tombol ke semula setelah 3 detik
                 setTimeout(() => {
                     btnElement.querySelector('.btn-text').innerText = originalText;
                     btnElement.disabled = false;
@@ -668,7 +669,6 @@
     <script>
     let printCharacteristic = null;
 
-    // 1. KONEKSI BLUETOOTH (Tetap sama)
     document.getElementById('connectBtn').addEventListener('click', async () => {
         try {
             const device = await navigator.bluetooth.requestDevice({
@@ -687,18 +687,15 @@
         }
     });
 
-    // --- FUNGSI BARU: MENGIRIM DATA DALAM POTONGAN KECIL (CHUNKS) ---
     async function writeChunks(characteristic, data) {
-        const CHUNK_SIZE = 100; // Ukuran aman untuk printer thermal Bluetooth
+        const CHUNK_SIZE = 100; 
         for (let i = 0; i < data.length; i += CHUNK_SIZE) {
             const chunk = data.slice(i, i + CHUNK_SIZE);
             await characteristic.writeValue(chunk);
-            // Beri jeda sangat singkat agar printer tidak overload
             await new Promise(resolve => setTimeout(resolve, 20)); 
         }
     }
 
-    // 2. FUNGSI CETAK STRUK PEMBAYARAN
     async function printReceipt(transactionId) {
         if (!printCharacteristic) {
             alert('⚠️ Harap hubungkan Printer Thermal Bluetooth terlebih dahulu.');
@@ -708,7 +705,6 @@
         try {
             document.body.style.cursor = 'wait';
 
-            // Ambil Data dari Server
             const response = await fetch(`/admin/transaksi/${transactionId}/print-data`);
             const result = await response.json();
             if(result.status !== 'success') throw new Error("Gagal mengambil data");
@@ -717,7 +713,6 @@
             const qrUrl = window.location.origin + "/cek-pendaftaran/" + data.no_daftar;
             const encoder = new TextEncoder();
             
-            // Perintah ESC/POS
             const ESC = '\u001B';
             const GS = '\u001D';
             const center = ESC + 'a' + '\u0001';
@@ -750,13 +745,9 @@
             text += left + "Petugas: " + data.petugas + "\n\n";
             text += center + "Scan QR untuk melihat\nRIWAYAT & STATUS LENGKAP:\n";
 
-            // GUNAKAN writeChunks untuk teks utama
             await writeChunks(printCharacteristic, encoder.encode(text));
-
-            // CETAK QR CODE
             await printQRCode(qrUrl);
 
-            // FEED AKHIR
             let footer = "\nSimpan struk ini sebagai\nbukti pembayaran yang sah.\n\n\n\n";
             await writeChunks(printCharacteristic, encoder.encode(footer));
 
@@ -767,7 +758,6 @@
         }
     }
 
-    // FUNGSI BANTUAN CETAK QR (Tetap sama, tapi gunakan writeValue karena data QR pendek)
     async function printQRCode(dataString) {
         const storeLen = dataString.length + 3;
         const pL = storeLen % 256;
