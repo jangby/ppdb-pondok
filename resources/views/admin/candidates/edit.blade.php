@@ -52,7 +52,8 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jenjang</label>
                             <select name="jenjang" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="SMP" {{ old('jenjang', $candidate->jenjang) == 'SMP' ? 'selected' : '' }}>SMP</option>
-                                <option value="SMK" {{ old('jenjang', $candidate->jenjang) == 'SMK' ? 'selected' : '' }}>SMK</option>
+                                <option value="SMA" {{ old('jenjang', $candidate->jenjang) == 'SMA' ? 'selected' : '' }}>SMA</option>
+                                <option value="Takhosus" {{ old('jenjang', $candidate->jenjang) == 'Takhosus' ? 'selected' : '' }}>Takhosus</option>
                             </select>
                         </div>
 
