@@ -411,4 +411,41 @@ class PPDBController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    // =======================================================================
+    // API UNTUK MENGAMBIL DATA KONTAK VCF
+    // =======================================================================
+    public function getKontakWali()
+    {
+        try {
+            // Ambil data verifikasi yang sudah disetujui (punya nomor WA)
+            $verifications = \App\Models\Verification::where('status', 'approved')->get();
+            $kontak = [];
+
+            foreach ($verifications as $v) {
+                // Cari nama santri berdasarkan file_perjanjian
+                $candidate = \App\Models\Candidate::where('file_perjanjian', $v->file_perjanjian)->first();
+                $namaSantri = $candidate ? $candidate->nama_lengkap : 'Santri Baru';
+
+                // Bersihkan nomor WA
+                $noWa = preg_replace('/[^0-9]/', '', $v->no_wa);
+                if (substr($noWa, 0, 1) == '0') {
+                    $noWa = '62' . substr($noWa, 1);
+                }
+
+                $kontak[] = [
+                    'nama' => $namaSantri,
+                    'no_wa' => $noWa
+                ];
+            }
+
+            return response()->json([
+                'success' => true, 
+                'data' => $kontak
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }
