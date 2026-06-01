@@ -17,3 +17,4 @@ Route::get('/ppdb/rincian', [PPDBController::class, 'getRincian']);
 // Endpoint untuk sistem pendaftaran via WA
 Route::get('/ppdb/wa-check-token/{token}', [PPDBController::class, 'checkTokenWA']);
 Route::post('/ppdb/wa-submit-daftar', [PPDBController::class, 'submitDaftarWA']);
+Route::get('/ppdb/peserta-lulus', [App\Http\Controllers\Api\PPDBController::class, 'getPesertaLulus']);

@@ -372,4 +372,43 @@ class PPDBController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    // =======================================================================
+    // API UNTUK MENGAMBIL DAFTAR PESERTA YANG SUDAH LULUS VERIFIKASI & BAYAR
+    // =======================================================================
+    // =======================================================================
+    // API UNTUK MENGAMBIL DAFTAR PESERTA YANG SUDAH LULUS VERIFIKASI BERKAS
+    // =======================================================================
+    public function getPesertaLulus()
+    {
+        try {
+            // [PERBAIKAN]: Hanya mensyaratkan berkas disetujui (approved), tanpa melihat status pembayaran
+            $verifications = \App\Models\Verification::where('status', 'approved')
+                ->get(['no_wa']);
+
+            $numbers = [];
+            foreach ($verifications as $v) {
+                // Bersihkan karakter selain angka
+                $noWa = preg_replace('/[^0-9]/', '', $v->no_wa);
+                // Ubah awalan 0 menjadi 62
+                if (substr($noWa, 0, 1) == '0') {
+                    $noWa = '62' . substr($noWa, 1);
+                }
+                
+                // Format standar Baileys WhatsApp JID
+                $numbers[] = $noWa . '@s.whatsapp.net';
+            }
+
+            // Hapus duplikat nomor jika ada
+            $numbers = array_values(array_unique($numbers));
+
+            return response()->json([
+                'success' => true, 
+                'data' => $numbers
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }
