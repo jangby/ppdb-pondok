@@ -25,4 +25,10 @@ class Verification extends Model
     
     // Atau jika ingin lebih simpel (mengizinkan semua kecuali id):
     // protected $guarded = ['id'];
+
+    // Tambahkan ini di App\Models\Verification
+public function candidate()
+{
+    return $this->belongsTo(Candidate::class, 'file_perjanjian', 'file_perjanjian');
+}
 }

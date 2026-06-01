@@ -186,159 +186,173 @@ class PPDBController extends Controller
     // 1. API UNTUK MENGECEK TOKEN DARI BOT WA
     // =======================================================================
     public function checkTokenWA($token)
-    {
-        try {
-            // Cari data verifikasi berdasarkan token
-            $verification = \App\Models\Verification::where('token', $token)->first();
+{
+    try {
+        // 1. Cari data verifikasi berdasarkan token
+        $verification = \App\Models\Verification::where('token', $token)->first();
 
-            if (!$verification) {
+        if (!$verification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token tidak valid.'
+            ], 404);
+        }
+
+        // 2. Cari Candidate berdasarkan file_perjanjian 
+        // (Ini adalah field yang menghubungkan tabel Verification dan Candidate di kodingan form Anda)
+        $candidate = \App\Models\Candidate::where('file_perjanjian', $verification->file_perjanjian)->first();
+
+        if ($candidate) {
+            // Cek apakah data sudah lengkap (NIK sebagai indikator utama)
+            if (!empty($candidate->nik)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Token tidak valid atau tidak ditemukan.'
-                ], 404);
-            }
-
-            // Cari apakah admin sudah membuatkan data Kandidat (Santri)
-            // Asumsi: Anda mengaitkan tabel menggunakan id atau no_wa
-            // Sesuaikan query pencarian relasi ini jika Anda memakai foreign_key tertentu (misal: verification_id)
-            $candidate = \App\Models\Candidate::whereHas('verification', function($q) use($token) {
-                $q->where('token', $token);
-            })->first(); 
-            
-            // Jika relasi di atas gagal, alternatifnya cari berdasarkan No WA:
-            // $candidate = \App\Models\Candidate::whereHas('parent', function($q) use($verification) { $q->where('no_wa_ortu', $verification->no_wa); })->first();
-
-            if ($candidate) {
-                // FILTER: CEK DOBEL DATA (Jika NIK sudah diisi, berarti pendaftaran sudah selesai)
-                if (!empty($candidate->nik)) {
-                    return response()->json([
-                        'success' => false,
-                        'is_completed' => true,
-                        'message' => "Data pendaftaran atas nama {$candidate->nama_lengkap} sudah lengkap.",
-                        'data' => [
-                            'no_daftar' => $candidate->no_daftar,
-                            'nama' => $candidate->nama_lengkap
-                        ]
-                    ]);
-                }
-
-                // JIKA BELUM SELESAI (Skenario A: Admin sudah isi nama & nomor daftar, tapi NIK dkk masih kosong)
-                return response()->json([
-                    'success' => true,
-                    'is_completed' => false,
-                    'is_admin_filled' => true, // Menandakan bot tidak perlu menanyakan Nama & JK lagi
+                    'is_completed' => true,
+                    'message' => "Data pendaftaran atas nama {$candidate->nama_lengkap} sudah lengkap.",
                     'data' => [
                         'no_daftar' => $candidate->no_daftar,
-                        'nama' => $candidate->nama_lengkap,
-                        'jenjang' => $candidate->jenjang,
-                        'jenis_kelamin' => $candidate->jenis_kelamin,
+                        'nama' => $candidate->nama_lengkap
                     ]
                 ]);
             }
 
-            // JIKA KANDIDAT BELUM DIBUAT (Skenario B: Admin belum input apa-apa)
             return response()->json([
                 'success' => true,
                 'is_completed' => false,
-                'is_admin_filled' => false, // Bot HARUS menanyakan Nama, Jenjang & JK
-                'data' => [
-                    'no_daftar' => null,
-                    'nama' => null,
-                    'jenjang' => $verification->jenjang ?? null, // Ambil dari form verifikasi awal jika ada
-                    'jenis_kelamin' => null,
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()], 500);
-        }
-    }
-
-    // =======================================================================
-    // 2. API UNTUK MENYIMPAN DATA DARI BOT WA KETIKA "YA" (SELESAI)
-    // =======================================================================
-    public function submitDaftarWA(\Illuminate\Http\Request $request)
-    {
-        // Validasi data masuk dari bot
-        $request->validate([
-            'token' => 'required|string',
-            'nama_lengkap' => 'required|string',
-            'jenis_kelamin' => 'required|in:L,P',
-            'jenjang' => 'required|string',
-            'nik' => 'required|string',
-            // ... tambahkan validasi untuk tempat_lahir, tgl_lahir, dll jika diperlukan
-        ]);
-
-        $verification = \App\Models\Verification::where('token', $request->token)->first();
-
-        if (!$verification) {
-            return response()->json(['success' => false, 'message' => 'Token tidak valid.']);
-        }
-
-        \Illuminate\Support\Facades\DB::beginTransaction();
-        try {
-            // Cari data kandidat seperti di fungsi check
-            $candidate = \App\Models\Candidate::whereHas('verification', function($q) use($request) {
-                $q->where('token', $request->token);
-            })->first();
-
-            if ($candidate) {
-                // SKENARIO A: DATA SUDAH ADA, TINGGAL UPDATE (MELENGKAPI)
-                $candidate->nik = $request->nik;
-                // Jika di bot memperbolehkan edit nama/jenjang, update juga:
-                if (empty($candidate->nama_lengkap)) $candidate->nama_lengkap = $request->nama_lengkap;
-                if (empty($candidate->jenjang)) $candidate->jenjang = $request->jenjang;
-                if (empty($candidate->jenis_kelamin)) $candidate->jenis_kelamin = $request->jenis_kelamin;
-                
-                // $candidate->tempat_lahir = $request->tempat_lahir; // (Lengkapi sesuai kebutuhan bot)
-                
-                $candidate->save();
-            } else {
-                // SKENARIO B: DATA BELUM ADA, BUAT BARU + AUTO GENERATE NOMOR PENDAFTARAN
-                $tahun = date('Y');
-                // Cari nomor pendaftaran terakhir di tahun ini
-                $lastCandidate = \App\Models\Candidate::whereYear('created_at', $tahun)->orderBy('id', 'desc')->first();
-                
-                // Logika: Ambil 3/4 digit terakhir lalu tambah 1. Contoh: REG-2026-0001
-                $urutan = $lastCandidate ? intval(substr($lastCandidate->no_daftar, -4)) + 1 : 1;
-                $noDaftar = 'SPMB-' . date('y') . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
-
-                $candidate = \App\Models\Candidate::create([
-                    'no_daftar' => $noDaftar,
-                    'tahun_masuk' => $tahun,
-                    'jalur_pendaftaran' => 'Online',
-                    'status_seleksi' => 'Pending',
-                    'status' => 'Baru', 
-                    'nama_lengkap' => $request->nama_lengkap,
-                    'jenjang' => $request->jenjang,
-                    'jenis_kelamin' => $request->jenis_kelamin,
-                    'nik' => $request->nik,
-                    // 'tempat_lahir' => $request->tempat_lahir,
-                    // ... (masukkan field sisanya)
-                ]);
-
-                // [PENTING] Hubungkan/Kaitkan relasi Verification ini ke Candidate yang baru dibuat
-                // Sesuaikan kolom ini dengan struktur database Anda yang sebenarnya (jika ada foreign_key)
-                // misal: $verification->update(['candidate_id' => $candidate->id]);
-            }
-
-            \Illuminate\Support\Facades\DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Data biodata berhasil disimpan secara permanen.',
+                'is_admin_filled' => true, 
                 'data' => [
                     'no_daftar' => $candidate->no_daftar,
-                    'nama' => $candidate->nama_lengkap
+                    'nama' => $candidate->nama_lengkap,
+                    'jenjang' => $candidate->jenjang,
+                    'jenis_kelamin' => $candidate->jenis_kelamin,
                 ]
-            ], 200);
-
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan data ke database: ' . $e->getMessage()
-            ], 500);
+            ]);
         }
+
+        // Jika Candidate belum dibuat, ambil data dari tabel Verification
+        return response()->json([
+            'success' => true,
+            'is_completed' => false,
+            'is_admin_filled' => false,
+            'data' => [
+                'no_daftar' => null,
+                'nama' => null, // Nama akan diminta ke user jika admin belum buat kandidat
+                'jenjang' => $verification->jenjang,
+                'jenis_kelamin' => null,
+            ]
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
     }
+}
+
+    public function submitDaftarWA(\Illuminate\Http\Request $request)
+{
+    // 1. Validasi ketat sesuai field yang Anda perlukan
+    $request->validate([
+        'token' => 'required|string',
+        'nama_lengkap' => 'required|string',
+        'jenis_kelamin' => 'required|in:L,P',
+        'jenjang' => 'required|string',
+        'nik' => 'required|string',
+        'no_kk' => 'required|string',
+        'alamat' => 'required|string',
+        'desa' => 'required|string',
+        'kecamatan' => 'required|string',
+        'kabupaten' => 'required|string',
+        'provinsi' => 'required|string',
+        'no_hp_ayah' => 'required|string',
+        'no_hp_ibu' => 'required|string',
+    ]);
+
+    $verification = \App\Models\Verification::where('token', $request->token)->first();
+    if (!$verification) {
+        return response()->json(['success' => false, 'message' => 'Token tidak valid.'], 404);
+    }
+
+    \Illuminate\Support\Facades\DB::beginTransaction();
+    try {
+        // Cari Candidate berdasarkan file_perjanjian (sesuai jembatan data Anda)
+        $candidate = \App\Models\Candidate::where('file_perjanjian', $verification->file_perjanjian)->first();
+
+        if ($candidate) {
+            // Update data santri
+            $candidate->update([
+                'nik' => $request->nik,
+                'nama_lengkap' => $request->nama_lengkap,
+                'jenjang' => $request->jenjang,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'tempat_lahir' => $request->tempat_lahir,
+                'tanggal_lahir' => \Carbon\Carbon::createFromFormat('d-m-Y', $request->tanggal_lahir)->format('Y-m-d'),
+                'nisn' => $request->nisn,
+                'no_kk' => $request->no_kk,
+            ]);
+        } else {
+            // Buat baru jika belum ada
+            $tahun = date('Y');
+            $last = \App\Models\Candidate::whereYear('created_at', $tahun)->orderBy('id', 'desc')->first();
+            $urutan = $last ? intval(substr($last->no_daftar, -4)) + 1 : 1;
+            $noDaftar = 'SPMB-' . date('y') . '-' . str_pad($urutan, 4, '0', STR_PAD_LEFT);
+
+            $candidate = \App\Models\Candidate::create([
+                'no_daftar' => $noDaftar,
+                'tahun_masuk' => $tahun,
+                'jalur_pendaftaran' => 'Online',
+                'status_seleksi' => 'Pending',
+                'status' => 'Baru',
+                'nama_lengkap' => $request->nama_lengkap,
+                'jenjang' => $request->jenjang,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'nik' => $request->nik,
+                'nisn' => $request->nisn,
+                'tempat_lahir' => $request->tempat_lahir,
+                'tanggal_lahir' => \Carbon\Carbon::createFromFormat('d-m-Y', $request->tanggal_lahir)->format('Y-m-d'),
+                'no_kk' => $request->no_kk,
+                'file_perjanjian' => $verification->file_perjanjian, // Penting untuk relasi
+            ]);
+        }
+
+        // 2. Update/Buat Alamat (Tabel candidate_addresses)
+        \App\Models\CandidateAddress::updateOrCreate(
+            ['candidate_id' => $candidate->id],
+            [
+                'alamat' => $request->alamat,
+                'rt' => $request->rt,
+                'rw' => $request->rw,
+                'desa' => $request->desa,
+                'kecamatan' => $request->kecamatan,
+                'kabupaten' => $request->kabupaten,
+                'provinsi' => $request->provinsi,
+            ]
+        );
+
+        // 3. Update/Buat Data Orang Tua (Tabel candidate_parents)
+        \App\Models\CandidateParent::updateOrCreate(
+            ['candidate_id' => $candidate->id],
+            [
+                'nama_ayah' => $request->nama_ayah,
+                'pekerjaan_ayah' => $request->pekerjaan_ayah,
+                'no_hp_ayah' => $request->no_hp_ayah,
+                'penghasilan_ayah' => $request->penghasilan_ayah,
+                'nama_ibu' => $request->nama_ibu,
+                'pekerjaan_ibu' => $request->pekerjaan_ibu,
+                'no_hp_ibu' => $request->no_hp_ibu,
+                'penghasilan_ibu' => $request->penghasilan_ibu,
+            ]
+        );
+
+        \Illuminate\Support\Facades\DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data biodata berhasil disimpan.',
+            'data' => ['no_daftar' => $candidate->no_daftar, 'nama' => $candidate->nama_lengkap]
+        ], 200);
+
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\DB::rollBack();
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
 }

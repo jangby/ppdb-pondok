@@ -126,13 +126,16 @@ public function santri_room()
     }
 
     // Tambahkan ini agar tidak error "Undefined relationship"
-    public function verification()
-    {
-        return $this->hasOne(Verification::class);
-    }
+    // Di App\Models\Candidate
+public function verification()
+{
+    // Karena penghubungnya adalah file_perjanjian
+    return $this->hasOne(Verification::class, 'file_perjanjian', 'file_perjanjian');
+}
 
     public function testRoom()
 {
     return $this->belongsTo(TestRoom::class, 'test_room_id');
 }
+
 }
