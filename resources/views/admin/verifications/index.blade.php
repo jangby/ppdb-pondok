@@ -126,33 +126,49 @@
                         <tbody class="divide-y divide-gray-100 bg-white">
                             @forelse($verifications as $v)
                             
-                            {{-- LOGIKA CEK PINTAR: Mencari Relasi, File, atau Nomor WA --}}
-@php
-    $candidateData = null;
-    
-    // 1. Cek dari relasi database langsung (jika sudah terhubung)
-    if ($v->candidate ?? false) {
-        $candidateData = $v->candidate;
-    } 
-    // 2. Cek pencocokan dari file perjanjian
-    elseif (!empty($v->file_perjanjian)) {
-        $candidateData = \App\Models\Candidate::where('file_perjanjian', $v->file_perjanjian)->first();
-    }
-    
-    // 3. JIKA MASIH KOSONG: Cek pencocokan berdasarkan Nomor WA (Untuk yang daftar via Link WAHA)
-    if (!$candidateData && !empty($v->no_wa)) {
-        // Bersihkan nomor WA (buang awalan 0 atau 62 agar pencariannya akurat)
-        $cleanWa = ltrim($v->no_wa, '0');
-        $cleanWa = ltrim($cleanWa, '62');
-        
-        // Cari di database Data Santri (candidates) yang ujung nomor WA-nya sama
-        $candidateData = \App\Models\Candidate::where('no_wa', 'LIKE', '%' . $cleanWa)->first();
-    }
-    
-    // Tentukan status akhir
-    $isRegistered = $candidateData ? true : false;
-    $namaSantri = $candidateData ? $candidateData->nama_lengkap : '';
-@endphp
+                            {{-- LOGIKA CEK PINTAR: Mencari Relasi, File, atau Nomor HP --}}
+                            @php
+                                $candidateData = null;
+                                
+                                // 1. Cek dari relasi database langsung
+                                if ($v->candidate ?? false) {
+                                    $candidateData = $v->candidate;
+                                } 
+                                // 2. Cek pencocokan dari file perjanjian
+                                elseif (!empty($v->file_perjanjian)) {
+                                    $candidateData = \App\Models\Candidate::where('file_perjanjian', $v->file_perjanjian)->first();
+                                }
+                                
+                                // 3. PENCARIAN BERLAPIS BERDASARKAN NOMOR HP (ANTI-ERROR)
+                                if (!$candidateData && !empty($v->no_wa)) {
+                                    $cleanWa = ltrim($v->no_wa, '0');
+                                    $cleanWa = ltrim($cleanWa, '62');
+                                    
+                                    try {
+                                        // A. Cek apakah di tabel candidates ada kolom 'no_hp'
+                                        if (\Illuminate\Support\Facades\Schema::hasColumn('candidates', 'no_hp')) {
+                                            $candidateData = \App\Models\Candidate::where('no_hp', 'LIKE', '%' . $cleanWa)->first();
+                                        }
+                                        
+                                        // B. Jika masih kosong, cari di tabel Orang Tua (CandidateParent)
+                                        if (!$candidateData && class_exists(\App\Models\CandidateParent::class)) {
+                                            $ortu = \App\Models\CandidateParent::where('no_hp_ayah', 'LIKE', '%' . $cleanWa)
+                                                        ->orWhere('no_hp_ibu', 'LIKE', '%' . $cleanWa)
+                                                        ->first();
+                                                        
+                                            if ($ortu) {
+                                                $candidateData = \App\Models\Candidate::find($ortu->candidate_id);
+                                            }
+                                        }
+                                    } catch (\Exception $e) {
+                                        // Abaikan jika terjadi error database agar halaman tetap bisa dibuka dengan aman
+                                    }
+                                }
+                                
+                                // Tentukan status akhir
+                                $isRegistered = $candidateData ? true : false;
+                                $namaSantri = $candidateData ? $candidateData->nama_lengkap : '';
+                            @endphp
 
                             <tr class="hover:bg-indigo-50/30 transition group">
                                 {{-- KOLOM 1: Info Pendaftar --}}
