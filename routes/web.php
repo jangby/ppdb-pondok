@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/admin/verifications/{id}/register-basic', [AdminVerificationController::class, 'registerBasic'])
      ->name('admin.verifications.register_basic');
+    Route::delete('/admin/verifications/{id}', [App\Http\Controllers\AdminVerificationController::class, 'destroy'])->name('admin.verifications.destroy');
 
     // --- PENGATURAN PPDB ---
     Route::get('/admin/pengaturan', [SettingController::class, 'index'])->name('admin.settings.index');

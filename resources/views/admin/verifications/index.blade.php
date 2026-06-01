@@ -341,6 +341,21 @@
                                                 Verified
                                             </span>
                                         @endif
+
+                                        {{-- ================================================================= --}}
+                                        {{-- TOMBOL HAPUS DATA SAMPAH (Selalu Tampil di Semua Status)          --}}
+                                        {{-- ================================================================= --}}
+                                        <div class="w-full flex justify-end mt-2 pt-2 border-t border-gray-100">
+                                            <form action="{{ route('admin.verifications.destroy', $v->id) }}" method="POST" onsubmit="return confirm('⚠️ YAKIN INGIN MENGHAPUS?\n\nSemua biodata, file PDF, dan tagihan anak ini akan terhapus permanen dari server!');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="w-28 bg-white border border-red-300 text-red-500 hover:bg-red-600 hover:text-white hover:border-red-600 px-2 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition flex items-center justify-center gap-1" title="Hapus Permanen Data Ini">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    Hapus Data
+                                                </button>
+                                            </form>
+                                        </div>
+
                                     </div>
                                 </td>
                             </tr>

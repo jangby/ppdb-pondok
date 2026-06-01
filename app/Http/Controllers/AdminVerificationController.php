@@ -377,4 +377,28 @@ public function registerBasic(Request $request, $id)
         return back()->with('error', 'Gagal mendaftarkan santri: ' . $e->getMessage());
     }
 }
+
+public function destroy($id)
+    {
+        $data = Verification::findOrFail($id);
+        
+        // 1. Hapus data Candidate terkait (ini otomatis akan menghapus tagihan, biodata, dan alamat berkat fungsi booted di model Candidate)
+        $candidate = \App\Models\Candidate::where('file_perjanjian', $data->file_perjanjian)->first();
+        if ($candidate) {
+            $candidate->delete();
+        }
+
+        // 2. Hapus file fisik dari penyimpanan server agar tidak memenuhi hardisk
+        if (!empty($data->file_perjanjian)) {
+            \Illuminate\Support\Facades\Storage::delete($data->file_perjanjian);
+        }
+        if (!empty($data->bukti_bayar)) {
+            \Illuminate\Support\Facades\Storage::delete($data->bukti_bayar);
+        }
+
+        // 3. Terakhir, hapus data verifikasinya
+        $data->delete();
+
+        return back()->with('success', 'Data pendaftar dan seluruh berkas terkait berhasil dihapus permanen!');
+    }
 }
