@@ -99,7 +99,7 @@ class AdminTransactionController extends Controller
 
                 // Tembak ke Node.js jika nomor WA ditemukan
                 if ($no_wa) {
-                    Http::timeout(5)->post('http://127.0.0.1:5000/api/notifikasi-ppdb', [
+                    Http::timeout(5)->post('http://72.61.208.130:5000/api/notifikasi-ppdb', [
                         'no_wa'  => $no_wa,
                         'tipe'   => 'terima_bayar',
                         'nama'   => $candidate->nama_lengkap,
