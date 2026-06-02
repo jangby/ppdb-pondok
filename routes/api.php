@@ -19,3 +19,6 @@ Route::get('/ppdb/wa-check-token/{token}', [PPDBController::class, 'checkTokenWA
 Route::post('/ppdb/wa-submit-daftar', [PPDBController::class, 'submitDaftarWA']);
 Route::get('/ppdb/peserta-lulus', [App\Http\Controllers\Api\PPDBController::class, 'getPesertaLulus']);
 Route::get('/ppdb/kontak-wali', [App\Http\Controllers\Api\PPDBController::class, 'getKontakWali']);
+Route::get('/ppdb/profil', [App\Http\Controllers\Api\PPDBController::class, 'getProfilSantri']);
+Route::get('/ppdb/stats', [App\Http\Controllers\Api\PPDBController::class, 'getStatsPPDB']);
+Route::get('/ppdb/search', [App\Http\Controllers\Api\PPDBController::class, 'searchSantri']);

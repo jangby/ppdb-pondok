@@ -448,4 +448,120 @@ class PPDBController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    // =======================================================================
+    // API UNTUK MENGAMBIL PROFIL, STATUS, & TAGIHAN BERDASARKAN NO WA BOT
+    // =======================================================================
+    public function getProfilSantri(Request $request)
+    {
+        $wa = $request->query('wa');
+        if (!$wa) return response()->json(['success' => false, 'message' => 'No WA provided']);
+
+        // Ambil 9 digit terakhir WA agar pencarian akurat meskipun formatnya 08/62/8 dll
+        $cleanWa = preg_replace('/[^0-9]/', '', $wa);
+        $searchWa = substr($cleanWa, -9);
+
+        $candidates = collect();
+
+        // 1. Cari lewat tabel Verifikasi Awal
+        $verifications = \App\Models\Verification::where('no_wa', 'LIKE', "%{$searchWa}%")->get();
+        foreach ($verifications as $v) {
+            $c = \App\Models\Candidate::with(['bills.payment_type', 'santri_room', 'wali_room'])
+                ->where('file_perjanjian', $v->file_perjanjian)->first();
+            if ($c) $candidates->push($c);
+        }
+
+        // 2. Cari lewat tabel Orang Tua (Jika mendaftar beda nomor)
+        if (class_exists(\App\Models\CandidateParent::class)) {
+            $parents = \App\Models\CandidateParent::where('no_hp_ayah', 'LIKE', "%{$searchWa}%")
+                            ->orWhere('no_hp_ibu', 'LIKE', "%{$searchWa}%")->get();
+            foreach ($parents as $p) {
+                $c = \App\Models\Candidate::with(['bills.payment_type', 'santri_room', 'wali_room'])
+                    ->find($p->candidate_id);
+                if ($c) $candidates->push($c);
+            }
+        }
+
+        $candidates = $candidates->unique('id')->values();
+
+        if ($candidates->isEmpty()) {
+            if ($verifications->isNotEmpty()) {
+                 $v = $verifications->first();
+                 return response()->json([
+                     'success' => true,
+                     'type' => 'verifikasi_awal',
+                     'data' => [
+                         'status_berkas' => $v->status,
+                         'status_bayar' => $v->status_pembayaran
+                     ]
+                 ]);
+            }
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'type' => 'lengkap',
+            'data' => $candidates
+        ]);
+    }
+
+    // =======================================================================
+    // API UTK LIVE REKAP / STATISTIK PPDB (UNTUK BOT WA ADMIN)
+    // =======================================================================
+    public function getStatsPPDB()
+    {
+        try {
+            $total = \App\Models\Candidate::count();
+            $laki = \App\Models\Candidate::where('jenis_kelamin', 'L')->count();
+            $perempuan = \App\Models\Candidate::where('jenis_kelamin', 'P')->count();
+            $pending = \App\Models\Candidate::where('status_seleksi', 'Pending')->count();
+            $diterima = \App\Models\Candidate::whereIn('status_seleksi', ['Lulus', 'Diterima', 'Approved'])->count();
+
+            // Statistik per Jenjang
+            $jenjangData = \Illuminate\Support\Facades\DB::table('candidates')
+                ->select('jenjang', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+                ->groupBy('jenjang')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'summary' => [
+                    'total' => $total,
+                    'laki' => $laki,
+                    'perempuan' => $perempuan,
+                    'pending' => $pending,
+                    'diterima' => $diterima,
+                ],
+                'jenjang' => $jenjangData
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =======================================================================
+    // API UTK PENCARIAN KILAT SANTRI (UNTUK BOT WA ADMIN)
+    // =======================================================================
+    public function searchSantri(Request $request)
+    {
+        $keyword = $request->query('q');
+        if (!$keyword) return response()->json(['success' => false, 'message' => 'Keyword kosong']);
+
+        try {
+            $results = \App\Models\Candidate::with(['parent', 'bills'])
+                ->where('nama_lengkap', 'LIKE', "%{$keyword}%")
+                ->orWhere('no_daftar', 'LIKE', "%{$keyword}%")
+                ->orWhere('nisn', 'LIKE', "%{$keyword}%")
+                ->take(5) // Batasi maksimal 5 hasil agar chat tidak terlalu panjang
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $results
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

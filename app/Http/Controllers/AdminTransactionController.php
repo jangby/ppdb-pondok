@@ -6,10 +6,11 @@ use App\Models\Candidate;
 use App\Models\CandidateBill;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
-use App\Models\Setting; // [PENTING] Tambahkan Model Setting
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http; // [PENTING] Tambahkan ini untuk Webhook
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminTransactionController extends Controller
@@ -42,44 +43,75 @@ class AdminTransactionController extends Controller
             ]);
 
             // 3. Proses Rincian Pembayaran
-foreach ($payments as $billId => $nominal) {
-    // Ambil data tagihan asli untuk validasi
-    $bill = CandidateBill::lockForUpdate()->findOrFail($billId);
+            foreach ($payments as $billId => $nominal) {
+                // Ambil data tagihan asli untuk validasi
+                $bill = CandidateBill::lockForUpdate()->findOrFail($billId);
 
-    // Validasi: Jangan sampai bayar lebih dari sisa hutang
-    if ($nominal > $bill->sisa_tagihan) {
-        throw new \Exception("Nominal pembayaran untuk {$bill->payment_type->nama_pembayaran} melebihi sisa tagihan!");
-    }
+                // Validasi: Jangan sampai bayar lebih dari sisa hutang
+                if ($nominal > $bill->sisa_tagihan) {
+                    throw new \Exception("Nominal pembayaran untuk {$bill->payment_type->nama_pembayaran} melebihi sisa tagihan!");
+                }
 
-    // Simpan Detail
-    TransactionDetail::create([
-        'transaction_id' => $transaction->id,
-        'candidate_bill_id' => $billId,
-        'nominal' => $nominal
-    ]);
+                // Simpan Detail
+                TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'candidate_bill_id' => $billId,
+                    'nominal' => $nominal
+                ]);
 
-    // Update Tagihan
-    $bill->nominal_terbayar += $nominal;
-    
-    // --- FITUR TOLERANSI ANOMALI ---
-    $sisa_sekarang = $bill->nominal_tagihan - $bill->nominal_terbayar;
-    // Jika sisa tagihan menyisakan angka anomali (misal di bawah Rp 10), genapkan otomatis.
-    if ($sisa_sekarang > 0 && $sisa_sekarang <= 10) {
-        $bill->nominal_terbayar = $bill->nominal_tagihan; 
-    }
-    // -------------------------------
-    
-    // Cek Lunas
-    if ($bill->nominal_terbayar >= $bill->nominal_tagihan) {
-        $bill->status = 'Lunas';
-    } else {
-        $bill->status = 'Cicilan';
-    }
-    $bill->save();
-}
+                // Update Tagihan
+                $bill->nominal_terbayar += $nominal;
+                
+                // --- FITUR TOLERANSI ANOMALI ---
+                $sisa_sekarang = $bill->nominal_tagihan - $bill->nominal_terbayar;
+                // Jika sisa tagihan menyisakan angka anomali (misal di bawah Rp 10), genapkan otomatis.
+                if ($sisa_sekarang > 0 && $sisa_sekarang <= 10) {
+                    $bill->nominal_terbayar = $bill->nominal_tagihan; 
+                }
+                // -------------------------------
+                
+                // Cek Lunas
+                if ($bill->nominal_terbayar >= $bill->nominal_tagihan) {
+                    $bill->status = 'Lunas';
+                } else {
+                    $bill->status = 'Cicilan';
+                }
+                $bill->save();
+            }
 
             DB::commit();
-            return back()->with('success', 'Pembayaran berhasil disimpan!');
+
+            // ====================================================================
+            // [BARU] TEMBAK WEBHOOK KE BOT SETELAH PEMBAYARAN KASIR BERHASIL
+            // ====================================================================
+            try {
+                $candidate = Candidate::with('parent')->find($candidate_id);
+
+                // Cari No WA Wali (Prioritas 1: Tabel Verification, Prioritas 2: Tabel Parent)
+                $no_wa = null;
+                $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
+
+                if ($verification && !empty($verification->no_wa)) {
+                    $no_wa = $verification->no_wa;
+                } elseif ($candidate->parent && !empty($candidate->parent->no_hp_ayah)) {
+                    $no_wa = $candidate->parent->no_hp_ayah;
+                }
+
+                // Tembak ke Node.js jika nomor WA ditemukan
+                if ($no_wa) {
+                    Http::timeout(5)->post('http://127.0.0.1:5000/api/notifikasi-ppdb', [
+                        'no_wa'  => $no_wa,
+                        'tipe'   => 'terima_bayar',
+                        'nama'   => $candidate->nama_lengkap,
+                        'detail' => $totalReceived // Kirim total nominal yang baru saja dibayar
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // Abaikan error webhook agar proses kasir tetap lancar walau bot sedang offline
+            }
+            // ====================================================================
+
+            return back()->with('success', 'Pembayaran berhasil disimpan & Notifikasi WA terkirim!');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -92,12 +124,7 @@ foreach ($payments as $billId => $nominal) {
         $transaction = Transaction::with(['candidate', 'details.bill.payment_type', 'admin'])
                         ->findOrFail($id);
 
-        // [BARU] Ambil Pengaturan Sekolah untuk Header Struk
         $settings = Setting::all()->pluck('value', 'key');
-
-        // Konfigurasi ukuran kertas 80mm (Thermal Printer Standard)
-        // Format: [0, 0, width, height]
-        // Width 226.77 pt setara 80mm. Height 1000 agar panjang ke bawah (continuous).
         $customPaper = [0, 0, 226.77, 1000];
 
         $pdf = Pdf::loadView('admin.receipt.thermal', compact('transaction', 'settings'))
@@ -106,54 +133,44 @@ foreach ($payments as $billId => $nominal) {
         return $pdf->stream('Struk-' . $transaction->kode_transaksi . '.pdf');
     }
 
-    // Fungsi untuk kirim data JSON ke Printer Bluetooth
     public function getDataForPrinter($id)
-{
-    // Ambil data transaksi beserta rincian tagihan santri
-    $transaction = \App\Models\Transaction::with(['candidate.bills', 'details.bill.payment_type'])->findOrFail($id);
-    $candidate = $transaction->candidate;
+    {
+        $transaction = \App\Models\Transaction::with(['candidate.bills', 'details.bill.payment_type'])->findOrFail($id);
+        $candidate = $transaction->candidate;
 
-    // Hitung total keuangan santri
-    $totalTagihan = $candidate->bills->sum('nominal_tagihan');
-    $totalTerbayar = $candidate->bills->sum('nominal_terbayar');
-    $sisaTagihan = $totalTagihan - $totalTerbayar;
+        $totalTagihan = $candidate->bills->sum('nominal_tagihan');
+        $totalTerbayar = $candidate->bills->sum('nominal_terbayar');
+        $sisaTagihan = $totalTagihan - $totalTerbayar;
 
-    return response()->json([
-        'status' => 'success',
-        'data' => [
-            'invoice'        => $transaction->kode_transaksi, 
-            'tanggal'        => $transaction->created_at->format('d/m/Y H:i'),
-            'nama'           => $candidate->nama_lengkap,
-            'no_daftar'      => $candidate->no_daftar,
-            'jenis'          => $transaction->details->pluck('bill.payment_type.nama_pembayaran')->implode(', '),
-            'bayar_sekarang' => number_format($transaction->total_bayar, 0, ',', '.'),
-            'total_tagihan'  => number_format($totalTagihan, 0, ',', '.'),
-            'sisa_tagihan'   => number_format($sisaTagihan, 0, ',', '.'),
-            'keterangan'     => $transaction->keterangan ?? '-',
-            'petugas'        => auth()->user()->name ?? 'Admin',
-        ]
-    ]);
-}
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'invoice'        => $transaction->kode_transaksi, 
+                'tanggal'        => $transaction->created_at->format('d/m/Y H:i'),
+                'nama'           => $candidate->nama_lengkap,
+                'no_daftar'      => $candidate->no_daftar,
+                'jenis'          => $transaction->details->pluck('bill.payment_type.nama_pembayaran')->implode(', '),
+                'bayar_sekarang' => number_format($transaction->total_bayar, 0, ',', '.'),
+                'total_tagihan'  => number_format($totalTagihan, 0, ',', '.'),
+                'sisa_tagihan'   => number_format($sisaTagihan, 0, ',', '.'),
+                'keterangan'     => $transaction->keterangan ?? '-',
+                'petugas'        => auth()->user()->name ?? 'Admin',
+            ]
+        ]);
+    }
 
-/**
-     * Membatalkan transaksi dan mengembalikan nominal tagihan santri
-     */
     public function destroy($id)
     {
         DB::beginTransaction();
         try {
-            // Tarik data transaksi beserta detailnya
             $transaction = Transaction::with('details')->findOrFail($id);
 
-            // 1. Kembalikan nominal di tabel CandidateBill
             foreach ($transaction->details as $detail) {
                 $bill = CandidateBill::lockForUpdate()->find($detail->candidate_bill_id);
                 
                 if ($bill) {
-                    // Kurangi nominal terbayar dengan nominal yang dibatalkan
                     $bill->nominal_terbayar -= $detail->nominal;
                     
-                    // Pastikan tidak minus jika ada anomali sebelumnya
                     if ($bill->nominal_terbayar <= 0) {
                         $bill->nominal_terbayar = 0;
                         $bill->status = 'Belum Lunas';
@@ -165,8 +182,6 @@ foreach ($payments as $billId => $nominal) {
                 }
             }
 
-            // 2. Hapus Rincian dan Header Transaksi
-            // (Jika di model Transaction sudah pakai onDelete('cascade') di database, ->delete() rincian bisa dilewati)
             $transaction->details()->delete(); 
             $transaction->delete();
 
