@@ -10,7 +10,8 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http; // [PENTING] Tambahkan ini untuk Webhook
+use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Log; // [PENTING] Tambahkan Log
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminTransactionController extends Controller
@@ -82,7 +83,7 @@ class AdminTransactionController extends Controller
             DB::commit();
 
             // ====================================================================
-            // [BARU] TEMBAK WEBHOOK KE BOT SETELAH PEMBAYARAN KASIR BERHASIL
+            // [BARU] TEMBAK WEBHOOK KE BOT BESERTA LOGGING & FORMAT NOMOR
             // ====================================================================
             try {
                 $candidate = Candidate::with('parent')->find($candidate_id);
@@ -97,17 +98,29 @@ class AdminTransactionController extends Controller
                     $no_wa = $candidate->parent->no_hp_ayah;
                 }
 
-                // Tembak ke Node.js jika nomor WA ditemukan
                 if ($no_wa) {
-                    Http::timeout(5)->post('http://72.61.208.130:5000/api/notifikasi-ppdb', [
-                        'no_wa'  => $no_wa,
+                    // FORMATTING NOMOR WA: Hapus spasi/strip, ubah '08' jadi '628'
+                    $chatId = preg_replace('/[^0-9]/', '', $no_wa);
+                    if (substr($chatId, 0, 1) == '0') {
+                        $chatId = '62' . substr($chatId, 1);
+                    }
+
+                    Log::info("[WEBHOOK KASIR] Mencoba kirim notif ke: {$chatId} untuk santri: {$candidate->nama_lengkap}");
+
+                    // Tembak ke Node.js bot
+                    $response = Http::timeout(5)->post('http://72.61.208.130:5000/api/notifikasi-ppdb', [
+                        'no_wa'  => $chatId,
                         'tipe'   => 'terima_bayar',
                         'nama'   => $candidate->nama_lengkap,
-                        'detail' => $totalReceived // Kirim total nominal yang baru saja dibayar
+                        'detail' => $totalReceived 
                     ]);
+
+                    Log::info("[WEBHOOK KASIR] Response dari Bot: " . $response->body());
+                } else {
+                    Log::warning("[WEBHOOK KASIR] Batal kirim WA. Nomor WA tidak ditemukan di database untuk kandidat ID: {$candidate_id}");
                 }
             } catch (\Exception $e) {
-                // Abaikan error webhook agar proses kasir tetap lancar walau bot sedang offline
+                Log::error("[WEBHOOK KASIR] Terjadi Error Webhook: " . $e->getMessage());
             }
             // ====================================================================
 
