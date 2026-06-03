@@ -22,3 +22,4 @@ Route::get('/ppdb/kontak-wali', [App\Http\Controllers\Api\PPDBController::class,
 Route::get('/ppdb/profil', [App\Http\Controllers\Api\PPDBController::class, 'getProfilSantri']);
 Route::get('/ppdb/stats', [App\Http\Controllers\Api\PPDBController::class, 'getStatsPPDB']);
 Route::get('/ppdb/search', [App\Http\Controllers\Api\PPDBController::class, 'searchSantri']);
+Route::get('/ppdb/cekstatus', [App\Http\Controllers\Api\PPDBController::class, 'cekStatus']);

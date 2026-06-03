@@ -564,4 +564,33 @@ class PPDBController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    // =======================================================================
+    // API UNTUK CEK STATUS KELULUSAN (VIA NO DAFTAR ATAU NIK)
+    // =======================================================================
+    public function cekStatus(Request $request)
+    {
+        $keyword = $request->query('q');
+        if (!$keyword) return response()->json(['success' => false, 'message' => 'Parameter pencarian kosong']);
+
+        try {
+            // Cari data kandidat yang No Daftarnya atau NIK-nya cocok (Sama Persis)
+            $candidate = \App\Models\Candidate::with(['santri_room', 'wali_room'])
+                ->where('no_daftar', $keyword)
+                ->orWhere('nik', $keyword)
+                ->first();
+
+            if (!$candidate) {
+                return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $candidate
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

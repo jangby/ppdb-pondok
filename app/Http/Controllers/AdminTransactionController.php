@@ -108,7 +108,7 @@ class AdminTransactionController extends Controller
                     Log::info("[WEBHOOK KASIR] Mencoba kirim notif ke: {$chatId} untuk santri: {$candidate->nama_lengkap}");
 
                     // Tembak ke Node.js bot
-                    $response = Http::timeout(5)->post('http://72.61.208.130:5000/api/notifikasi-ppdb', [
+                    $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/notifikasi-ppdb', [
                         'no_wa'  => $chatId,
                         'tipe'   => 'terima_bayar',
                         'nama'   => $candidate->nama_lengkap,
