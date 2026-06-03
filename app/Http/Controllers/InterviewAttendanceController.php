@@ -67,7 +67,7 @@ class InterviewAttendanceController extends Controller
     }
 
     // =================================================================
-    // 2. FITUR KIRIM WA (LINK KARTU TES)
+    // 2. FITUR KIRIM WA (DIRECT LAMPIRAN KARTU TES)
     // =================================================================
     
     // Dipanggil dari Tombol Ungu di Tabel Santri
@@ -80,26 +80,56 @@ class InterviewAttendanceController extends Controller
         $ruangSantri = $candidate->santri_room ? $candidate->santri_room->nama_ruangan : 'Cek di Papan Pengumuman';
         $ruangWali   = $candidate->wali_room   ? $candidate->wali_room->nama_ruangan   : 'Cek di Papan Pengumuman';
 
-        // 3. Buat Link
+        // 3. Buat Link Data File Kartu
         $linkKartu = route('public.kartu_tes', $candidate->no_daftar);
         
-        // 4. Susun Pesan (Menampilkan 2 Lokasi)
-        $message = "*UNDANGAN WAWANCARA & TES*\n\n" .
+        // 4. Susun Pesan (Tanpa menyuruh klik link lagi)
+        $message = "🎓 *UNDANGAN WAWANCARA & TES*\n\n" .
                    "Santri/ah: *{$candidate->nama_lengkap}*\n" .
                    "No. Daftar: *{$candidate->no_daftar}*\n\n" .
                    "📍 *LOKASI TES:*\n" .
                    "👤 Santri: *{$ruangSantri}*\n" .
                    "👥 Wali: *{$ruangWali}*\n\n" .
-                   "Silakan klik link di bawah ini untuk melihat *Kartu Tes / QR Code* Anda:\n" .
-                   "👇👇👇\n" .
-                   "$linkKartu\n" .
-                   "👆👆👆\n\n" .
-                   "Harap tunjukkan QR Code di dalam link tersebut kepada panitia saat tiba di lokasi.\n\n" .
+                   "Berikut adalah lampiran *Kartu Tes / QR Code* Ananda.\n" .
+                   "Silakan diunduh (download) dan tunjukkan gambar/file ini kepada panitia saat tiba di lokasi.\n\n" .
                    "_Simpan pesan ini._";
 
-        $this->sendWaLink($candidate, $message);
+        // 5. Eksekusi pengiriman via Bot Baileys (dengan file terlampir)
+        $this->sendWaDirectFile($candidate, $message, $linkKartu, 'Kartu_Tes_'.$candidate->no_daftar.'.pdf');
 
-        return back()->with('success', 'Link Kartu Tes & Info Ruangan berhasil dikirim ke WA Wali.');
+        return back()->with('success', 'Lampiran Kartu Tes & Info Ruangan berhasil dikirim langsung ke WA Wali.');
+    }
+
+    /**
+     * Fungsi Helper Baru Khusus Mengirim File ke Bot Baileys Node.js
+     */
+    private function sendWaDirectFile($candidate, $message, $fileUrl, $fileName)
+    {
+        // Sesuaikan dengan struktur tabel Anda, biasanya nomor WA ada di relasi parent atau di tabel candidate
+        $number = $candidate->no_wa ?? ($candidate->parent->no_wa ?? null); 
+        
+        if (!$number) return false;
+
+        // Bersihkan format nomor WA
+        $chatId = preg_replace('/[^0-9]/', '', $number);
+        if (substr($chatId, 0, 1) == '0') {
+            $chatId = '62' . substr($chatId, 1);
+        }
+
+        try {
+            // Tembak ke Port 5000 Bot Baileys Anda
+            \Illuminate\Support\Facades\Http::timeout(15)->post('http://127.0.0.1:5000/api/send-message', [
+                'no_wa'     => $chatId,
+                'pesan'     => $message,
+                'file_url'  => $fileUrl,
+                'file_name' => $fileName
+            ]);
+            
+            return true;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Gagal kirim file Kartu Tes ke Bot WA: " . $e->getMessage());
+            return false;
+        }
     }
 
     // Dipanggil dari Tombol Lonceng (Pengingat)

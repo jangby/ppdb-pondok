@@ -205,6 +205,60 @@
                         </div>
                     </div>
 
+                    {{-- CARD KELENGKAPAN BERKAS FISIK --}}
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h3 class="font-bold text-gray-800">Checklist Berkas Fisik</h3>
+                        </div>
+                        <div class="p-6">
+                            <form action="{{ route('admin.candidates.update_berkas', $candidate->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                
+                                @php
+                                    // 1. Ambil data JSON dari tabel Setting
+                                    $rawPersyaratan = \App\Models\Setting::getValue('syarat_pendaftaran', '[]');
+                                    $decodedSyarat = json_decode($rawPersyaratan, true);
+                                    
+                                    // 2. Susun ulang array untuk mengambil 'nama' dan 'jumlah'
+                                    $listBerkas = [];
+                                    if (is_array($decodedSyarat)) {
+                                        foreach ($decodedSyarat as $item) {
+                                            if (isset($item['nama'])) {
+                                                // Jika ada jumlahnya, tambahkan di dalam kurung untuk tampilan
+                                                $labelJumlah = (isset($item['jumlah']) && $item['jumlah'] > 0) ? ' (' . $item['jumlah'] . ' Lembar/Pcs)' : '';
+                                                
+                                                $listBerkas[] = [
+                                                    'value' => $item['nama'], // Ini yang akan disimpan ke database
+                                                    'label' => $item['nama'] . $labelJumlah // Ini yang akan dilihat Admin
+                                                ];
+                                            }
+                                        }
+                                    }
+
+                                    // 3. Ambil data yang sudah dicentang sebelumnya oleh admin
+                                    $berkasTerkumpul = is_array($candidate->kelengkapan_berkas) ? $candidate->kelengkapan_berkas : [];
+                                @endphp
+
+                                <div class="space-y-2 mb-6">
+                                    @foreach($listBerkas as $berkas)
+                                        <label class="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-indigo-50/50 transition border border-transparent hover:border-indigo-100">
+                                            <input type="checkbox" name="berkas[]" value="{{ $berkas['value'] }}"
+                                                   class="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                                                   {{ in_array($berkas['value'], $berkasTerkumpul) ? 'checked' : '' }}>
+                                            <span class="text-sm font-medium text-gray-700">{{ $berkas['label'] }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+
+                                <button type="submit" class="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition shadow-md flex justify-center items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                                    Simpan Checklist
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                     {{-- CARD STATUS SELEKSI --}}
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-6">

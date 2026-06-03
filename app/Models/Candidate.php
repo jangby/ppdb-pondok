@@ -13,6 +13,11 @@ class Candidate extends Model
     // Izinkan semua kolom diisi (mass assignment)
     protected $guarded = ['id'];
 
+    // [BARU] Ubah otomatis dari JSON text ke Array PHP
+    protected $casts = [
+        'kelengkapan_berkas' => 'array',
+    ];
+
     // Relasi ke User (Akun Login)
     public function user()
     {

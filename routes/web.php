@@ -154,6 +154,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/santri/create', [AdminCandidateController::class, 'create'])->name('admin.candidates.create');
     Route::post('/admin/santri/store', [AdminCandidateController::class, 'store'])->name('admin.candidates.store');
 
+
     // --- RINCIAN PEMASUKAN DASHBOARD ---
     Route::get('/dashboard/pemasukan', [DashboardController::class, 'rincianPemasukan'])->name('dashboard.pemasukan.rincian');
 
@@ -169,6 +170,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/santri/{id}/generate-missing-bills', [AdminCandidateController::class, 'generateMissingBills'])->name('admin.candidates.generate_missing_bills');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
     Route::post('/candidates/{candidate}/upload-perjanjian', [AdminCandidateController::class, 'uploadPerjanjian'])->name('admin.candidates.upload_perjanjian');
+    Route::patch('/candidates/{id}/update-berkas', [App\Http\Controllers\AdminCandidateController::class, 'updateBerkas'])->name('admin.candidates.update_berkas');
 
     // [TAMBAHKAN INI] Route Kirim Notifikasi Tagihan
     Route::post('/admin/santri/{id}/notify-bill', [AdminCandidateController::class, 'sendBillNotification'])

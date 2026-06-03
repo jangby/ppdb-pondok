@@ -593,4 +593,78 @@ class PPDBController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    // =======================================================================
+    // API UNTUK CEK KELENGKAPAN BERKAS FISIK
+    // =======================================================================
+    public function cekBerkas(Request $request)
+    {
+        $keyword = $request->query('q');
+        if (!$keyword) return response()->json(['success' => false, 'message' => 'Parameter kosong']);
+
+        try {
+            $candidate = \App\Models\Candidate::where('no_daftar', $keyword)
+                ->orWhere('nik', $keyword)
+                ->first();
+
+            if (!$candidate) {
+                return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
+            }
+
+            // Ambil master persyaratan dari Setting
+            $rawPersyaratan = \App\Models\Setting::getValue('syarat_pendaftaran', '[]');
+            $decodedSyarat = json_decode($rawPersyaratan, true);
+            $masterBerkas = [];
+            
+            if (is_array($decodedSyarat)) {
+                foreach ($decodedSyarat as $item) {
+                    if (isset($item['nama'])) {
+                        $masterBerkas[] = $item['nama'];
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'nama_lengkap' => $candidate->nama_lengkap,
+                    'no_daftar' => $candidate->no_daftar,
+                    'terkumpul' => is_array($candidate->kelengkapan_berkas) ? $candidate->kelengkapan_berkas : [],
+                    'master' => $masterBerkas
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =======================================================================
+    // API UNTUK MENGAMBIL KARTU UJIAN DIGITAL
+    // =======================================================================
+    public function getKartuTes(Request $request)
+    {
+        $keyword = $request->query('q');
+        if (!$keyword) return response()->json(['success' => false, 'message' => 'Parameter kosong']);
+
+        try {
+            $candidate = \App\Models\Candidate::where('no_daftar', $keyword)->orWhere('nik', $keyword)->first();
+            if (!$candidate) return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
+
+            // PASTIKAN NAMA ROUTE INI SESUAI DENGAN FITUR CETAK KARTU ANDA
+            $fileUrl = route('admin.candidates.print_kartu', $candidate->id); 
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'nama_lengkap' => $candidate->nama_lengkap,
+                    'no_daftar'    => $candidate->no_daftar,
+                    'file_url'     => $fileUrl
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

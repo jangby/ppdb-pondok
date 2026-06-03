@@ -669,4 +669,21 @@ class AdminCandidateController extends Controller
             return back()->with('error', 'Gagal memproses tagihan: ' . $e->getMessage());
         }
     }
+
+    // --- FUNGSI UPDATE CHECKLIST BERKAS ---
+    public function updateBerkas(Request $request, $id)
+    {
+        try {
+            $candidate = Candidate::findOrFail($id);
+            
+            // Simpan array berkas yang dicentang admin
+            $candidate->update([
+                'kelengkapan_berkas' => $request->input('berkas', [])
+            ]);
+
+            return back()->with('success', 'Status kelengkapan berkas fisik berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal menyimpan kelengkapan berkas: ' . $e->getMessage());
+        }
+    }
 }
