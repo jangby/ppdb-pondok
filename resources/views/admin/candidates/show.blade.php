@@ -457,11 +457,11 @@
                                                                 <span class="text-gray-500 sm:text-xs font-bold">Rp</span>
                                                             </div>
                                                             <input type="number" 
-                                                                   name="payments[{{ $bill->id }}]" 
-                                                                   class="block w-full rounded-lg border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2" 
-                                                                   placeholder="0"
-                                                                   min="0"
-                                                                   max="{{ $bill->sisa_tagihan }}">
+       name="payments[{{ $bill->id }}]" 
+       class="block w-full rounded-lg border-gray-300 pl-10 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 input-cicilan" 
+       placeholder="0"
+       min="0"
+       max="{{ $bill->sisa_tagihan }}">
                                                         </div>
                                                     @else
                                                         <div class="text-center text-xs text-green-600 font-bold flex items-center justify-center gap-1">
@@ -474,6 +474,15 @@
                                             @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+
+                                {{-- KOTAK TOTAL KALKULATOR REAL-TIME --}}
+                                <div class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-xl flex justify-between items-center shadow-sm">
+                                    <div>
+                                        <span class="block font-bold text-gray-700 text-sm uppercase tracking-wider">Total Yang Sedang Diketik:</span>
+                                        <span class="block text-xs text-blue-500 mt-1">Otomatis dihitung saat Anda mengetik nominal</span>
+                                    </div>
+                                    <span id="teks-total-ketik" class="text-2xl font-black text-blue-700">Rp 0</span>
                                 </div>
 
                                 <div class="flex flex-col sm:flex-row justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100 gap-4">
@@ -834,4 +843,37 @@
         await printCharacteristic.writeValue(cmdPrint);
     }
 </script>
+
+{{-- SCRIPT KALKULATOR REAL-TIME --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('.input-cicilan');
+            const teksTotal = document.getElementById('teks-total-ketik');
+
+            function hitungTotalRealTime() {
+                let total = 0;
+                inputs.forEach(function(input) {
+                    let nilai = parseFloat(input.value) || 0; 
+                    if (nilai > 0) {
+                        total += nilai;
+                    }
+                });
+
+                let formatRupiah = new Intl.NumberFormat('id-ID', {
+                    style: 'currency',
+                    currency: 'IDR',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(total);
+
+                if(teksTotal) teksTotal.innerText = formatRupiah;
+            }
+
+            inputs.forEach(function(input) {
+                input.addEventListener('input', hitungTotalRealTime);
+            });
+
+            hitungTotalRealTime();
+        });
+    </script>
 </x-app-layout>
