@@ -651,18 +651,109 @@ class PPDBController extends Controller
             $candidate = \App\Models\Candidate::where('no_daftar', $keyword)->orWhere('nik', $keyword)->first();
             if (!$candidate) return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.']);
 
-            // PASTIKAN NAMA ROUTE INI SESUAI DENGAN FITUR CETAK KARTU ANDA
-            $fileUrl = route('admin.candidates.print_kartu', $candidate->id); 
+            // Sulap menjadi gambar QR (HANYA BERISI NO DAFTAR)
+            $qrImageUrl = "https://quickchart.io/qr?text=" . urlencode($candidate->no_daftar) . "&margin=2&size=500";
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'nama_lengkap' => $candidate->nama_lengkap,
                     'no_daftar'    => $candidate->no_daftar,
-                    'file_url'     => $fileUrl
+                    'file_url'     => $qrImageUrl 
                 ]
             ], 200);
 
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =======================================================================
+    // API UNTUK CEK SISA ANTREAN TES WAWANCARA (REAL-TIME)
+    // =======================================================================
+    public function cekAntrean(Request $request)
+    {
+        $keyword = $request->query('q');
+        if (!$keyword) return response()->json(['success' => false, 'message' => 'Parameter kosong']);
+
+        try {
+            $candidate = \App\Models\Candidate::where('no_daftar', $keyword)
+                ->orWhere('nik', $keyword)
+                ->first();
+
+            if (!$candidate) {
+                return response()->json(['success' => false, 'message' => 'Data pendaftar tidak ditemukan.']);
+            }
+
+            // KONDISI 1: Belum lapor kehadiran di meja panitia
+            if (!$candidate->nomor_antrian) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'status_antrian' => 'belum_hadir',
+                        'nama_lengkap' => $candidate->nama_lengkap,
+                    ]
+                ]);
+            }
+
+            // KONDISI 2: Sudah dipanggil masuk ke ruangan
+            if ($candidate->waktu_panggil) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'status_antrian' => 'sudah_dipanggil',
+                        'nama_lengkap' => $candidate->nama_lengkap,
+                    ]
+                ]);
+            }
+
+            // KONDISI 3: Sedang menunggu giliran
+            // Cari nomor antrean yang PALING BARU dipanggil hari ini
+            $current = \App\Models\Candidate::whereDate('waktu_hadir', \Carbon\Carbon::today())
+                ->whereNotNull('waktu_panggil')
+                ->orderBy('waktu_panggil', 'desc')
+                ->first();
+
+            $currentNo = $current ? $current->nomor_antrian : 0;
+            $myNo = $candidate->nomor_antrian;
+            
+            // Hitung sisa antrean di depannya
+            $sisa = $myNo - $currentNo;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'status_antrian' => 'menunggu',
+                    'nama_lengkap'   => $candidate->nama_lengkap,
+                    'no_daftar'      => $candidate->no_daftar,
+                    'nomor_saya'     => $myNo,
+                    'nomor_sekarang' => $currentNo,
+                    'sisa_antrean'   => $sisa > 0 ? $sisa : 0
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =======================================================================
+    // API UNTUK INFO PERSIAPAN ASRAMA
+    // =======================================================================
+    public function infoAsrama()
+    {
+        try {
+            // Ambil data dari tabel settings, berikan teks default jika masih kosong
+            $wajib = \App\Models\Setting::getValue('perlengkapan_wajib', '- Belum ada informasi perlengkapan wajib.');
+            $dilarang = \App\Models\Setting::getValue('perlengkapan_dilarang', '- Belum ada informasi barang terlarang.');
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'wajib' => $wajib,
+                    'dilarang' => $dilarang
+                ]
+            ], 200);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

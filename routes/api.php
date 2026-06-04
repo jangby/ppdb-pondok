@@ -25,3 +25,5 @@ Route::get('/ppdb/search', [App\Http\Controllers\Api\PPDBController::class, 'sea
 Route::get('/ppdb/cekstatus', [App\Http\Controllers\Api\PPDBController::class, 'cekStatus']);
 Route::get('/ppdb/cekberkas', [App\Http\Controllers\Api\PPDBController::class, 'cekBerkas']);
 Route::get('/ppdb/kartutes', [App\Http\Controllers\Api\PPDBController::class, 'getKartuTes']);
+Route::get('/ppdb/cekantrean', [App\Http\Controllers\Api\PPDBController::class, 'cekAntrean']);
+Route::get('/ppdb/info-asrama', [App\Http\Controllers\Api\PPDBController::class, 'infoAsrama']);

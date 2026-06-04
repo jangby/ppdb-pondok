@@ -58,6 +58,9 @@
                             <button type="button" @click="activeTab = 'syarat'" :class="activeTab === 'syarat' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Persyaratan
                             </button>
+                            <button type="button" @click="activeTab = 'asrama'" :class="activeTab === 'asrama' ? 'bg-blue-600 text-white shadow-md ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600'" class="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all whitespace-nowrap">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg> Persiapan Asrama
+                            </button>
                         </nav>
                     </div>
 
@@ -342,6 +345,35 @@ Kode Bank: 002">{{ $settings['info_rekening'] ?? '' }}</textarea>
                                     </template>
                                 </div>
                                 <button type="button" @click="requirements.push({nama:'', jumlah:1})" class="mt-4 w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-xl hover:border-blue-500 hover:text-blue-600 transition font-bold flex items-center justify-center gap-2">+ Tambah Persyaratan</button>
+                            </div>
+                        </div>
+
+                        {{-- TAB: PERSIAPAN ASRAMA (BARU) --}}
+                        <div x-show="activeTab === 'asrama'" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="font-bold text-gray-800 text-lg mb-6 border-b pb-4">Info Persiapan Asrama / Mondok</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2 text-emerald-600">✅ Perlengkapan Wajib Dibawa</label>
+                                    <p class="text-xs text-gray-500 mb-2">Tuliskan barang apa saja yang harus disiapkan santri (pisahkan dengan baris baru / enter).</p>
+                                    <textarea name="perlengkapan_wajib" rows="8" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Contoh:
+- Baju Koko/Gamis 5 Set
+- Sarung 3 Buah
+- Peralatan Mandi
+- Kasur & Bantal">{{ $settings['perlengkapan_wajib'] ?? '' }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2 text-red-600">❌ Barang Terlarang</label>
+                                    <p class="text-xs text-gray-500 mb-2">Tuliskan barang yang DILARANG KERAS dibawa ke lingkungan pondok.</p>
+                                    <textarea name="perlengkapan_dilarang" rows="8" class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 shadow-sm py-3" placeholder="Contoh:
+- Handphone / Gadget
+- Senjata Tajam
+- Alat Musik
+- Pakaian Ketat">{{ $settings['perlengkapan_dilarang'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="mt-6 bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3">
+                                <svg class="w-6 h-6 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <p class="text-sm text-blue-800">Data ini akan otomatis ditarik oleh <strong>Bot WhatsApp</strong> saat wali santri mengirimkan perintah <strong>!asrama</strong> atau <strong>!perlengkapan</strong>.</p>
                             </div>
                         </div>
 

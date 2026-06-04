@@ -256,7 +256,7 @@ class AdminVerificationController extends Controller
                . "_(Mohon data diisi dengan jujur, teliti, dan berkas lengkap)_\n\n"
                . "💡 *PILIHAN PRAKTIS:*\n"
                . "Jika Anda ingin mengisi biodata otomatis langsung lewat ruang chat WhatsApp ini, silakan salin (copy) dan kirim format perintah di bawah ini:\n\n"
-               . "*!daftar {$data->token}*\n\n"
+               . "*.daftar {$data->token}*\n\n"
                . "Salam hangat - Panitia PPDB {$namaSekolah}";
 
         return $this->sendWA($data->no_wa, $pesan);

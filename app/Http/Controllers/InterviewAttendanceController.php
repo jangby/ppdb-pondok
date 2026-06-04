@@ -70,65 +70,67 @@ class InterviewAttendanceController extends Controller
     // 2. FITUR KIRIM WA (DIRECT LAMPIRAN KARTU TES)
     // =================================================================
     
-    // Dipanggil dari Tombol Ungu di Tabel Santri
     public function sendQrToWa($id)
     {
-        // 1. Load relasi 'santri_room' dan 'wali_room'
         $candidate = Candidate::with(['parent', 'santri_room', 'wali_room'])->findOrFail($id);
         
-        // 2. Ambil Nama Ruangan (Handle jika belum diset/null)
         $ruangSantri = $candidate->santri_room ? $candidate->santri_room->nama_ruangan : 'Cek di Papan Pengumuman';
         $ruangWali   = $candidate->wali_room   ? $candidate->wali_room->nama_ruangan   : 'Cek di Papan Pengumuman';
 
-        // 3. Buat Link Data File Kartu
-        $linkKartu = route('public.kartu_tes', $candidate->no_daftar);
+        // SULAP MENJADI GAMBAR QR CODE (HANYA BERISI NO DAFTAR)
+        $qrImageUrl = "https://quickchart.io/qr?text=" . urlencode($candidate->no_daftar) . "&margin=2&size=500";
         
-        // 4. Susun Pesan (Tanpa menyuruh klik link lagi)
         $message = "🎓 *UNDANGAN WAWANCARA & TES*\n\n" .
                    "Santri/ah: *{$candidate->nama_lengkap}*\n" .
                    "No. Daftar: *{$candidate->no_daftar}*\n\n" .
                    "📍 *LOKASI TES:*\n" .
                    "👤 Santri: *{$ruangSantri}*\n" .
                    "👥 Wali: *{$ruangWali}*\n\n" .
-                   "Berikut adalah lampiran *Kartu Tes / QR Code* Ananda.\n" .
-                   "Silakan diunduh (download) dan tunjukkan gambar/file ini kepada panitia saat tiba di lokasi.\n\n" .
+                   "Berikut adalah *Gambar QR Code* Ananda.\n" .
+                   "Silakan simpan gambar ini dan tunjukkan kepada panitia saat tiba di meja registrasi.\n\n" .
                    "_Simpan pesan ini._";
 
-        // 5. Eksekusi pengiriman via Bot Baileys (dengan file terlampir)
-        $this->sendWaDirectFile($candidate, $message, $linkKartu, 'Kartu_Tes_'.$candidate->no_daftar.'.pdf');
+        $status = $this->sendWaDirectFile($candidate, $message, $qrImageUrl, 'QR_Kartu_'.$candidate->no_daftar.'.png');
 
-        return back()->with('success', 'Lampiran Kartu Tes & Info Ruangan berhasil dikirim langsung ke WA Wali.');
-    }
-
-    /**
-     * Fungsi Helper Baru Khusus Mengirim File ke Bot Baileys Node.js
-     */
-    private function sendWaDirectFile($candidate, $message, $fileUrl, $fileName)
-    {
-        // Sesuaikan dengan struktur tabel Anda, biasanya nomor WA ada di relasi parent atau di tabel candidate
-        $number = $candidate->no_wa ?? ($candidate->parent->no_wa ?? null); 
-        
-        if (!$number) return false;
-
-        // Bersihkan format nomor WA
-        $chatId = preg_replace('/[^0-9]/', '', $number);
-        if (substr($chatId, 0, 1) == '0') {
-            $chatId = '62' . substr($chatId, 1);
+        // ... (kode peringatan success/error di bawahnya tetap sama)
+        if ($status === 'no_number') {
+            return back()->with('error', '⛔ Gagal: Nomor WA pendaftar tidak ditemukan.');
+        } elseif ($status === 'bot_error') {
+            return back()->with('error', '⚠️ Gagal: Tidak dapat menghubungi Bot.');
         }
 
+        return back()->with('success', '✅ Gambar QR Code & Info Ruangan berhasil dikirim.');
+    }
+
+    private function sendWaDirectFile($candidate, $message, $fileUrl, $fileName)
+    {
+        // A. Coba cari nomor WA dari relasi Candidate atau Parent
+        $number = $candidate->no_wa ?? ($candidate->parent->no_wa ?? null); 
+        
+        // B. Jika tidak ketemu, kita bongkar dan lacak riwayat pendaftaran di tabel Verification
+        if (!$number) {
+            $verif = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
+            $number = $verif ? $verif->no_wa : null;
+        }
+
+        // Jika tetap tidak ketemu, teriakkan error "no_number"
+        if (!$number) return 'no_number';
+
+        $chatId = preg_replace('/[^0-9]/', '', $number);
+        if (substr($chatId, 0, 1) == '0') $chatId = '62' . substr($chatId, 1);
+
         try {
-            // Tembak ke Port 5000 Bot Baileys Anda
-            \Illuminate\Support\Facades\Http::timeout(15)->post('http://127.0.0.1:5000/api/send-message', [
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->post('http://127.0.0.1:5000/api/send-message', [
                 'no_wa'     => $chatId,
                 'pesan'     => $message,
                 'file_url'  => $fileUrl,
                 'file_name' => $fileName
             ]);
             
-            return true;
+            return $response->successful() ? 'success' : 'bot_error';
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Gagal kirim file Kartu Tes ke Bot WA: " . $e->getMessage());
-            return false;
+            \Illuminate\Support\Facades\Log::error("Gagal konek ke Bot: " . $e->getMessage());
+            return 'bot_error';
         }
     }
 
@@ -138,19 +140,27 @@ class InterviewAttendanceController extends Controller
         $candidate = Candidate::with('parent')->findOrFail($id);
         
         if ($candidate->waktu_hadir) {
-            return back()->with('error', 'Santri sudah hadir, tidak perlu diingatkan.');
+            return back()->with('error', '⛔ Santri sudah hadir, tidak perlu diingatkan.');
         }
 
-        $message = "*PENGINGAT JADWAL WAWANCARA*\n\n" .
-                   "Yth. Wali Santri *{$candidate->nama_lengkap}*,\n" .
-                   "Kami menunggu kehadiran Anda di lokasi tes. Mohon segera melakukan registrasi ulang di meja panitia.\n\n" .
-                   "Terima kasih.";
+        $message = "🔔 *PENGINGAT JADWAL WAWANCARA & TES*\n\n" .
+                   "Yth. Bapak/Ibu Wali dari *{$candidate->nama_lengkap}*,\n\n" .
+                   "Kami menginformasikan bahwa panitia saat ini sedang menunggu kehadiran Anda di lokasi tes. Mohon segera menuju meja registrasi kepanitiaan untuk melakukan lapor kedatangan.\n\n" .
+                   "Terima kasih atas kerjasamanya. 🙏";
 
-        $this->sendWaLink($candidate, $message);
+        // Eksekusi pengiriman via Bot Baileys (Parameter ke-3 dan ke-4 diisi null karena tidak ada lampiran file)
+        $status = $this->sendWaDirectFile($candidate, $message, null, null);
 
-        return back()->with('success', 'Pengingat berhasil dikirim.');
+        // Tampilkan pesan error / sukses yang informatif
+        if ($status === 'no_number') {
+            return back()->with('error', '⛔ Gagal: Nomor WA pendaftar tidak ditemukan di database.');
+        } elseif ($status === 'bot_error') {
+            return back()->with('error', '⚠️ Gagal: Tidak dapat menghubungi server Bot Baileys.');
+        }
+
+        return back()->with('success', '✅ Pesan pengingat (Reminder) berhasil dikirim langsung ke WhatsApp Wali Santri.');
     }
-
+    
     // Helper Kirim WA (Text Only / Link)
     private function sendWaLink($candidate, $messageText)
     {
