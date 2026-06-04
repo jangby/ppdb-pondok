@@ -485,6 +485,17 @@
                                     <span id="teks-total-ketik" class="text-2xl font-black text-blue-700">Rp 0</span>
                                 </div>
 
+                                {{-- CHECKBOX KIRIM WA --}}
+                                <div class="mb-4 flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+                                    <div class="flex items-center h-5">
+                                        <input id="kirim_wa" name="kirim_wa" type="checkbox" value="1" checked class="w-5 h-5 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer">
+                                    </div>
+                                    <div class="text-sm">
+                                        <label for="kirim_wa" class="font-bold text-green-900 cursor-pointer">Kirim Struk ke WA Orang Tua</label>
+                                        <p class="text-xs text-green-700">Hapus centang ini jika Anda hanya sedang melakukan perbaikan/koreksi data agar orang tua tidak bingung.</p>
+                                    </div>
+                                </div>
+
                                 <div class="flex flex-col sm:flex-row justify-between items-center bg-indigo-50 p-4 rounded-xl border border-indigo-100 gap-4">
                                     <div class="flex items-center gap-3 text-sm text-indigo-900">
                                         <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">

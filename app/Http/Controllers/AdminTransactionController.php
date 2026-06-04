@@ -96,46 +96,53 @@ class AdminTransactionController extends Controller
             // ====================================================================
             // [BARU] TEMBAK WEBHOOK KE BOT BESERTA LOGGING & FORMAT NOMOR
             // ====================================================================
-            try {
-                $candidate = Candidate::with('parent')->find($candidate_id);
+            // CEK APAKAH CHECKBOX "KIRIM WA" DICENTANG?
+            if ($request->has('kirim_wa')) {
+                try {
+                    $candidate = Candidate::with('parent')->find($candidate_id);
 
-                // Cari No WA Wali (Prioritas 1: Tabel Verification, Prioritas 2: Tabel Parent)
-                $no_wa = null;
-                $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
+                    // Cari No WA Wali
+                    $no_wa = null;
+                    $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
 
-                if ($verification && !empty($verification->no_wa)) {
-                    $no_wa = $verification->no_wa;
-                } elseif ($candidate->parent && !empty($candidate->parent->no_hp_ayah)) {
-                    $no_wa = $candidate->parent->no_hp_ayah;
-                }
-
-                if ($no_wa) {
-                    // FORMATTING NOMOR WA: Hapus spasi/strip, ubah '08' jadi '628'
-                    $chatId = preg_replace('/[^0-9]/', '', $no_wa);
-                    if (substr($chatId, 0, 1) == '0') {
-                        $chatId = '62' . substr($chatId, 1);
+                    if ($verification && !empty($verification->no_wa)) {
+                        $no_wa = $verification->no_wa;
+                    } elseif ($candidate->parent && !empty($candidate->parent->no_hp_ayah)) {
+                        $no_wa = $candidate->parent->no_hp_ayah;
                     }
 
-                    Log::info("[WEBHOOK KASIR] Mencoba kirim notif ke: {$chatId} untuk santri: {$candidate->nama_lengkap}");
+                    if ($no_wa) {
+                        // FORMATTING NOMOR WA
+                        $chatId = preg_replace('/[^0-9]/', '', $no_wa);
+                        if (substr($chatId, 0, 1) == '0') {
+                            $chatId = '62' . substr($chatId, 1);
+                        }
 
-                    // Tembak ke Node.js bot
-                    $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/notifikasi-ppdb', [
-                        'no_wa'  => $chatId,
-                        'tipe'   => 'terima_bayar',
-                        'nama'   => $candidate->nama_lengkap,
-                        'detail' => $totalReceived 
-                    ]);
+                        Log::info("[WEBHOOK KASIR] Mencoba kirim notif ke: {$chatId} untuk santri: {$candidate->nama_lengkap}");
 
-                    Log::info("[WEBHOOK KASIR] Response dari Bot: " . $response->body());
-                } else {
-                    Log::warning("[WEBHOOK KASIR] Batal kirim WA. Nomor WA tidak ditemukan di database untuk kandidat ID: {$candidate_id}");
+                        // Tembak ke Node.js bot
+                        $response = Http::timeout(5)->post('http://127.0.0.1:5000/api/notifikasi-ppdb', [
+                            'no_wa'  => $chatId,
+                            'tipe'   => 'terima_bayar',
+                            'nama'   => $candidate->nama_lengkap,
+                            'detail' => $totalReceived 
+                        ]);
+
+                        Log::info("[WEBHOOK KASIR] Response dari Bot: " . $response->body());
+                    } else {
+                        Log::warning("[WEBHOOK KASIR] Batal kirim WA. Nomor WA tidak ditemukan.");
+                    }
+                } catch (\Exception $e) {
+                    Log::error("[WEBHOOK KASIR] Terjadi Error Webhook: " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                Log::error("[WEBHOOK KASIR] Terjadi Error Webhook: " . $e->getMessage());
+                
+                // Pesan Sukses jika WA dikirim
+                return back()->with('success', 'Pembayaran berhasil disimpan & Notifikasi WA terkirim!');
             }
             // ====================================================================
 
-            return back()->with('success', 'Pembayaran berhasil disimpan & Notifikasi WA terkirim!');
+            // Pesan Sukses jika WA TIDAK dikirim (Mode Senyap)
+            return back()->with('success', 'Data pembayaran berhasil diperbarui secara senyap (Tanpa Notifikasi WA).');
 
         } catch (\Exception $e) {
             DB::rollBack();
