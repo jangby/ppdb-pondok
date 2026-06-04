@@ -21,8 +21,19 @@ class AdminTransactionController extends Controller
         // $request->payments adalah array: [id_tagihan => nominal_bayar]
         $inputs = $request->input('payments', []);
         
-        // Filter: Hapus input yang kosong atau 0
-        $payments = array_filter($inputs, fn($value) => $value > 0);
+        // =======================================================
+        // [PERBAIKAN BUG]: Bulatkan paksa (round) setiap input 
+        // untuk mencegah anomali Floating-Point (misal 99999.99)
+        // =======================================================
+        $payments = [];
+        foreach ($inputs as $billId => $value) {
+            // Ubah menjadi float, lalu bulatkan, lalu jadikan Integer mutlak
+            $nominalBulat = intval(round(floatval($value)));
+            
+            if ($nominalBulat > 0) {
+                $payments[$billId] = $nominalBulat;
+            }
+        }
 
         if (empty($payments)) {
             return back()->with('error', 'Tidak ada nominal yang dimasukkan.');
@@ -30,7 +41,7 @@ class AdminTransactionController extends Controller
 
         DB::beginTransaction();
         try {
-            // 1. Hitung Total Uang Masuk
+            // 1. Hitung Total Uang Masuk (Sekarang sudah dijamin angka bulat)
             $totalReceived = array_sum($payments);
 
             // 2. Buat Header Transaksi
