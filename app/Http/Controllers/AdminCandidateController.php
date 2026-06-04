@@ -246,29 +246,46 @@ class AdminCandidateController extends Controller
 
             $newStatus = $candidate->status_seleksi;
 
-            $candidate->address()->update([
-                'alamat' => $request->alamat,
-                'rt' => $request->rt,
-                'rw' => $request->rw,
-                'desa' => $request->desa,
-                'kecamatan' => $request->kecamatan,
-                'kabupaten' => $request->kabupaten,
-                'provinsi' => $request->provinsi,
-                'kode_pos' => $request->kode_pos,
-            ]);
+            // =========================================================
+            // 1. PERBAIKAN UPDATE ALAMAT (Gunakan updateOrCreate)
+            // =========================================================
+            $candidate->address()->updateOrCreate(
+                ['candidate_id' => $candidate->id], // Kunci pencarian
+                [
+                    'alamat' => $request->alamat,
+                    'rt' => $request->rt,
+                    'rw' => $request->rw,
+                    'desa' => $request->desa,
+                    'kecamatan' => $request->kecamatan,
+                    'kabupaten' => $request->kabupaten,
+                    'provinsi' => $request->provinsi,
+                    'kode_pos' => $request->kode_pos,
+                ]
+            );
 
-            $candidate->parent()->update([
-                'nama_ayah' => $request->nama_ayah,
-                'nik_ayah' => $request->nik_ayah,
-                'pekerjaan_ayah' => $request->pekerjaan_ayah,
-                'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
-                'no_hp_ayah' => $request->no_hp_ayah,
-                'nama_ibu' => $request->nama_ibu,
-                'nik_ibu' => $request->nik_ibu,
-                'pekerjaan_ibu' => $request->pekerjaan_ibu,
-                'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
-                'no_hp_ibu' => $request->no_hp_ibu,
-            ]);
+            // =========================================================
+            // 2. PERBAIKAN UPDATE ORANG TUA (Tambahkan field yang hilang)
+            // =========================================================
+            $candidate->parent()->updateOrCreate(
+                ['candidate_id' => $candidate->id], // Kunci pencarian
+                [
+                    'nama_ayah' => $request->nama_ayah,
+                    'nik_ayah' => $request->nik_ayah,
+                    'thn_lahir_ayah' => $request->thn_lahir_ayah, // <-- BARU DITAMBAHKAN
+                    'pendidikan_ayah' => $request->pendidikan_ayah, // <-- BARU DITAMBAHKAN
+                    'pekerjaan_ayah' => $request->pekerjaan_ayah,
+                    'penghasilan_ayah' => $request->penghasilan_ayah ?? 0,
+                    'no_hp_ayah' => $request->no_hp_ayah,
+                    
+                    'nama_ibu' => $request->nama_ibu,
+                    'nik_ibu' => $request->nik_ibu,
+                    'thn_lahir_ibu' => $request->thn_lahir_ibu, // <-- BARU DITAMBAHKAN
+                    'pendidikan_ibu' => $request->pendidikan_ibu, // <-- BARU DITAMBAHKAN
+                    'pekerjaan_ibu' => $request->pekerjaan_ibu,
+                    'penghasilan_ibu' => $request->penghasilan_ibu ?? 0,
+                    'no_hp_ibu' => $request->no_hp_ibu,
+                ]
+            );
 
             DB::commit();
 
