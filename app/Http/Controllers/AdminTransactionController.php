@@ -200,9 +200,15 @@ class AdminTransactionController extends Controller
                 $bill = CandidateBill::lockForUpdate()->find($detail->candidate_bill_id);
                 
                 if ($bill) {
+                    // Kurangi uang sesuai yang ada di struk
                     $bill->nominal_terbayar -= $detail->nominal;
                     
-                    if ($bill->nominal_terbayar <= 0) {
+                    // =======================================================
+                    // [PERBAIKAN] PENYAPU TOLERANSI (MENGHAPUS UANG HANTU)
+                    // Jika setelah dikurangi ternyata sisanya <= Rp 10, 
+                    // langsung paksa jadi 0 (Belum Lunas).
+                    // =======================================================
+                    if ($bill->nominal_terbayar <= 10) {
                         $bill->nominal_terbayar = 0;
                         $bill->status = 'Belum Lunas';
                     } elseif ($bill->nominal_terbayar < $bill->nominal_tagihan) {
