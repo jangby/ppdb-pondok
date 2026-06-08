@@ -439,8 +439,7 @@ class AdminCandidateController extends Controller
             return back()->with('error', 'Tagihan santri ini sudah lunas.');
         }
 
-        // 3. LOGIKA PENENTUAN NOMOR WA (Sesuai Request)
-        // Cek tabel verification berdasarkan file_perjanjian yang sama
+        // 3. LOGIKA PENENTUAN NOMOR WA
         $verification = \App\Models\Verification::where('file_perjanjian', $candidate->file_perjanjian)->first();
         
         $targetNo = null;
@@ -457,70 +456,66 @@ class AdminCandidateController extends Controller
             $sumberNomor = 'Data Ayah';
         }
 
-        // 4. VALIDASI & PEMBERSIHAN NOMOR (PENTING AGAR TIDAK ERROR 500)
-        // Hapus semua karakter selain angka
+        // 4. VALIDASI & PEMBERSIHAN NOMOR
         $cleanNo = preg_replace('/[^0-9]/', '', $targetNo);
 
-        // Cek jika nomor terlalu pendek (kurang dari 10 digit itu tidak wajar)
         if (empty($cleanNo) || strlen($cleanNo) < 10) {
             return back()->with('error', "Gagal: Nomor WA tidak valid atau kosong. (Sumber: $sumberNomor)");
         }
 
-        // Format ke 62 (Standar Internasional)
+        // Format ke 62
         if (substr($cleanNo, 0, 1) == '0') {
             $cleanNo = '62' . substr($cleanNo, 1);
         } elseif (substr($cleanNo, 0, 2) != '62') {
             $cleanNo = '62' . $cleanNo;
         }
         
-        $chatId = $cleanNo . '@c.us';
+        // Baileys hanya butuh nomor murni, tidak perlu @c.us
+        $chatId = $cleanNo; 
 
         // 5. Ambil Pengaturan
         $namaSekolah = Setting::where('key', 'nama_sekolah')->value('value') ?? 'Pondok Pesantren';
         $waAdmin     = Setting::where('key', 'whatsapp_admin')->value('value') ?? '-';
         $noRekening  = Setting::where('key', 'info_rekening')->value('value') ?? '(Hubungi Admin)';
         
-        // Nama Wali (Untuk sapaan)
         $namaWali = $candidate->parent->nama_ayah ?? 'Wali Santri';
 
-        // 6. Susun Pesan (Gunakan Emoji Standar Saja)
+        // 6. SUSUN PESAN (Ditambahkan opsi Transfer & Tunai)
         $pesan = "Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\n"
                . "Yth. Bapak/Ibu *{$namaWali}*,\n"
-               . "Berikut informasikan tagihan pembayaran santri:\n\n"
+               . "Berikut kami informasikan rincian tagihan administrasi santri:\n\n"
                . "👤 Nama: *{$candidate->nama_lengkap}*\n"
                . "📝 No. Daftar: {$candidate->no_daftar}\n"
                . "💰 Sisa Tagihan: *Rp " . number_format($sisaTagihan, 0, ',', '.') . "*\n\n"
-               . "Mohon pelunasan ditransfer ke:\n"
-               . "🏦 *{$noRekening}*\n\n"
-               . "Konfirmasi bukti bayar ke Admin:\n"
+               . "💳 *METODE PEMBAYARAN:*\n"
+               . "1️⃣ *Transfer Bank:*\n"
+               . "{$noRekening}\n\n"
+               . "2️⃣ *Bayar Tunai (Cash):*\n"
+               . "Bapak/Ibu juga dapat melakukan pelunasan secara langsung dengan datang ke meja Kasir / Sekretariat PPDB {$namaSekolah}.\n\n"
+               . "Bila sudah melakukan pembayaran, mohon konfirmasi bukti bayar ke Admin melalui tautan berikut:\n"
                . "📞 wa.me/{$waAdmin}\n\n"
                . "Terima kasih.\n"
                . "_{$namaSekolah}_";
 
-        // 7. Kirim & Debugging
+        // 7. KIRIM MENGGUNAKAN BOT BAILEYS (Node.js)
         try {
-            // Log dulu sebelum kirim untuk cek di storage/logs/laravel.log
             Log::info("Mencoba kirim Tagihan WA ke: $chatId ($sumberNomor)");
 
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'X-Api-Key'    => env('WAHA_API_KEY', '0f0eb5d196b6459781f7d854aac5050e'),
-            ])->timeout(10)->post(env('WAHA_BASE_URL', 'http://72.61.208.130:3001') . '/api/sendText', [
-                'session' => 'default',
-                'chatId'  => $chatId,
-                'text'    => $pesan
+            // Tembak ke API lokal Bot Node.js Anda
+            $response = Http::timeout(10)->post('http://127.0.0.1:5000/api/send-message', [
+                'no_wa' => $chatId,
+                'pesan' => $pesan
             ]);
 
             if ($response->successful()) {
-                return back()->with('success', "Sukses mengirim tagihan ke nomor $sumberNomor ($cleanNo).");
+                return back()->with('success', "✅ Sukses mengirim tagihan ke nomor $sumberNomor ($cleanNo) via Bot.");
             } else {
-                // Log error detail dari WAHA
-                Log::error("WAHA Error {$response->status()}: " . $response->body());
-                return back()->with('error', "Gagal kirim WA (Status {$response->status()}). Cek Log untuk detail.");
+                Log::error("Baileys Error {$response->status()}: " . $response->body());
+                return back()->with('error', "⚠️ Gagal kirim WA (Status {$response->status()}). Pastikan server bot Baileys aktif.");
             }
         } catch (\Exception $e) {
             Log::error("Koneksi WA Gagal: " . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan sistem saat mengirim WA.');
+            return back()->with('error', '⚠️ Terjadi kesalahan sistem saat menghubungi server Bot WhatsApp lokal.');
         }
     }
 

@@ -798,7 +798,7 @@
 
             let text = "";
             text += center + boldOn + "BUKTI PEMBAYARAN\n" + boldOff;
-            text += "PSB PONPES AL-HIKAM\n";
+            text += "PSB PONPES ASSA'ADAH\n";
             text += "--------------------------------\n";
             text += left;
             text += "No Invoice : #" + data.invoice + "\n";
