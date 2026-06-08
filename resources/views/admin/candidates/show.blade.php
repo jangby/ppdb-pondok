@@ -488,7 +488,7 @@
                                 {{-- CHECKBOX KIRIM WA --}}
                                 <div class="mb-4 flex items-start gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
                                     <div class="flex items-center h-5">
-                                        <input id="kirim_wa" name="kirim_wa" type="checkbox" value="1" checked class="w-5 h-5 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer">
+                                        <input id="kirim_wa" name="kirim_wa" type="checkbox" value="0" checked class="w-5 h-5 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 focus:ring-2 cursor-pointer">
                                     </div>
                                     <div class="text-sm">
                                         <label for="kirim_wa" class="font-bold text-green-900 cursor-pointer">Kirim Struk ke WA Orang Tua</label>
