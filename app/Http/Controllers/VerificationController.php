@@ -32,7 +32,8 @@ class VerificationController extends Controller
 
             Verification::create([
                 'no_wa'             => '000000000000',      // Nomor dummy
-                'file_perjanjian'   => 'skipped_by_system', // Penanda dilewati
+                // PERBAIKAN: Tambahkan Str::random(10) agar datanya unik untuk setiap pendaftar
+                'file_perjanjian'   => 'skipped_by_system_' . Str::random(10), 
                 'token'             => $autoToken,
                 'status'            => 'approved',          // Auto Lolos Berkas
                 'status_pembayaran' => 'paid'               // Auto Lunas (Bypass)
