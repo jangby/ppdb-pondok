@@ -97,7 +97,7 @@ class AdminTransactionController extends Controller
             // [BARU] TEMBAK WEBHOOK KE BOT BESERTA LOGGING & FORMAT NOMOR
             // ====================================================================
             // CEK APAKAH CHECKBOX "KIRIM WA" DICENTANG?
-            if ($request->has('kirim_wa')) {
+            if (env('WA_NOTIF_ACTIVE', true) == true && $request->has('kirim_wa')) {
                 try {
                     $candidate = Candidate::with('parent')->find($candidate_id);
 

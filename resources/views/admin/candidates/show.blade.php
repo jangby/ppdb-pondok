@@ -396,6 +396,34 @@
                                     </div>
                                 @endif
                                 {{-- ================================================================= --}}
+
+                                {{-- FORM TAMBAH ITEM TAGIHAN BARU --}}
+<div class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div>
+        <h4 class="font-bold text-gray-800 text-sm">Sesuaikan Item Tagihan</h4>
+        <p class="text-xs text-gray-500 mt-1">Tambahkan tagihan baru yang belum ada di daftar.</p>
+    </div>
+    <button type="button" onclick="document.getElementById('formTambahTagihan').classList.toggle('hidden')" class="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg text-xs hover:bg-gray-100 transition shadow-sm">
+        + Tambah Item Manual
+    </button>
+</div>
+
+{{-- UI TAMBAH ITEM (Diubah jadi DIV agar tidak terjadi Nested Form) --}}
+   <div id="formTambahTagihan" class="hidden mb-6 p-4 bg-white border border-indigo-200 rounded-xl shadow-sm flex flex-col sm:flex-row gap-3 items-end">
+       <div class="flex-1 w-full">
+           <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Item Pembayaran:</label>
+           <!-- Atribut form="formRahasiaTambah" akan menghubungkan input ini ke form di bawah -->
+           <select name="payment_type_id" form="formRahasiaTambah" required class="block w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+               <option value="">-- Pilih Tagihan Baru --</option>
+               @foreach($paymentTypes as $tipe)
+                   <option value="{{ $tipe->id }}">{{ $tipe->nama_pembayaran }} (Rp {{ number_format($tipe->nominal, 0, ',', '.') }})</option>
+               @endforeach
+           </select>
+       </div>
+       <button type="submit" form="formRahasiaTambah" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg text-sm hover:bg-indigo-700 transition shadow-md">
+           Simpan Item
+       </button>
+   </div>
                                 
                                 <div class="overflow-hidden rounded-xl border border-gray-200 mb-6">
                                     <table class="min-w-full divide-y divide-gray-200">
@@ -411,39 +439,54 @@
                                             @foreach($candidate->bills as $bill)
                                             <tr class="hover:bg-gray-50 transition {{ $bill->sisa_tagihan == 0 ? 'bg-green-50/50' : '' }}">
                                                 <td class="px-5 py-4 text-sm font-medium text-gray-900">
-                                                    {{ $bill->payment_type->nama_pembayaran }}
-                                                    @if($bill->sisa_tagihan == 0)
-                                                        <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold border border-green-200">LUNAS</span>
-                                                    @endif
+    {{ $bill->payment_type->nama_pembayaran }}
+    
+    @if($bill->sisa_tagihan == 0)
+        <span class="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-bold border border-green-200">LUNAS</span>
+    @endif
 
-                                                    @if($bill->nominal_tagihan != $bill->payment_type->nominal)
-                                                        <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
-                                                            <div class="text-yellow-800 mb-2 leading-relaxed">
-                                                                <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>
-                                                                Harga dasar saat ini: <span class="font-bold">Rp {{ number_format($bill->payment_type->nominal, 0, ',', '.') }}</span>
-                                                            </div>
-                                                            <button type="submit" 
-                                                                    formaction="{{ route('admin.bills.reconstruct', $bill->id) }}"
-                                                                    onclick="return confirm('Yakin ingin merekonstruksi tagihan ini? Status Lunas/Cicilan dan Sisa Hutang akan dihitung ulang secara otomatis.');" 
-                                                                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded font-bold transition flex items-center justify-center gap-1">
-                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                                                Sesuaikan Tagihan
-                                                            </button>
-                                                        </div>
-                                                    @endif
+    {{-- INI DIA TOMBOL HAPUS TAGIHANNYA --}}
+    @if($bill->nominal_terbayar == 0)
+        <div class="mt-2 block w-full">
+            <button type="button" 
+                    onclick="if(confirm('Yakin ingin menghapus item tagihan ini?')) { document.getElementById('form-hapus-{{ $bill->id }}').submit(); }" 
+                    class="w-full bg-red-50 hover:bg-red-100 text-red-600 px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-red-200">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Hapus Tagihan
+            </button>
+        </div>
+    @endif
 
-                                                    @if($bill->sisa_tagihan > 0 && $bill->sisa_tagihan <= 100)
-                                                        <div class="mt-2 block w-full">
-                                                            <button type="submit" 
-                                                                    formaction="{{ route('admin.bills.fix_anomaly', $bill->id) }}"
-                                                                    onclick="return confirm('Sisa tagihan anomali: Rp {{ $bill->sisa_tagihan }}.\n\nYakin ingin MERESET tagihan ini kembali menjadi Belum Bayar (Rp 0)?\nSetelah direset, Anda bisa menginputkan ulang pembayarannya dengan benar agar tercatat di Riwayat Transaksi.');" 
-                                                                    class="w-full bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-orange-600">
-                                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                                                Reset ke Belum Bayar
-                                                            </button>
-                                                        </div>
-                                                    @endif
-                                                </td>
+    {{-- TOMBOL BAWAAN: SESUAIKAN TARIF --}}
+    @if($bill->nominal_tagihan != $bill->payment_type->nominal)
+        <div class="mt-3 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg text-xs shadow-sm block w-full">
+            <div class="text-yellow-800 mb-2 leading-relaxed">
+                <strong class="block text-yellow-900">⚠️ Tarif Berubah!</strong>
+                Harga dasar saat ini: <span class="font-bold">Rp {{ number_format($bill->payment_type->nominal, 0, ',', '.') }}</span>
+            </div>
+            <button type="submit" 
+                    formaction="{{ route('admin.bills.reconstruct', $bill->id) }}"
+                    onclick="return confirm('Yakin ingin merekonstruksi tagihan ini? Status Lunas/Cicilan dan Sisa Hutang akan dihitung ulang secara otomatis.');" 
+                    class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 rounded font-bold transition flex items-center justify-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Sesuaikan Tagihan
+            </button>
+        </div>
+    @endif
+
+    {{-- TOMBOL BAWAAN: RESET ANOMALI --}}
+    @if($bill->sisa_tagihan > 0 && $bill->sisa_tagihan <= 100)
+        <div class="mt-2 block w-full">
+            <button type="submit" 
+                    formaction="{{ route('admin.bills.fix_anomaly', $bill->id) }}"
+                    onclick="return confirm('Sisa tagihan anomali: Rp {{ $bill->sisa_tagihan }}.\n\nYakin ingin MERESET tagihan ini kembali menjadi Belum Bayar (Rp 0)?');" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-white px-2 py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 text-xs shadow-sm border border-orange-600">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reset ke Belum Bayar
+            </button>
+        </div>
+    @endif
+</td>
                                                 <td class="px-5 py-4 text-sm text-gray-500 text-right">
                                                     {{ number_format($bill->nominal_tagihan, 0, ',', '.') }}
                                                 </td>
@@ -887,4 +930,16 @@
             hitungTotalRealTime();
         });
     </script>
+
+    {{-- KUMPULAN FORM RAHASIA (Aman dari bentrok karena diletakkan di luar form pembayaran) --}}
+    <form id="formRahasiaTambah" action="{{ route('admin.candidates.bills.add', $candidate->id) }}" method="POST" class="hidden">
+        @csrf
+    </form>
+
+    @foreach($candidate->bills as $b)
+        <form id="form-hapus-{{ $b->id }}" action="{{ route('admin.candidates.bills.remove', ['candidate_id' => $candidate->id, 'bill_id' => $b->id]) }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endforeach
 </x-app-layout>

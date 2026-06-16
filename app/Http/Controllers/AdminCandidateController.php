@@ -179,11 +179,15 @@ class AdminCandidateController extends Controller
     }
 
     public function show($id)
-    {
-        // Tetap load dormitory jaga-jaga kalau sudah diassign di tahap interview nanti
-        $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions', 'dormitory'])->findOrFail($id);
-        return view('admin.candidates.show', compact('candidate'));
-    }
+ {
+     // Tetap load dormitory jaga-jaga kalau sudah diassign di tahap interview nanti
+     $candidate = Candidate::with(['address', 'parent', 'bills.payment_type', 'transactions', 'dormitory'])->findOrFail($id);
+
+     // Mengambil semua jenis tagihan yang ada di sistem
+     $paymentTypes = \App\Models\PaymentType::all(); 
+
+     return view('admin.candidates.show', compact('candidate', 'paymentTypes'));
+ }
     
     // --- [1] LOGIKA UPDATE STATUS (TOMBOL KHUSUS) ---
     public function updateStatus(Request $request, $id)
@@ -697,5 +701,43 @@ class AdminCandidateController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal menyimpan kelengkapan berkas: ' . $e->getMessage());
         }
+    }
+
+    // --- FUNGSI TAMBAH ITEM TAGIHAN MANUAL ---
+    public function addBill(Request $request, $id)
+    {
+        $request->validate(['payment_type_id' => 'required']);
+        $candidate = Candidate::findOrFail($id);
+        $paymentType = \App\Models\PaymentType::findOrFail($request->payment_type_id);
+
+        // Cek apakah tagihan ini sudah ada di anak ini (jangan sampai double)
+        if ($candidate->bills()->where('payment_type_id', $paymentType->id)->exists()) {
+            return back()->with('error', 'Gagal: Tagihan ini sudah ada di daftar tagihan santri.');
+        }
+
+        // Masukkan tagihan baru
+        CandidateBill::create([
+            'candidate_id' => $candidate->id,
+            'payment_type_id' => $paymentType->id,
+            'nominal_tagihan' => $paymentType->nominal,
+            'nominal_terbayar' => 0,
+            'status' => 'Belum Lunas',
+        ]);
+
+        return back()->with('success', 'Berhasil menambahkan item tagihan baru (misal: tambahan baju/buku).');
+    }
+
+    // --- FUNGSI HAPUS ITEM TAGIHAN MANUAL ---
+    public function removeBill($candidate_id, $bill_id)
+    {
+        $bill = CandidateBill::where('candidate_id', $candidate_id)->where('id', $bill_id)->firstOrFail();
+        
+        // Mencegah error: Jangan izinkan hapus kalau tagihannya sudah pernah dicicil/dibayar
+        if ($bill->nominal_terbayar > 0) {
+            return back()->with('error', 'Tidak bisa dihapus! Tagihan ini sudah ada riwayat cicilan masuk. Jika ingin menghapus, batalkan dulu transaksinya di tabel bawah.');
+        }
+
+        $bill->delete();
+        return back()->with('success', 'Item tagihan berhasil dihapus (misal: diberi beasiswa keringanan).');
     }
 }

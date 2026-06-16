@@ -163,6 +163,8 @@ Route::middleware('auth')->group(function () {
 
     // Route Wildcard Santri
     Route::get('/admin/santri/{id}', [AdminCandidateController::class, 'show'])->name('admin.candidates.show');
+    Route::post('/admin/santri/{id}/tambah-tagihan', [AdminCandidateController::class, 'addBill'])->name('admin.candidates.bills.add');
+    Route::delete('/admin/santri/{candidate_id}/hapus-tagihan/{bill_id}', [AdminCandidateController::class, 'removeBill'])->name('admin.candidates.bills.remove');
     Route::get('/admin/santri/{id}/edit', [AdminCandidateController::class, 'edit'])->name('admin.candidates.edit');
     Route::put('/admin/santri/{id}', [AdminCandidateController::class, 'update'])->name('admin.candidates.update');
     Route::delete('/admin/santri/{id}', [AdminCandidateController::class, 'destroy'])->name('admin.candidates.destroy');
