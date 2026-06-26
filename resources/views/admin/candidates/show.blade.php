@@ -320,6 +320,28 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- CARD CETAK KARTU ASRAMA --}}
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Penempatan Asrama</h3>
+                        
+                        @if($candidate->dormitory)
+                            <div class="mb-4 text-center">
+                                <span class="block text-xs font-bold text-gray-400 uppercase">Kamar Santri:</span>
+                                <span class="block text-lg font-black text-indigo-700 mt-1">{{ $candidate->dormitory->nama_asrama }}</span>
+                            </div>
+                            <a href="{{ route('admin.candidates.print_asrama', $candidate->id) }}" target="_blank" class="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition shadow-md">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Cetak Kartu Asrama
+                            </a>
+                        @else
+                            <div class="text-center py-4 bg-gray-50 rounded-xl border border-gray-200 border-dashed">
+                                <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                <p class="text-sm font-bold text-gray-500">Belum Ada Asrama</p>
+                                <p class="text-xs text-gray-400 mt-1">Santri belum dialokasikan ke asrama mana pun.</p>
+                            </div>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- RIGHT COLUMN (MAIN) --}}
@@ -841,16 +863,13 @@
 
             let text = "";
             text += center + boldOn + "BUKTI PEMBAYARAN\n" + boldOff;
-            text += "PSB PONPES AL-HIKAM\n";
+            text += "PSB PONPES ASSA'ADAH\n";
             text += "--------------------------------\n";
             text += left;
             text += "No Invoice : #" + data.invoice + "\n";
             text += "Tanggal    : " + data.tanggal + "\n";
             text += "Nama       : " + data.nama.substring(0, 20) + "\n";
             text += "No Daftar  : " + data.no_daftar + "\n";
-            text += "--------------------------------\n";
-            text += boldOn + "Pembayaran:" + boldOff + "\n";
-            text += data.jenis + "\n";
             text += "--------------------------------\n";
             text += "Total Tagihan  : Rp " + data.total_tagihan + "\n";
             text += boldOn + "Bayar Sekarang : Rp " + data.bayar_sekarang + boldOff + "\n";

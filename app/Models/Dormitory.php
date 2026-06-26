@@ -15,33 +15,37 @@ class Dormitory extends Model
     }
 
     /**
-     * LOGIKA UTAMA: AUTO ASSIGN (ROUND ROBIN / BALANCING)
-     * Fungsi ini akan mencari asrama yang paling sedikit penghuninya
-     * berdasarkan gender santri. Ini otomatis menciptakan efek "selang-seling".
+     * LOGIKA BARU: SEQUENTIAL FILLING (Isi Penuh Satu per Satu)
+     * Fungsi ini akan mengisi asrama yang paling dulu dibuat sampai batas kapasitasnya.
+     * Jika sudah penuh, baru bergeser ke asrama selanjutnya.
      */
     public static function getAutoAssignedDorm($genderSantri) // 'L' atau 'P'
     {
         // Mapping Gender L/P ke Putra/Putri
         $jenis = ($genderSantri == 'L') ? 'Putra' : 'Putri';
 
-        // Ambil semua asrama aktif sesuai gender beserta jumlah penghuninya
+        // Ambil semua asrama aktif sesuai gender
+        // Urutkan dari yang paling pertama dibuat (created_at asc / id asc)
         $dorms = self::where('jenis_asrama', $jenis)
                     ->where('is_active', true)
+                    ->orderBy('id', 'asc') 
                     ->withCount('candidates') // Hitung jumlah santri yg sudah ada
                     ->get();
 
         if ($dorms->isEmpty()) return null;
 
-        // Cari asrama dengan penghuni TERDIKIT (Load Balancing)
-        // Logika ini otomatis membuat urutan A -> B -> A -> B
-        $selectedDorm = $dorms->sortBy('candidates_count')->first();
+        // Cari asrama PERTAMA yang jumlah penghuninya MASIH DI BAWAH batas kapasitas
+        $selectedDorm = $dorms->first(function ($dorm) {
+            return $dorm->candidates_count < $dorm->kapasitas;
+        });
 
-        // Cek Kuota (Opsional: Jika penuh, cari yang lain atau tetap paksa masuk)
-        if ($selectedDorm->candidates_count >= $selectedDorm->kapasitas) {
-            // Jika mau strict kuota, bisa return null atau throw error
-            // Tapi untuk sekarang kita biarkan masuk (over quota) agar santri tetap dapat kamar
+        // Jika ditemukan asrama yang belum penuh, kembalikan ID-nya
+        if ($selectedDorm) {
+            return $selectedDorm->id;
         }
 
-        return $selectedDorm->id;
+        // Jika kode sampai di sini, berarti SEMUA ASRAMA SUDAH PENUH.
+        // Return null agar santri sisanya tidak dipaksakan masuk.
+        return null;
     }
 }

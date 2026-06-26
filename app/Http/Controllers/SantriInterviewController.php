@@ -60,6 +60,7 @@ class SantriInterviewController extends Controller
     }
     
     // Halaman Form Soal
+    // Halaman Form Soal
     public function form()
     {
         if (!session('santri_id')) {
@@ -72,11 +73,22 @@ class SantriInterviewController extends Controller
             return redirect()->route('interview.santri.login');
         }
 
-        // Ambil Data Pertanyaan
-        $questions = \App\Models\InterviewQuestion::where('is_active', true)->get();
+        // 1. AMBIL DATA SANTRI DARI SESSION
+        $candidateId = session('santri_id');
+        $candidate = Candidate::findOrFail($candidateId);
+
+        // 2. AMBIL DATA PERTANYAAN (Khusus soal Santri)
+        $questions = \App\Models\InterviewQuestion::where('is_active', true)
+                        ->where('target', 'Santri') // Memastikan hanya soal santri yang muncul
+                        ->get();
         
-        // PERBAIKAN: Sesuaikan dengan folder resources/views/interview/santri/form.blade.php
-        return view('interview.santri.form', compact('questions'));
+        // 3. AMBIL JAWABAN SEBELUMNYA (Jika santri merefresh halaman)
+        $existingAnswers = \App\Models\InterviewAnswer::where('candidate_id', $candidateId)
+                        ->pluck('answer', 'interview_question_id')
+                        ->toArray();
+        
+        // PERBAIKAN: Kirim semua variabel yang dibutuhkan ke view
+        return view('interview.santri.form', compact('questions', 'candidate', 'existingAnswers'));
     }
 
     // Simpan Jawaban Santri

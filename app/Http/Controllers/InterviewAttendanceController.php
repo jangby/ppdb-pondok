@@ -251,4 +251,28 @@ class InterviewAttendanceController extends Controller
 
         return back()->with('success', "Berhasil mengirim pengingat ke {$countSuccess} Wali Santri.");
     }
+
+    // Fungsi untuk Live Search Nama Santri di Meja Registrasi
+    public function searchCandidate(Request $request)
+    {
+        $keyword = $request->query('q');
+
+        if (empty($keyword)) {
+            return response()->json([]);
+        }
+
+        // Cari berdasarkan nama atau no_daftar, maksimal tampilkan 5 hasil teratas agar ringan
+        $candidates = Candidate::where('nama_lengkap', 'LIKE', "%{$keyword}%")
+                        ->orWhere('no_daftar', 'LIKE', "%{$keyword}%")
+                        ->select('no_daftar', 'nama_lengkap', 'jenjang', 'waktu_hadir')
+                        ->limit(5)
+                        ->get();
+
+        return response()->json($candidates);
+    }
+
+    public function mobile()
+    {
+        return view('admin.interview.attendance_mobile');
+    }
 }

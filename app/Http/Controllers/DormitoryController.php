@@ -8,20 +8,19 @@ use Illuminate\Http\Request;
 
 class DormitoryController extends Controller
 {
-    /**
-     * Menampilkan daftar asrama beserta statistik penghuninya.
-     */
     public function index()
     {
-        // Ambil data asrama, urutkan terbaru, dan hitung jumlah santri di dalamnya
-        $dorms = Dormitory::withCount('candidates')->latest()->get();
-        
+        // PERBARUAN: Tambahkan with('candidates') untuk menarik daftar anggota asrama
+        $dorms = Dormitory::withCount('candidates')
+                    ->with(['candidates' => function($q) {
+                        $q->orderBy('nama_lengkap', 'asc'); // Urutkan nama sesuai abjad
+                    }])
+                    ->latest()
+                    ->get();
+                    
         return view('admin.dormitories.index', compact('dorms'));
     }
 
-    /**
-     * Menyimpan data asrama baru.
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -42,10 +41,6 @@ class DormitoryController extends Controller
         return back()->with('success', 'Asrama baru berhasil ditambahkan.');
     }
 
-    /**
-     * Menghapus asrama.
-     * Santri yang ada di dalamnya akan otomatis NULL dormitory_id-nya (sesuai migration onDelete set null).
-     */
     public function destroy($id)
     {
         $dorm = Dormitory::findOrFail($id);
@@ -54,29 +49,22 @@ class DormitoryController extends Controller
         return back()->with('success', 'Asrama berhasil dihapus.');
     }
 
-    /**
-     * FITUR SPESIAL: Distribusi Otomatis.
-     * Mencari santri Lulus yang belum punya kamar, lalu membaginya secara rata (selang-seling).
-     */
     public function autoDistribute()
     {
-        // 1. Ambil santri LULUS yang BELUM punya kamar
+        // Ambil SEMUA santri yang BELUM punya kamar (Baik Pending/Lulus)
+        // KECUALIKAN jenjang "SMA Lanjutan"
         $candidates = Candidate::whereNull('dormitory_id')
-                        ->where(function($q) {
-                            $q->where('status_seleksi', 'LIKE', '%Lulus%')
-                              ->orWhere('status_seleksi', 'LIKE', '%Diterima%')
-                              ->orWhere('status_seleksi', 'LIKE', '%Approved%');
-                        })
+                        ->where('jenjang', '!=', 'SMA Lanjutan')
+                        ->orderBy('created_at', 'asc')
                         ->get();
 
         if ($candidates->isEmpty()) {
-            return back()->with('error', 'Tidak ada santri lulus yang perlu ditempatkan (semua sudah punya kamar atau belum lulus).');
+            return back()->with('error', 'Tidak ada santri yang perlu ditempatkan (semua sudah punya kamar atau hanya tersisa jenjang SMA Lanjutan).');
         }
 
         $count = 0;
 
         foreach ($candidates as $santri) {
-            // Panggil fungsi Auto Assign di Model Dormitory
             $dormId = Dormitory::getAutoAssignedDorm($santri->jenis_kelamin);
             
             if ($dormId) {
@@ -86,9 +74,9 @@ class DormitoryController extends Controller
         }
 
         if ($count > 0) {
-            return back()->with('success', "Sukses! $count santri berhasil ditempatkan ke asrama secara otomatis.");
+            return back()->with('success', "Sukses! $count santri berhasil ditempatkan. (Sistem mengisi asrama satu per satu hingga penuh).");
         } else {
-            return back()->with('error', 'Gagal menempatkan santri. Pastikan ada Asrama Aktif yang tersedia untuk Putra/Putri.');
+            return back()->with('error', 'Gagal menempatkan santri. Kemungkinan kapasitas SELURUH Asrama (Putra/Putri) sudah PENUH. Silakan tambah asrama baru atau tambah kapasitasnya.');
         }
     }
 }

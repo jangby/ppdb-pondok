@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/admin/santri/{id}/status', [AdminCandidateController::class, 'updateStatus'])->name('admin.candidates.updateStatus');
     Route::post('/admin/santri/{id}/generate-missing-bills', [AdminCandidateController::class, 'generateMissingBills'])->name('admin.candidates.generate_missing_bills');
     Route::get('/admin/candidates/{id}/print', [AdminCandidateController::class, 'printCard'])->name('admin.candidates.print');
+    Route::get('/admin/candidates/{id}/print-asrama', [AdminCandidateController::class, 'printAsrama'])->name('admin.candidates.print_asrama');
     Route::post('/candidates/{candidate}/upload-perjanjian', [AdminCandidateController::class, 'uploadPerjanjian'])->name('admin.candidates.upload_perjanjian');
     Route::patch('/candidates/{id}/update-berkas', [App\Http\Controllers\AdminCandidateController::class, 'updateBerkas'])->name('admin.candidates.update_berkas');
 
@@ -205,6 +206,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\InterviewDashboardController::class, 'index'])->name('dashboard');
         Route::get('/result/{id}', [App\Http\Controllers\InterviewDashboardController::class, 'result'])->name('result');
         Route::get('/export', [App\Http\Controllers\InterviewDashboardController::class, 'exportExcel'])->name('export');
+        Route::get('/attendance/search', [\App\Http\Controllers\InterviewAttendanceController::class, 'searchCandidate'])->name('attendance.search');
+        Route::get('/attendance/mobile', [App\Http\Controllers\InterviewAttendanceController::class, 'mobile'])->name('attendance.mobile');
         
         // Questions
         Route::get('/questions', [App\Http\Controllers\InterviewQuestionController::class, 'index'])->name('questions.index');

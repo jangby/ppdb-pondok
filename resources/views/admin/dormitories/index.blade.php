@@ -9,12 +9,10 @@
         
         {{-- TOMBOL AKSI CEPAT: DISTRIBUSI OTOMATIS --}}
         @php
+            // Menghitung jumlah santri belum punya kamar (Kecuali SMA Lanjutan)
             $pendingSantri = \App\Models\Candidate::whereNull('dormitory_id')
-                ->where(function($q) {
-                    $q->where('status_seleksi', 'LIKE', '%Lulus%')
-                      ->orWhere('status_seleksi', 'LIKE', '%Diterima%')
-                      ->orWhere('status_seleksi', 'LIKE', '%Approved%');
-                })->count();
+                ->where('jenjang', '!=', 'SMA Lanjutan')
+                ->count();
         @endphp
 
         <div class="col-span-1 lg:col-span-3 mb-8">
@@ -26,7 +24,7 @@
                     <div>
                         <h3 class="font-bold text-xl text-indigo-900">Distribusi Otomatis</h3>
                         <p class="text-sm text-indigo-600 mt-1 leading-relaxed">
-                            Fitur ini akan membagikan kamar secara adil (selang-seling) kepada santri yang sudah Lulus tapi belum mendapatkan asrama.
+                            Fitur ini akan membagikan kamar secara adil (mengisi berurutan sampai penuh) kepada seluruh santri (kecuali SMA Lanjutan) yang belum mendapatkan asrama.
                         </p>
                         @if($pendingSantri > 0)
                             <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-white border border-indigo-200 rounded-full text-xs font-bold text-indigo-700 animate-pulse">
@@ -36,7 +34,7 @@
                         @else
                             <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 bg-white border border-indigo-200 rounded-full text-xs font-bold text-green-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                Semua santri lulus sudah dapat kamar
+                                Semua santri sudah dapat kamar
                             </div>
                         @endif
                     </div>
@@ -44,7 +42,7 @@
 
                 <form action="{{ route('admin.dormitories.distribute') }}" method="POST">
                     @csrf
-                    <button type="submit" 
+                    <button type="submit" onclick="return confirm('Proses penempatan otomatis akan dijalankan. Lanjutkan?')"
                         class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         {{ $pendingSantri == 0 ? 'disabled' : '' }}>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -68,7 +66,6 @@
             </div>
         @endif
 
-        
         {{-- GRID UTAMA: INPUT DAN DAFTAR --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
@@ -155,7 +152,6 @@
 
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group relative overflow-hidden">
                         
-                        {{-- Hiasan Background --}}
                         <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full {{ $bgColor }} opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
 
                         <div class="flex flex-col md:flex-row gap-5 items-start relative z-10">
@@ -170,17 +166,19 @@
                                     <div>
                                         <h4 class="font-bold text-lg text-gray-800 group-hover:text-indigo-600 transition">{{ $dorm->nama_asrama }}</h4>
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider {{ $bgColor }} {{ $textColor }} mt-1">
-                                            @if($dorm->jenis_asrama == 'Putra')
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                            @else
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                            @endif
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                             Khusus {{ $dorm->jenis_asrama }}
                                         </span>
                                     </div>
                                     
-                                    {{-- Actions --}}
+                                    {{-- Actions (Termasuk Tombol Lihat Anggota) --}}
                                     <div class="flex items-center gap-2">
+                                        
+                                        {{-- TOMBOL BARU: LIHAT ANGGOTA --}}
+                                        <button onclick="document.getElementById('modal-dorm-{{ $dorm->id }}').classList.remove('hidden')" class="p-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg hover:bg-indigo-100 hover:scale-105 transition" title="Lihat Daftar Anggota">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                        </button>
+
                                         @if($dorm->link_group_wa)
                                             <a href="{{ $dorm->link_group_wa }}" target="_blank" class="p-2 bg-green-50 text-green-600 border border-green-100 rounded-lg hover:bg-green-100 hover:scale-105 transition" title="Link Grup WhatsApp">
                                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
@@ -214,6 +212,57 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- POPUP MODAL DAFTAR ANGGOTA ASRAMA --}}
+                    <div id="modal-dorm-{{ $dorm->id }}" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity backdrop-blur-sm" onclick="document.getElementById('modal-dorm-{{ $dorm->id }}').classList.add('hidden')"></div>
+
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100">
+                                <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-lg font-black text-indigo-900 leading-tight">Daftar Anggota Asrama</h3>
+                                        <p class="text-xs font-bold text-indigo-600 uppercase tracking-widest mt-0.5">{{ $dorm->nama_asrama }}</p>
+                                    </div>
+                                    <button type="button" onclick="document.getElementById('modal-dorm-{{ $dorm->id }}').classList.add('hidden')" class="text-gray-400 hover:text-red-500 bg-white rounded-lg p-1 transition shadow-sm border border-gray-200">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                                <div class="px-6 py-4 max-h-[60vh] overflow-y-auto bg-gray-50/30">
+                                    @if($dorm->candidates->count() > 0)
+                                        <ul class="space-y-2">
+                                            @foreach($dorm->candidates as $idx => $santri)
+                                                <li class="p-3 flex justify-between items-center bg-white border border-gray-100 rounded-xl shadow-sm hover:border-indigo-200 transition">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            {{ $idx + 1 }}
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-sm font-bold text-gray-800 uppercase leading-snug">{{ $santri->nama_lengkap }}</p>
+                                                            <p class="text-[10px] text-gray-400 font-mono mt-0.5 font-bold">{{ $santri->no_daftar ?? '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span class="px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 border border-gray-200 text-[10px] font-bold tracking-wider shrink-0">
+                                                        {{ $santri->jenjang }}
+                                                    </span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <div class="text-center py-10 bg-white rounded-xl border border-dashed border-gray-200">
+                                            <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                            <p class="text-sm text-gray-600 font-bold">Belum ada santri di asrama ini.</p>
+                                            <p class="text-xs text-gray-400 mt-1">Gunakan fitur distribusi otomatis.</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- END MODAL --}}
+
                 @empty
                     <div class="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-dashed border-gray-300">
                         <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3">

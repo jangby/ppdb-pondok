@@ -740,4 +740,13 @@ class AdminCandidateController extends Controller
         $bill->delete();
         return back()->with('success', 'Item tagihan berhasil dihapus (misal: diberi beasiswa keringanan).');
     }
+
+    public function printAsrama($id)
+    {
+        // Pastikan load relasi dormitory dan address
+        $candidate = Candidate::with(['address', 'dormitory'])->findOrFail($id);
+        $settings = Setting::all()->pluck('value', 'key');
+        
+        return view('admin.candidates.print_asrama', compact('candidate', 'settings'));
+    }
 }

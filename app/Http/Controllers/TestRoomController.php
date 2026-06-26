@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TestRoom;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
-use App\Models\Setting; // <--- Tambahkan baris ini
+use App\Models\Setting;
 
 class TestRoomController extends Controller
 {
@@ -27,10 +27,10 @@ class TestRoomController extends Controller
      */
     public function store(Request $request)
     {
-        // UPDATE: Validasi jenis sekarang menerima 3 opsi
+        // VALIDASI BARU: Hanya menerima Santri atau Wali
         $request->validate([
             'nama_ruangan' => 'required|string|max:255',
-            'jenis'        => 'required|in:Santri Putra,Santri Putri,Wali', 
+            'jenis'        => 'required|in:Santri,Wali', 
             'lokasi'       => 'nullable|string',
             'kapasitas'    => 'required|integer|min:1'
         ]);
@@ -50,12 +50,14 @@ class TestRoomController extends Controller
     }
 
     /**
-     * 4. Distribusi Otomatis (UPDATE UTAMA DISINI)
+     * 4. Distribusi Otomatis
      */
     public function autoDistribute()
     {
-        // Ambil kandidat yang belum punya ruangan
+        // 1. Ambil kandidat yang statusnya BUKAN Ditolak (Berarti masuk Pending & Lulus)
+        // 2. KECUALIKAN jenjang SMA Lanjutan
         $candidates = Candidate::where('status_seleksi', '!=', 'Ditolak')
+                               ->where('jenjang', '!=', 'SMA Lanjutan')
                                ->where(function($q) {
                                    $q->whereNull('santri_room_id')
                                      ->orWhereNull('wali_room_id');
@@ -63,59 +65,38 @@ class TestRoomController extends Controller
                                ->get();
 
         if ($candidates->isEmpty()) {
-            return back()->with('warning', 'Semua calon santri sudah mendapatkan ruangan.');
+            return back()->with('warning', 'Semua calon santri yang valid sudah mendapatkan ruangan atau tidak ada data (SMA Lanjutan diabaikan).');
         }
 
         foreach ($candidates as $candidate) {
             
-            // A. LOGIKA RUANGAN SANTRI (DIPISAH GENDER)
+            // A. LOGIKA RUANGAN SANTRI (CAMPUR PUTRA & PUTRI)
             if (!$candidate->santri_room_id) {
+                // Cari ruangan 'Santri' yang masih kosong/paling sedikit
+                $roomSantri = TestRoom::where('jenis', 'Santri')
+                                ->withCount('candidates_santri')
+                                ->orderBy('candidates_santri_count', 'asc')
+                                ->first();
                 
-                // Tentukan jenis ruangan berdasarkan jenis kelamin kandidat
-                // ASUMSI: Kolom jenis kelamin di tabel candidates bernama 'jenis_kelamin'
-                // dan isinya 'L' (Laki-laki) atau 'P' (Perempuan)
-                
-                $targetJenis = null;
-                if ($candidate->jenis_kelamin == 'L') {
-                    $targetJenis = 'Santri Putra';
-                } elseif ($candidate->jenis_kelamin == 'P') {
-                    $targetJenis = 'Santri Putri';
-                }
-
-                if ($targetJenis) {
-                    // Cari ruangan sesuai gender yang isinya paling sedikit
-                    $roomSantri = TestRoom::where('jenis', $targetJenis)
-                                    ->withCount('candidates_santri')
-                                    ->orderBy('candidates_santri_count', 'asc')
-                                    ->first();
-                    
-                    // Masukkan santri ke ruangan tersebut
-                    if ($roomSantri) {
-                        // Cek apakah kapasitas masih cukup (opsional, tapi bagus)
-                        if ($roomSantri->candidates_santri_count < $roomSantri->kapasitas) {
-                            $candidate->update(['santri_room_id' => $roomSantri->id]);
-                        }
-                    }
+                if ($roomSantri && $roomSantri->candidates_santri_count < $roomSantri->kapasitas) {
+                    $candidate->update(['santri_room_id' => $roomSantri->id]);
                 }
             }
 
-            // B. LOGIKA RUANGAN WALI (TETAP SAMA/CAMPUR)
+            // B. LOGIKA RUANGAN WALI
             if (!$candidate->wali_room_id) {
                 $roomWali = TestRoom::where('jenis', 'Wali')
                                 ->withCount('candidates_wali')
                                 ->orderBy('candidates_wali_count', 'asc')
                                 ->first();
                 
-                if ($roomWali) {
-                     // Cek kapasitas wali juga
-                    if ($roomWali->candidates_wali_count < $roomWali->kapasitas) {
-                        $candidate->update(['wali_room_id' => $roomWali->id]);
-                    }
+                if ($roomWali && $roomWali->candidates_wali_count < $roomWali->kapasitas) {
+                    $candidate->update(['wali_room_id' => $roomWali->id]);
                 }
             }
         }
 
-        return back()->with('success', "Distribusi otomatis selesai! Santri putra & putri telah dipisahkan.");
+        return back()->with('success', "Distribusi otomatis selesai! Santri (Putra & Putri) dan Wali telah dibagikan ke ruangannya masing-masing.");
     }
 
     /**
@@ -125,8 +106,7 @@ class TestRoomController extends Controller
     {
         $room = TestRoom::findOrFail($id);
 
-        // UPDATE: Cek string jenisnya mengandung kata 'Santri'
-        if (str_contains($room->jenis, 'Santri')) {
+        if ($room->jenis == 'Santri') {
             $participants = $room->candidates_santri()
                                  ->where('status_seleksi', '!=', 'Ditolak')
                                  ->orderBy('nama_lengkap')

@@ -40,17 +40,13 @@
                 <span class="block text-xl font-black text-gray-800">{{ $room->nama_ruangan }}</span>
             </div>
 
-            {{-- 2. Peruntukan Peserta (BAGIAN YANG DISESUAIKAN) --}}
+            {{-- 2. Peruntukan Peserta (SUDAH DISESUAIKAN) --}}
             <div class="border-r border-gray-200 text-center">
                 <span class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Peruntukan Peserta</span>
                 
-                @if($room->jenis == 'Santri Putra')
+                @if($room->jenis == 'Santri')
                     <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-800">
-                        SANTRI PUTRA
-                    </span>
-                @elseif($room->jenis == 'Santri Putri')
-                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-pink-100 text-pink-800">
-                        SANTRI PUTRI
+                        CALON SANTRI
                     </span>
                 @else
                     <span class="inline-block px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">

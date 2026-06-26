@@ -34,9 +34,8 @@
                     <div class="w-full md:w-56">
                         <select name="jenis" class="rounded-lg border-gray-300 w-full focus:ring-blue-500 focus:border-blue-500 cursor-pointer" required>
                             <option value="">-- Pilih Peruntukan --</option>
-                            <option value="Santri Putra">Santri Putra (Laki-laki)</option>
-                            <option value="Santri Putri">Santri Putri (Perempuan)</option>
-                            <option value="Wali">Wali Santri (Campur)</option>
+                            <option value="Santri">Calon Santri (Campur)</option>
+                            <option value="Wali">Wali Santri</option>
                         </select>
                     </div>
 
@@ -60,7 +59,7 @@
             <p class="text-sm text-gray-500">
                 Total Ruangan: <span class="font-bold text-gray-800">{{ $rooms->count() }}</span>
             </p>
-            <form action="{{ route('admin.test_rooms.distribute') }}" method="POST" onsubmit="return confirm('Yakin ingin membagikan ruangan? Santri Putra akan masuk ke ruang Putra, dan Putri ke ruang Putri.');">
+            <form action="{{ route('admin.test_rooms.distribute') }}" method="POST" onsubmit="return confirm('Yakin ingin membagikan ruangan? Santri (Putra & Putri) akan masuk ke ruang Santri, dan Orangtua ke ruang Wali.');">
                 @csrf
                 <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-700 transition shadow-sm flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -95,17 +94,13 @@
 
                             {{-- UPDATE: Tampilan Label --}}
                             <td class="px-6 py-4">
-                                @if($room->jenis == 'Santri Putra')
+                                @if($room->jenis == 'Santri')
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                        Putra
-                                    </span>
-                                @elseif($room->jenis == 'Santri Putri')
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-pink-100 text-pink-700 border border-pink-200">
-                                        Putri
+                                        Calon Santri
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 border border-purple-200">
-                                        Wali
+                                        Wali Santri
                                     </span>
                                 @endif
                             </td>

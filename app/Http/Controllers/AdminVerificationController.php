@@ -19,12 +19,14 @@ class AdminVerificationController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. Ambil Filter Status
+        // 1. Ambil Filter Status & Search Keyword
         $filter = $request->query('status', 'pending');
+        $search = $request->query('search'); // Ambil kata kunci pencarian
 
         // 2. Query Utama untuk Tabel (Sesuai Filter)
         $query = Verification::latest();
 
+        // Logika Tab Status
         if ($filter == 'pending') {
             $query->where(function($q) {
                 $q->where('status', 'pending')
@@ -42,9 +44,55 @@ class AdminVerificationController extends Controller
             });
         }
         
+        // 3. LOGIKA PENCARIAN BERLAPIS (Sesuai Cek Pintar di View)
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                // A. Pencarian langsung berdasarkan Nomor WA
+                $q->where('no_wa', 'LIKE', '%' . $search . '%');
+
+                // B. Cari data santri yang namanya cocok dengan kata kunci
+                $candidates = \App\Models\Candidate::where('nama_lengkap', 'LIKE', '%' . $search . '%')->get();
+
+                if ($candidates->count() > 0) {
+                    // 1. Cocokkan berdasarkan File Perjanjian
+                    $files = $candidates->pluck('file_perjanjian')->filter()->toArray();
+                    if (!empty($files)) {
+                        $q->orWhereIn('file_perjanjian', $files);
+                    }
+
+                    // 2. Cocokkan berdasarkan Nomor HP Orang Tua (Fallback)
+                    $candidateIds = $candidates->pluck('id')->toArray();
+                    $phones = [];
+
+                    // Ambil no hp dari tabel relasi orang tua
+                    if (class_exists(\App\Models\CandidateParent::class)) {
+                        $parents = \App\Models\CandidateParent::whereIn('candidate_id', $candidateIds)->get();
+                        foreach($parents as $p) {
+                            if (!empty($p->no_hp_ayah)) {
+                                $phones[] = ltrim(ltrim($p->no_hp_ayah, '0'), '62');
+                            }
+                            if (!empty($p->no_hp_ibu)) {
+                                $phones[] = ltrim(ltrim($p->no_hp_ibu, '0'), '62');
+                            }
+                        }
+                    }
+
+                    // Masukkan ke dalam query pencarian WA
+                    if (!empty($phones)) {
+                        $q->orWhere(function($subQ) use ($phones) {
+                            foreach($phones as $phone) {
+                                // Cari no_wa verifikasi yang mengandung nomor hp orang tua santri ini
+                                $subQ->orWhere('no_wa', 'LIKE', '%' . $phone . '%');
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
         $verifications = $query->paginate(10);
 
-        // 3. Hitung KPI / Statistik Global
+        // 4. Hitung KPI / Statistik Global
         $stats = [
             'berkas_pending' => Verification::where('status', 'pending')->count(),
             'bayar_pending'  => Verification::where('status_pembayaran', 'pending')->count(),
@@ -54,7 +102,8 @@ class AdminVerificationController extends Controller
         
         $stats['total_antrian'] = $stats['berkas_pending'] + $stats['bayar_pending'];
 
-        return view('admin.verifications.index', compact('verifications', 'filter', 'stats'));
+        // Tambahkan variabel $search di compact
+        return view('admin.verifications.index', compact('verifications', 'filter', 'search', 'stats'));
     }
 
     /**

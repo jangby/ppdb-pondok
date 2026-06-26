@@ -4,6 +4,11 @@
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
             {{ __('Meja Registrasi & Cetak Antrian') }}
         </h2>
+        <a href="{{ route('admin.interview.attendance.mobile') }}" target="_blank" 
+       class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition shadow-lg">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        Mode Mobile
+    </a>
     </x-slot>
 
     <div class="py-12 px-4 max-w-7xl mx-auto">
@@ -24,6 +29,24 @@
                         <button id="connectBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg flex items-center gap-2">
                             Hubungkan Bluetooth
                         </button>
+                    </div>
+                </div>
+
+                {{-- KOTAK PENCARIAN MANUAL --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-6 relative z-40">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Pencarian Manual
+                    </h3>
+                    <div class="relative">
+                        <input type="text" id="searchManualInput" placeholder="Ketik nama santri atau no. daftar..." autocomplete="off" class="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm font-medium">
+                        <div class="absolute right-3 top-3 text-gray-400">
+                            <div class="w-5 h-5 animate-spin border-2 border-blue-500 border-t-transparent rounded-full hidden" id="searchSpinner"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="searchDropdown" class="absolute w-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl hidden max-h-60 overflow-y-auto z-50">
+                        <ul id="searchList" class="divide-y divide-gray-100"></ul>
                     </div>
                 </div>
 
@@ -210,8 +233,9 @@
             // Kirim Teks Dulu
             await printCharacteristic.writeValue(encoder.encode(text));
 
-            // CETAK QR CODE (No Daftar)
-            await printQRCode(data.no_daftar);
+            // CETAK QR CODE (LINK KE HALAMAN CEK PENDAFTARAN WALI)
+            const urlWali = `{{ url('/cek-pendaftaran') }}/${data.no_daftar}`;
+            await printQRCode(urlWali);
 
             // Feed Akhir (Biar kertas keluar agak panjang buat disobek)
             await printCharacteristic.writeValue(encoder.encode("\n\n\n"));
@@ -230,7 +254,7 @@
             // 1. Definisikan Link Halaman Login Ujian/Interview
             // Pastikan Anda sudah punya route bernama 'interview.santri.login'
             // Atau ganti manual string-nya, misal: "https://ppdb.sekolah.com/login-ujian"
-            const linkLogin = "{{ route('interview.santri.login') }}"; 
+            const linkLogin = `{{ route('interview.santri.login') }}?no_daftar=${data.no_daftar}`;
 
             let text = '';
 
@@ -315,8 +339,18 @@
             if (isProcessing) return;
 
             isProcessing = true;
+            
+            // JIKA PANITIA TIDAK SENGAJA SCAN STRUK BARU (YANG BERISI URL)
+            // KITA POTONG DAN AMBIL NOMOR DAFTARNYA SAJA
+            let finalCode = decodedText;
+            if (decodedText.includes('no_daftar=')) {
+                finalCode = new URL(decodedText).searchParams.get('no_daftar'); // Dari struk santri
+            } else if (decodedText.includes('/cek-pendaftaran/')) {
+                finalCode = decodedText.split('/').pop(); // Dari struk wali
+            }
+
             document.getElementById('loadingIndicator').classList.remove('hidden');
-            addLog(`📸 QR Terdeteksi: ${decodedText}`, 'info');
+            addLog(`📸 QR Terdeteksi: ${finalCode}`, 'info');
 
             fetch("{{ route('admin.attendance.process') }}", {
                 method: "POST",
@@ -324,7 +358,7 @@
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": "{{ csrf_token() }}"
                 },
-                body: JSON.stringify({ code: decodedText })
+                body: JSON.stringify({ code: finalCode }) // Gunakan finalCode yang sudah dibersihkan
             })
             .then(response => response.json())
             .then(data => {
@@ -405,5 +439,81 @@
         function playAudio(type) {
             // Opsional: audio.play()
         }
+
+        // ==========================================================
+        // 4. LOGIKA PENCARIAN MANUAL (LIVE SEARCH)
+        // ==========================================================
+        const searchInput = document.getElementById('searchManualInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const searchList = document.getElementById('searchList');
+        const searchSpinner = document.getElementById('searchSpinner');
+        let searchTimeout = null;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const keyword = this.value.trim();
+
+            if (keyword.length < 2) {
+                searchDropdown.classList.add('hidden');
+                searchSpinner.classList.add('hidden');
+                return;
+            }
+
+            searchSpinner.classList.remove('hidden');
+
+            searchTimeout = setTimeout(() => {
+                fetch(`{{ route('admin.interview.attendance.search') }}?q=${keyword}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        searchSpinner.classList.add('hidden');
+                        searchList.innerHTML = '';
+                        
+                        if (data.length === 0) {
+                            searchList.innerHTML = `<li class="p-4 text-center text-sm text-gray-500">❌ Tidak ada santri yang cocok.</li>`;
+                        } else {
+                            data.forEach(item => {
+                                // Tanda visual jika santri sudah check-in
+                                const status = item.waktu_hadir 
+                                    ? `<span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Telah Hadir</span>` 
+                                    : `<span class="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">Belum Hadir</span>`;
+
+                                const li = document.createElement('li');
+                                li.className = "p-3 hover:bg-blue-50 cursor-pointer transition flex justify-between items-center group";
+                                li.innerHTML = `
+                                    <div>
+                                        <div class="font-bold text-gray-800 text-sm group-hover:text-blue-700">${item.nama_lengkap}</div>
+                                        <div class="text-xs text-gray-500 font-mono mt-0.5">${item.no_daftar} • ${item.jenjang}</div>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        ${status}
+                                        <span class="text-[9px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition">PILIH & CHECK-IN</span>
+                                    </div>
+                                `;
+                                
+                                // JIKA NAMA DIKLIK -> SIMULASIKAN SEPERTI SCAN BARCODE!
+                                li.addEventListener('click', () => {
+                                    searchInput.value = ''; // Kosongkan input
+                                    searchDropdown.classList.add('hidden'); // Tutup dropdown hasil
+                                    onScanSuccess(item.no_daftar, null); // Kirim No Daftar ke fungsi scanner
+                                });
+
+                                searchList.appendChild(li);
+                            });
+                        }
+                        searchDropdown.classList.remove('hidden');
+                    })
+                    .catch(err => {
+                        searchSpinner.classList.add('hidden');
+                        console.error('Search error:', err);
+                    });
+            }, 400); // Tunggu 400ms setelah mengetik untuk mengurangi beban server
+        });
+
+        // Sembunyikan dropdown jika panitia mengklik di luar area pencarian
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
     </script>
 </x-app-layout>

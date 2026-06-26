@@ -92,23 +92,35 @@
             {{-- 2. TAB & TABEL UTAMA --}}
             <div class="bg-white shadow-xl shadow-gray-100 sm:rounded-2xl border border-gray-100 overflow-hidden">
                 
-                {{-- Tab Header --}}
-                <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                {{-- Tab Header & Pencarian --}}
+                <div class="border-b border-gray-100 bg-gray-50/50 px-6 py-4 flex flex-col lg:flex-row justify-between items-center gap-4">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2 w-full lg:w-auto">
                         <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                         Daftar Antrian
                     </h3>
 
-                    <div class="flex bg-gray-200/60 p-1 rounded-xl">
-                        <a href="{{ route('admin.verifications.index', ['status' => 'pending']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 {{ $filter == 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
-                            <span>⏳ Menunggu</span>
-                            @if($stats['total_antrian'] > 0)
-                                <span class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px]">{{ $stats['total_antrian'] }}</span>
-                            @endif
-                        </a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'approved']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'approved' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">✅ Selesai</a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'rejected']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'rejected' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">❌ Ditolak</a>
-                        <a href="{{ route('admin.verifications.index', ['status' => 'all']) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition {{ $filter == 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Semua</a>
+                    <div class="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto">
+                        {{-- Form Pencarian --}}
+                        <form action="{{ route('admin.verifications.index') }}" method="GET" class="relative w-full md:w-64">
+                            <input type="hidden" name="status" value="{{ $filter }}">
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama santri / No WA..." class="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                        </form>
+
+                        {{-- Tabs --}}
+                        <div class="flex bg-gray-200/60 p-1 rounded-xl w-full md:w-auto overflow-x-auto hide-scroll">
+                            <a href="{{ route('admin.verifications.index', ['status' => 'pending', 'search' => $search]) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 whitespace-nowrap {{ $filter == 'pending' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">
+                                <span>⏳ Menunggu</span>
+                                @if($stats['total_antrian'] > 0)
+                                    <span class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px]">{{ $stats['total_antrian'] }}</span>
+                                @endif
+                            </a>
+                            <a href="{{ route('admin.verifications.index', ['status' => 'approved', 'search' => $search]) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap {{ $filter == 'approved' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">✅ Selesai</a>
+                            <a href="{{ route('admin.verifications.index', ['status' => 'rejected', 'search' => $search]) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap {{ $filter == 'rejected' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">❌ Ditolak</a>
+                            <a href="{{ route('admin.verifications.index', ['status' => 'all', 'search' => $search]) }}" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap {{ $filter == 'all' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700' }}">Semua</a>
+                        </div>
                     </div>
                 </div>
 
@@ -409,7 +421,7 @@
 
                 {{-- Pagination --}}
                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
-                    {{ $verifications->appends(['status' => $filter])->links() }}
+                    {{ $verifications->appends(['status' => $filter, 'search' => $search])->links() }}
                 </div>
             </div>
 
