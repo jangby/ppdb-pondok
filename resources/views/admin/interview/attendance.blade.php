@@ -340,17 +340,34 @@
 
             isProcessing = true;
             
-            // JIKA PANITIA TIDAK SENGAJA SCAN STRUK BARU (YANG BERISI URL)
-            // KITA POTONG DAN AMBIL NOMOR DAFTARNYA SAJA
-            let finalCode = decodedText;
-            if (decodedText.includes('no_daftar=')) {
-                finalCode = new URL(decodedText).searchParams.get('no_daftar'); // Dari struk santri
-            } else if (decodedText.includes('/cek-pendaftaran/')) {
-                finalCode = decodedText.split('/').pop(); // Dari struk wali
+            // --- LOGIKA PEMOTONG URL SUPER AMAN ---
+            let finalCode = decodedText.trim();
+            
+            if (finalCode.includes('http')) {
+                try {
+                    let urlObj = new URL(finalCode);
+                    if (urlObj.searchParams.has('no_daftar')) {
+                        finalCode = urlObj.searchParams.get('no_daftar'); // Dari URL Login Santri
+                    } else {
+                        // Memecah URL berdasarkan '/' dan mengambil teks yang paling belakang (REG-xxxx)
+                        let pathSegments = urlObj.pathname.split('/').filter(Boolean);
+                        finalCode = pathSegments.pop(); 
+                    }
+                } catch (e) {
+                    console.log("Bukan URL yang valid");
+                }
+            } else if (finalCode.includes('cek-pendaftaran')) {
+                // Fallback jika tidak pakai HTTP
+                finalCode = finalCode.split('/').pop().trim();
             }
+            // ----------------------------------------
 
             document.getElementById('loadingIndicator').classList.remove('hidden');
-            addLog(`📸 QR Terdeteksi: ${finalCode}`, 'info');
+            
+            // Update the log call to use the addLog function if it exists (desktop), otherwise just console.log (mobile)
+            if (typeof addLog === "function") {
+                 addLog(`📸 QR Terdeteksi: ${finalCode}`, 'info');
+            }
 
             fetch("{{ route('admin.attendance.process') }}", {
                 method: "POST",
@@ -365,34 +382,40 @@
                 document.getElementById('loadingIndicator').classList.add('hidden');
 
                 if (data.status === 'error') {
-                    showStatus('❌ DATA TIDAK DITEMUKAN', 'red');
-                    addLog(data.message, 'error');
-                    playAudio('error');
+                    if (typeof showStatus === "function") showStatus('❌ DATA TIDAK DITEMUKAN', 'red');
+                    if (typeof addLog === "function") addLog(data.message, 'error');
+                    if (typeof playAudio === "function") playAudio('error');
                     alert(data.message);
                 } else {
-                    // Update Tampilan (Termasuk Ruangan)
-                    document.getElementById('lblAntrian').innerText = data.data.antrian;
-                    document.getElementById('lblNama').innerText = data.data.nama;
-                    document.getElementById('lblNoDaftar').innerText = data.data.no_daftar;
-                    document.getElementById('lblWaktu').innerText = data.data.waktu;
-                    
-                    document.getElementById('lblRuangSantri').innerText = data.data.r_santri || '-';
-                    document.getElementById('lblRuangWali').innerText = data.data.r_wali || '-';
+                    // Update Tampilan (Termasuk Ruangan) - These IDs must exist in your HTML
+                    const elAntrian = document.getElementById('lblAntrian');
+                    const elNama = document.getElementById('lblNama');
+                    const elNoDaftar = document.getElementById('lblNoDaftar');
+                    const elWaktu = document.getElementById('lblWaktu');
+                    const elRuangSantri = document.getElementById('lblRuangSantri');
+                    const elRuangWali = document.getElementById('lblRuangWali');
+
+                    if(elAntrian) elAntrian.innerText = data.data.antrian;
+                    if(elNama) elNama.innerText = data.data.nama;
+                    if(elNoDaftar) elNoDaftar.innerText = data.data.no_daftar;
+                    if(elWaktu) elWaktu.innerText = data.data.waktu;
+                    if(elRuangSantri) elRuangSantri.innerText = data.data.r_santri || '-';
+                    if(elRuangWali) elRuangWali.innerText = data.data.r_wali || '-';
                     
                     lastData = data.data;
 
                     if (data.status === 'success') {
-                        showStatus('✅ BERHASIL CHECK-IN', 'green');
-                        addLog(`Santri ${data.data.nama} check-in.`, 'success');
-                        playAudio('success');
+                        if (typeof showStatus === "function") showStatus('✅ BERHASIL CHECK-IN', 'green');
+                        if (typeof addLog === "function") addLog(`Santri ${data.data.nama} check-in.`, 'success');
+                        if (typeof playAudio === "function") playAudio('success');
                         
                         // AUTO PRINT 2 TIKET (SEQUENCE)
-                        printFullSequence(data.data);
+                        if (typeof printFullSequence === "function") printFullSequence(data.data);
 
                     } else if (data.status === 'warning') {
-                        showStatus('⚠️ SUDAH CHECK-IN SEBELUMNYA', 'yellow');
-                        addLog(`Peringatan: Santri scan ulang.`, 'warning');
-                        playAudio('warning');
+                        if (typeof showStatus === "function") showStatus('⚠️ SUDAH CHECK-IN SEBELUMNYA', 'yellow');
+                        if (typeof addLog === "function") addLog(`Peringatan: Santri scan ulang.`, 'warning');
+                        if (typeof playAudio === "function") playAudio('warning');
                     }
                 }
 
@@ -401,43 +424,9 @@
             .catch(err => {
                 isProcessing = false;
                 document.getElementById('loadingIndicator').classList.add('hidden');
-                addLog('Server Error: ' + err, 'error');
+                if (typeof addLog === "function") addLog('Server Error: ' + err, 'error');
                 console.error(err);
             });
-        }
-
-        // Setup Scanner
-        let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { fps: 10, qrbox: {width: 250, height: 250} }, false
-        );
-        html5QrcodeScanner.render(onScanSuccess, (error) => {});
-
-        // --- UTILS ---
-        function addLog(msg, type) {
-            const logArea = document.getElementById('logArea');
-            let color = 'text-gray-300';
-            if(type === 'error') color = 'text-red-400 font-bold';
-            if(type === 'success') color = 'text-green-400 font-bold';
-            if(type === 'warning') color = 'text-yellow-400';
-            if(type === 'info') color = 'text-blue-400';
-
-            const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
-            logArea.innerHTML = `<div class="mb-1 ${color}">[${time}] ${msg}</div>` + logArea.innerHTML;
-        }
-
-        function showStatus(text, color) {
-            const badge = document.getElementById('statusBadge');
-            badge.innerText = text;
-            badge.className = 'px-3 py-1 rounded-full text-xs font-bold transition-all duration-300';
-            
-            if(color === 'green') badge.classList.add('bg-green-100', 'text-green-700');
-            else if(color === 'red') badge.classList.add('bg-red-100', 'text-red-700');
-            else if(color === 'yellow') badge.classList.add('bg-yellow-100', 'text-yellow-700');
-            else badge.classList.add('bg-gray-100', 'text-gray-400');
-        }
-
-        function playAudio(type) {
-            // Opsional: audio.play()
         }
 
         // ==========================================================
