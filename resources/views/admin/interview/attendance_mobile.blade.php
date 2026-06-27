@@ -20,7 +20,7 @@
         </div>
 
         <div class="flex gap-2 mb-6">
-            <button id="btnConnect" onclick="connectPrinter()" class="flex-1 text-xs font-bold text-white bg-blue-600 px-3 py-2.5 rounded-xl shadow-md hover:bg-blue-700 transition">
+            <button id="connectBtn" class="flex-1 text-xs font-bold text-white bg-blue-600 px-3 py-2.5 rounded-xl shadow-md hover:bg-blue-700 transition">
                 🖨️ Connect Printer
             </button>
             <button onclick="rePrintLast()" class="flex-1 text-xs font-bold text-gray-700 bg-white border border-gray-300 px-3 py-2.5 rounded-xl shadow-sm hover:bg-gray-50 transition">
@@ -43,7 +43,7 @@
 
         {{-- PENCARIAN MANUAL --}}
         <div class="bg-white p-3 rounded-2xl shadow-sm mb-6 border border-gray-100">
-            <input type="text" id="mobileSearch" placeholder="Cari nama santri manual..." autocomplete="off" class="w-full text-base font-bold p-3 outline-none border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="searchManualInput" placeholder="Cari nama santri manual..." autocomplete="off" class="w-full text-base font-bold p-3 outline-none border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500">
             <div id="searchDropdown" class="hidden mt-2 border-t border-gray-100 pt-2 max-h-48 overflow-y-auto">
                 <ul id="searchList" class="space-y-1"></ul>
             </div>
@@ -55,73 +55,82 @@
     </div>
 
     <script>
+        // --- VARIABLE GLOBAL ---
+        let printCharacteristic = null;
         let isProcessing = false;
-        let printerCharacteristic = null;
-        let lastData = null; // Menyimpan data terakhir untuk dicetak ulang
+        let lastData = null;
 
         // ==========================================================
-        // 1. KONEKSI PRINTER
+        // 1. KONEKSI BLUETOOTH PRINTER
         // ==========================================================
-        async function connectPrinter() {
+        document.getElementById('connectBtn').addEventListener('click', async () => {
             try {
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ services: ['000018f0-0000-1000-8000-00805f9b34fb'] }]
                 });
+
                 const server = await device.gatt.connect();
                 const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
-                printerCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
-                
-                const btn = document.getElementById('btnConnect');
+                printCharacteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+                const btn = document.getElementById('connectBtn');
                 btn.classList.replace('bg-blue-600', 'bg-green-600');
-                btn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
-                btn.innerHTML = "✅ Printer Konek";
-                alert("Printer Berhasil Terhubung!");
+                btn.innerHTML = "✅ Printer Terhubung";
+                alert('Printer Berhasil Terhubung!');
+
             } catch (error) {
-                alert("Gagal koneksi printer: " + error.message);
+                console.error(error);
+                alert('Gagal menghubungkan printer. Pastikan Bluetooth nyala & pilih printer yang benar.');
             }
-        }
+        });
 
         // ==========================================================
-        // 2. LOGIKA CETAK 2 STRUK + DELAY
+        // 2. LOGIKA CETAK 2 STRUK + DELAY (SAMA PERSIS DENGAN DESKTOP)
         // ==========================================================
         async function printFullSequence(data) {
-            if (!printerCharacteristic) {
-                alert("⚠️ Data tersimpan, tapi Printer tidak terhubung. Hubungkan printer lalu klik Cetak Ulang.");
+            if (!printCharacteristic) {
+                alert('⚠️ Check-in Berhasil, tapi Printer belum terhubung.');
                 return;
             }
 
             try {
-                // TAHAP 1: STRUK ANTRIAN
+                // TAHAP 1: CETAK STRUK ANTRIAN (UNTUK WALI)
                 await printQueueTicket(data);
 
-                // TAHAP 2: JEDA 3 DETIK (UTK SOBEK)
+                // TAHAP 2: JEDA 3 DETIK (UTK SOBEK KERTAS)
                 await new Promise(r => setTimeout(r, 3000)); 
 
-                // TAHAP 3: TIKET SANTRI
+                // TAHAP 3: CETAK STRUK LOGIN (UNTUK SANTRI)
                 await printStudentTicket(data);
 
             } catch (error) {
-                alert("Error saat mencetak: " + error.message);
+                alert('❌ Error saat nge-print: ' + error.message);
             }
         }
 
-        // --- CETAK 1: ANTRIAN UMUM (WALI) ---
+        // --- FUNGSI CETAK STRUK 1: ANTRIAN UMUM ---
         async function printQueueTicket(data) {
             const encoder = new TextEncoder();
-            const ESC = '\u001B', GS = '\u001D';
-            const center = ESC + 'a' + '\u0001', left = ESC + 'a' + '\u0000';
-            const boldOn = ESC + 'E' + '\u0001', boldOff = ESC + 'E' + '\u0000';
-            const doubleSize = GS + '!' + '\u0011', normalSize = GS + '!' + '\u0000';
+            
+            const ESC = '\u001B';
+            const GS = '\u001D';
+            const center = ESC + 'a' + '\u0001';
+            const left = ESC + 'a' + '\u0000';
+            const boldOn = ESC + 'E' + '\u0001';
+            const boldOff = ESC + 'E' + '\u0000';
+            const doubleSize = GS + '!' + '\u0011'; 
+            const normalSize = GS + '!' + '\u0000';
 
             let text = '';
+            
             text += center + boldOn + "BUKTI REGISTRASI\n" + boldOff;
             text += "PSB PONDOK PESANTREN\n";
             text += "--------------------------------\n";
             
-            text += left + "Waktu   : " + (data.waktu || '-') + "\n";
-            text += "No Reg  : " + (data.no_daftar || '-') + "\n";
-            text += "Nama    : " + (data.nama ? data.nama.substring(0, 20) : '-') + "\n"; 
-            text += "Jenjang : " + (data.jenjang || '-') + "\n";
+            text += left + "Waktu   : " + data.waktu + "\n";
+            text += "No Reg  : " + data.no_daftar + "\n";
+            text += "Nama    : " + data.nama.substring(0, 20) + "\n"; 
+            text += "Jenjang : " + data.jenjang + "\n";
             text += "--------------------------------\n";
             
             text += boldOn + "R. Santri: " + (data.r_santri || '-') + "\n";
@@ -129,89 +138,108 @@
             text += "--------------------------------\n";
             
             text += center + "NOMOR ANTRIAN ANDA\n";
-            text += doubleSize + boldOn + (data.antrian || '-') + "\n" + normalSize + boldOff;
+            text += doubleSize + boldOn + data.antrian + "\n" + normalSize + boldOff;
+            
             text += "--------------------------------\n";
             text += "Simpan struk ini untuk\n";
             text += "pemanggilan wali santri.\n\n";
 
-            await printerCharacteristic.writeValue(encoder.encode(text));
+            await printCharacteristic.writeValue(encoder.encode(text));
 
-            // CETAK QR CODE KE HALAMAN CEK PENDAFTARAN WALI
             const urlWali = `{{ url('/cek-pendaftaran') }}/${data.no_daftar}`;
             await printQRCode(urlWali);
 
-            await printerCharacteristic.writeValue(encoder.encode("\n\n\n"));
+            await printCharacteristic.writeValue(encoder.encode("\n\n\n"));
         }
 
-        // --- CETAK 2: TIKET SANTRI (AUTO LOGIN) ---
+        // --- FUNGSI CETAK STRUK 2: TIKET SANTRI ---
         async function printStudentTicket(data) {
             const encoder = new TextEncoder();
-            const ESC = '\u001B', center = ESC + 'a' + '\u0001', left = ESC + 'a' + '\u0000';
-            const boldOn = ESC + 'E' + '\u0001', boldOff = ESC + 'E' + '\u0000';
+            const ESC = '\u001B';
+            const center = ESC + 'a' + '\u0001';
+            const left = ESC + 'a' + '\u0000';
+            const boldOn = ESC + 'E' + '\u0001';
+            const boldOff = ESC + 'E' + '\u0000';
 
-            // Link Halaman Login Ujian Bawaan Auto-Login
             const linkLogin = `{{ route('interview.santri.login') }}?no_daftar=${data.no_daftar}`; 
 
             let text = '';
+
             text += center + boldOn + "TIKET MASUK TES\n" + boldOff;
             text += "--------------------------------\n";
-            text += left + "Nama   : " + (data.nama ? data.nama.substring(0, 20) : '-') + "\n";
+            
+            text += left;
+            text += "Nama   : " + data.nama.substring(0, 20) + "\n";
             text += "Jenjang: " + (data.jenjang || '-') + "\n";
             text += "--------------------------------\n";
+            
             text += center + "Scan QR di bawah ini untuk\n";
             text += "membuka Halaman Ujian:\n\n";
 
-            await printerCharacteristic.writeValue(encoder.encode(text));
-
-            // CETAK QR CODE AUTO LOGIN
+            await printCharacteristic.writeValue(encoder.encode(text));
             await printQRCode(linkLogin);
 
-            text = "\n" + left + "Lalu masukkan No. Registrasi:\n";
+            text = "\n";
+            text += left + "Lalu masukkan No. Registrasi:\n";
             text += center + boldOn + "\n" + data.no_daftar + "\n\n" + boldOff; 
             text += "SEMOGA SUKSES!\n\n\n\n"; 
 
-            await printerCharacteristic.writeValue(encoder.encode(text));
+            await printCharacteristic.writeValue(encoder.encode(text));
         }
 
-        // --- GENERATE NATIVE ESC/POS QR CODE ---
+        // --- HELPER: GENERATE NATIVE ESC/POS QR CODE ---
         async function printQRCode(dataString) {
             const storeLen = dataString.length + 3;
             const pL = storeLen % 256;
             const pH = Math.floor(storeLen / 256);
 
             let cmdModel = new Uint8Array([29, 40, 107, 4, 0, 49, 65, 50, 0]);
+            await printCharacteristic.writeValue(cmdModel);
+
             let cmdSize = new Uint8Array([29, 40, 107, 3, 0, 49, 67, 8]); 
+            await printCharacteristic.writeValue(cmdSize);
+
             let cmdErr = new Uint8Array([29, 40, 107, 3, 0, 49, 69, 48]);
+            await printCharacteristic.writeValue(cmdErr);
+
             let cmdStoreHeader = new Uint8Array([29, 40, 107, pL, pH, 49, 80, 48]);
             let dataBytes = new TextEncoder().encode(dataString);
             
             let cmdStoreFull = new Uint8Array(cmdStoreHeader.length + dataBytes.length);
             cmdStoreFull.set(cmdStoreHeader);
             cmdStoreFull.set(dataBytes, cmdStoreHeader.length);
-            let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+            await printCharacteristic.writeValue(cmdStoreFull);
 
-            await printerCharacteristic.writeValue(cmdModel);
-            await printerCharacteristic.writeValue(cmdSize);
-            await printerCharacteristic.writeValue(cmdErr);
-            await printerCharacteristic.writeValue(cmdStoreFull);
-            await printerCharacteristic.writeValue(cmdPrint);
+            let cmdPrint = new Uint8Array([29, 40, 107, 3, 0, 49, 81, 48]);
+            await printCharacteristic.writeValue(cmdPrint);
         }
 
         function rePrintLast() {
             if(lastData) {
                 printFullSequence(lastData);
             } else {
-                alert("Belum ada data check-in hari ini.");
+                alert("Belum ada data yang discan.");
             }
         }
 
         // ==========================================================
-        // 3. PROSES CHECK-IN
+        // 3. LOGIKA SCANNER & PROSES
         // ==========================================================
-        function processAttendance(code) {
+        function onScanSuccess(decodedText, decodedResult) {
             if (isProcessing) return;
             isProcessing = true;
-            
+
+            let finalCode = decodedText;
+            if (decodedText.includes('no_daftar=')) {
+                finalCode = new URL(decodedText).searchParams.get('no_daftar');
+            } else if (decodedText.includes('/cek-pendaftaran/')) {
+                finalCode = decodedText.split('/').pop();
+            }
+
+            processAttendance(finalCode);
+        }
+
+        function processAttendance(code) {
             document.getElementById('loadingIndicator').classList.remove('hidden');
             const statusDiv = document.getElementById('statusResult');
             statusDiv.classList.add('hidden');
@@ -224,84 +252,106 @@
                 },
                 body: JSON.stringify({ code: code })
             })
-            .then(res => res.json())
+            .then(response => response.json())
             .then(data => {
                 document.getElementById('loadingIndicator').classList.add('hidden');
-                
-                // Set Pesan
-                statusDiv.innerHTML = data.message;
-                statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-yellow-100', 'text-yellow-700', 'bg-red-100', 'text-red-700');
-                
-                if(data.status === 'success') {
-                    statusDiv.classList.add('bg-green-100', 'text-green-700');
-                    lastData = data.data; // Simpan untuk fungsi Reprint
-                    printFullSequence(data.data); // CETAK KEDUA STRUK
-                } else if(data.status === 'warning') {
-                    statusDiv.classList.add('bg-yellow-100', 'text-yellow-700');
-                    lastData = data.data; // Simpan untuk fungsi Reprint walau warning
+
+                if (data.status === 'error') {
+                    statusDiv.innerHTML = "❌ " + data.message;
+                    statusDiv.className = "p-4 rounded-2xl text-center shadow-lg font-black text-lg bg-red-100 text-red-700";
+                    alert(data.message);
                 } else {
-                    statusDiv.classList.add('bg-red-100', 'text-red-700');
+                    lastData = data.data;
+
+                    if (data.status === 'success') {
+                        statusDiv.innerHTML = "✅ BERHASIL CHECK-IN<br><span class='text-sm font-medium'>" + data.data.nama + "</span>";
+                        statusDiv.className = "p-4 rounded-2xl text-center shadow-lg font-black text-lg bg-green-100 text-green-700";
+                        
+                        // AUTO PRINT
+                        printFullSequence(data.data);
+
+                    } else if (data.status === 'warning') {
+                        statusDiv.innerHTML = "⚠️ SUDAH CHECK-IN<br><span class='text-sm font-medium'>" + data.data.nama + "</span>";
+                        statusDiv.className = "p-4 rounded-2xl text-center shadow-lg font-black text-lg bg-yellow-100 text-yellow-700";
+                    }
                 }
 
-                setTimeout(() => { statusDiv.classList.add('hidden'); isProcessing = false; }, 4000);
+                statusDiv.classList.remove('hidden');
+                setTimeout(() => { statusDiv.classList.add('hidden'); isProcessing = false; }, 3000);
             })
-            .catch((err) => {
-                document.getElementById('loadingIndicator').classList.add('hidden');
-                statusDiv.innerHTML = "Gagal memproses (Server Error)";
-                statusDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
-                statusDiv.classList.add('bg-red-100', 'text-red-700');
+            .catch(err => {
                 isProcessing = false;
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                alert('Server Error: ' + err);
             });
         }
 
-        // ==========================================================
-        // 4. SCANNER KAMERA
-        // ==========================================================
-        function onScanSuccess(decodedText) {
-            // Pembersihan URL dari QR Code Pintar
-            let finalCode = decodedText;
-            if (decodedText.includes('no_daftar=')) {
-                finalCode = new URL(decodedText).searchParams.get('no_daftar');
-            } else if (decodedText.includes('/cek-pendaftaran/')) {
-                finalCode = decodedText.split('/').pop();
-            }
-            processAttendance(finalCode);
-        }
-        
+        // Setup Scanner
         let html5QrcodeScanner = new Html5QrcodeScanner(
             "reader", { fps: 10, qrbox: {width: 250, height: 250} }, false
         );
         html5QrcodeScanner.render(onScanSuccess, (error) => {});
 
         // ==========================================================
-        // 5. PENCARIAN MANUAL
+        // 4. PENCARIAN MANUAL
         // ==========================================================
-        const searchInput = document.getElementById('mobileSearch');
+        const searchInput = document.getElementById('searchManualInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const searchList = document.getElementById('searchList');
+        let searchTimeout = null;
+
         searchInput.addEventListener('input', function() {
-            const keyword = this.value;
-            if (keyword.length < 2) { document.getElementById('searchDropdown').classList.add('hidden'); return; }
-            
-            fetch(`{{ route('admin.interview.attendance.search') }}?q=${keyword}`)
-                .then(res => res.json())
-                .then(data => {
-                    const list = document.getElementById('searchList');
-                    list.innerHTML = '';
-                    data.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = "p-3 bg-gray-50 rounded-xl font-bold text-sm active:bg-blue-100 border-b border-gray-100 cursor-pointer flex justify-between items-center";
-                        li.innerHTML = `
-                            <div>${item.nama_lengkap} <span class="text-gray-400 text-xs block">${item.no_daftar}</span></div>
-                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">PILIH</span>
-                        `;
-                        li.onclick = () => { 
-                            processAttendance(item.no_daftar); 
-                            document.getElementById('searchDropdown').classList.add('hidden'); 
-                            searchInput.value = ''; 
-                        };
-                        list.appendChild(li);
-                    });
-                    document.getElementById('searchDropdown').classList.remove('hidden');
-                });
+            clearTimeout(searchTimeout);
+            const keyword = this.value.trim();
+
+            if (keyword.length < 2) {
+                searchDropdown.classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`{{ route('admin.interview.attendance.search') }}?q=${keyword}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        searchList.innerHTML = '';
+                        if (data.length === 0) {
+                            searchList.innerHTML = `<li class="p-4 text-center text-sm text-gray-500">❌ Tidak ada santri yang cocok.</li>`;
+                        } else {
+                            data.forEach(item => {
+                                const status = item.waktu_hadir 
+                                    ? `<span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Hadir</span>` 
+                                    : `<span class="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold">Belum</span>`;
+
+                                const li = document.createElement('li');
+                                li.className = "p-3 bg-white hover:bg-blue-50 cursor-pointer transition flex justify-between items-center border-b";
+                                li.innerHTML = `
+                                    <div>
+                                        <div class="font-bold text-gray-800 text-sm">${item.nama_lengkap}</div>
+                                        <div class="text-xs text-gray-500 font-mono mt-0.5">${item.no_daftar}</div>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        ${status}
+                                    </div>
+                                `;
+                                li.addEventListener('click', () => {
+                                    if(isProcessing) return;
+                                    searchInput.value = ''; 
+                                    searchDropdown.classList.add('hidden'); 
+                                    processAttendance(item.no_daftar); 
+                                });
+                                searchList.appendChild(li);
+                            });
+                        }
+                        searchDropdown.classList.remove('hidden');
+                    })
+                    .catch(err => console.error(err));
+            }, 400);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
         });
     </script>
 </body>
