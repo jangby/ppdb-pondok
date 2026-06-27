@@ -81,6 +81,7 @@ Route::put('/pendaftaran/update/{no_daftar}', [App\Http\Controllers\Registration
 // --- LOKET PANGGILAN (MOBILE VIEW - TANPA LOGIN) ---
 Route::get('/loket-panggilan', [QueueController::class, 'publicIndex'])->name('public.queue.index');
 Route::post('/loket-panggilan/next', [QueueController::class, 'callNext'])->name('public.queue.next');
+Route::post('/queue/panggil', [App\Http\Controllers\QueueController::class, 'panggil'])->name('admin.queue.panggil');
 
 // --- MONITOR ANTRIAN (UNTUK ORANG TUA) ---
 Route::get('/pantau-antrian', [QueueController::class, 'publicMonitor'])->name('public.queue.monitor');

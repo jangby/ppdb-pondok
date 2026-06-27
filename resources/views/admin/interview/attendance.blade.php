@@ -133,6 +133,32 @@
         let isProcessing = false;
         let lastData = null;
 
+        // TAMBAHKAN FUNGSI INI
+        function addLog(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            if (!logArea) return;
+
+            // Ambil waktu saat ini
+            const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+            
+            // Tentukan warna berdasarkan tipe log
+            let color = 'text-gray-300';
+            if (type === 'success') color = 'text-green-400 font-bold';
+            else if (type === 'warning') color = 'text-yellow-400';
+            else if (type === 'error') color = 'text-red-400 font-bold';
+
+            // Buat elemen teks baru
+            const logItem = document.createElement('div');
+            logItem.className = `mb-1 ${color}`;
+            logItem.innerHTML = `<span class="text-gray-500">[${time}]</span> ${message}`;
+            
+            // Masukkan ke kotak log
+            logArea.appendChild(logItem);
+            
+            // Scroll otomatis ke bawah agar log terbaru selalu terlihat
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
         // ==========================================================
         // 1. KONEKSI BLUETOOTH PRINTER
         // ==========================================================

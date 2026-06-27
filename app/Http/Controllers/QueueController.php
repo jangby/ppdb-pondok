@@ -98,4 +98,17 @@ class QueueController extends Controller
             ]
         ]);
     }
+
+    public function panggil(Request $request)
+{
+    $santri = Candidate::where('no_daftar', $request->no_daftar)->firstOrFail();
+    
+    // Update status panggil
+    $santri->update(['waktu_panggil' => now()]);
+    
+    return response()->json([
+        'nama' => $santri->nama_lengkap,
+        'message' => 'Berhasil dipanggil'
+    ]);
+}
 }
